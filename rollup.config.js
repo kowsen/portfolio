@@ -6,6 +6,7 @@ import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
 import copy from 'rollup-plugin-copy'
 import replace from '@rollup/plugin-replace';
+import cleaner from 'rollup-plugin-cleaner';
 
 import { parsePosts } from './parse-posts';
 
@@ -35,12 +36,18 @@ function serve() {
 export default {
 	input: 'src/main.js',
 	output: {
-		sourcemap: true,
+		sourcemap: !production,
 		format: 'iife',
 		name: 'app',
 		file: 'public/build/bundle.js'
 	},
 	plugins: [
+		cleaner({
+			targets: [
+				'./public/posts',
+				'./public/build'
+			]
+		}),
 		replace({
 			__posts: JSON.stringify(parsePosts())
 		}),

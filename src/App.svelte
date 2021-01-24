@@ -1,5 +1,5 @@
 <script>
-  import { Router, Route, Link } from 'svelte-routing';
+  import { Router, Route } from 'svelte-routing';
 
   import Home from './pages/Home.svelte';
   import About from './pages/About.svelte';
@@ -11,15 +11,9 @@
   export let url = '';
 </script>
 
-<Header />
-
 <Router url="{url}">
- <nav>
-    <Link to="/">Home</Link>
-    <Link to="blog">Blog</Link>
-    <Link to="about">About</Link>
-    <Link to="contact">Contact</Link>
-  </nav>
+  <Header />
+
   <main>
   	<Route path="/">
   		<Home />
@@ -37,12 +31,14 @@
     	<Blog />
     </Route>
 
-	<Route path="blog/:id" let:params>
-		<Post id="{params.id}" />
-	</Route>
+  	<Route path="blog/:id" let:params>
+  		<Post id="{params.id}" />
+  	</Route>
   </main>
 </Router>
 
 <style>
-
+  main {
+    margin-top: 16px;
+  }
 </style>

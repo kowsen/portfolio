@@ -43,10 +43,10 @@ export default {
 	},
 	plugins: [
 		cleaner({
-			targets: [
+			targets: production ? [
 				'./public/posts',
 				'./public/build'
-			]
+			] : []
 		}),
 		replace({
 			__posts: JSON.stringify(parsePosts())

@@ -15,7 +15,9 @@
 
 <main>
     {#each posts as post}
-        <Link to="blog/{post.id}"><p>{post.title}</p></Link>
+        <div class="post-container">
+            <Link to="blog/{post.id}" class="font-bold">{post.title}</Link> ({post.date})
+        </div>
     {/each}
 </main>
 

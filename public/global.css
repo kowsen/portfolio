@@ -10,7 +10,9 @@ html {
 body {
 	max-width: 650px;
 	min-width: 425px;
-	margin: 40px auto;
+	margin: 24px auto;
+	display: grid;
+    row-gap: 16px;
 }
 
 a {

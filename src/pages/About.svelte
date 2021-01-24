@@ -2,7 +2,7 @@
 
 </script>
 
-<p>THIS IS ABOUT ME</p>
+<span>THIS IS ABOUT ME</span>
 
 <style>
 

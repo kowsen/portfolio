@@ -18,6 +18,6 @@
 	}
 
 	h1 {
-		margin-right: auto;
+		margin: 0 auto 0 0;
 	}
 </style>

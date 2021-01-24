@@ -38,7 +38,5 @@
 </Router>
 
 <style>
-  main {
-    margin-top: 16px;
-  }
+
 </style>

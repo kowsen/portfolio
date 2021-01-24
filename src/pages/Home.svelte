@@ -2,10 +2,8 @@
 
 </script>
 
-<p>HOME PAGE</p>
+<span>HOME PAGE</span>
 
 <style>
-	p {
-		font-size: 48px;
-	}
+
 </style>

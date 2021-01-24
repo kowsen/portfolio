@@ -45,6 +45,7 @@
 
 	:global(.nav-item) {
 		text-decoration: none;
+		font-weight: normal;
 		flex-grow: 1;
 	}
 </style>

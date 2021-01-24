@@ -18,6 +18,7 @@
 	}
 
 	h1 {
-		margin: 0 auto 0 0;
+		margin: 0;
+		white-space: nowrap;
 	}
 </style>

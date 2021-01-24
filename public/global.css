@@ -10,47 +10,44 @@ html {
 body {
 	max-width: 650px;
 	min-width: 425px;
-	margin: 24px auto;
+	margin: 0 auto;
+	padding: 24px 24px 0 24px;
 	display: grid;
     row-gap: 16px;
 }
 
 a {
 	color: inherit;
+	font-weight: bolder;
 }
 
-.font-regular {
-	font-family: 'IBM Plex Mono Regular', monospace;
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	margin: 1em 0;
 }
 
-.font-medium {
-	font-family: 'IBM Plex Mono Medium', monospace;
+th, td {
+	text-align: left;
+	vertical-align: top;
+	border: 1px solid;
+	padding: 0.4em
 }
 
-.font-semibold {
-	font-family: 'IBM Plex Mono SemiBold', monospace;
+thead, tfoot, pre, blockquote {
+	background: #e5cbaa;
 }
 
-.font-bold {
-	font-family: 'IBM Plex Mono Bold', monospace;
+pre, blockquote {
+	padding: 12px;
 }
 
-@font-face {
-	font-family: 'IBM Plex Mono Regular';
-	src: url('IBMPlexMono-Regular.ttf') format('truetype');
+hr {
+	border:0;
+	border-bottom: 1px solid #2e4756;
 }
 
 @font-face {
 	font-family: 'IBM Plex Mono Medium';
 	src: url('IBMPlexMono-Medium.ttf') format('truetype');
-}
-
-@font-face {
-	font-family: 'IBM Plex Mono SemiBold';
-	src: url('IBMPlexMono-SemiBold.ttf') format('truetype');
-}
-
-@font-face {
-	font-family: 'IBM Plex Mono Bold';
-	src: url('IBMPlexMono-Bold.ttf') format('truetype');
 }

@@ -17,9 +17,10 @@
                 }
             })
             .then(res => res.text())
-            .then(md => DOMPurify.sanitize(marked(md)))
-            .then(html => {
-                content.innerHTML = html;
+            .then(md => marked(md))
+            .then(html => DOMPurify.sanitize(html))
+            .then(safeHtml => {
+                content.innerHTML = safeHtml;
             })
             .catch(() => {
                 content.innerHTML = 'Post not found. Check your URL.';
@@ -27,8 +28,10 @@
     });
 </script>
 
-<div bind:this={content}></div>
+<div class="content-container" bind:this={content}></div>
 
 <style>
-
+    .content-creator :global(img) {
+        max-width: 35%;
+    }
 </style>

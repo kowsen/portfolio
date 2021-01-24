@@ -118,6 +118,13 @@
 
 <style>
 	h2 {
-		margin: 0;
+		margin: 0 0 0 auto;
+		white-space: nowrap;
+	}
+
+	@media only screen and (max-width: 540px) {
+		h2 {
+			font-size: 1em;
+		}
 	}
 </style>

@@ -2,9 +2,12 @@
 	const NBSP = '\u00A0';
 	const TICKS_PER_SPACE = 3;
 	const TICKS_PER_CHAR = 5;
-	const TICKS_PER_BACKSPACE = 1;
-	const PAUSE_TICKS = 50;
-	const TICK_LENGTH = 50;
+	const TICKS_PER_BACKSPACE = 2;
+	const PAUSE_TICKS = 250;
+	const TICK_LENGTH = 30;
+	const UNIQUE_REQ = 2;
+	const BLINK_LEN = 42;
+	const BLINK_RATIO = 1 / 2;
 
 	const descriptions = padToMax([
 		'Software Engineer',
@@ -17,36 +20,60 @@
 	let descriptionIndex = 0;
 	let ticks = 0;
 	let maxTicks = -1;
+	let lastIndexes = [];
 
-	let description;
+	let description = '';
 
 	setInterval(() => {
 		if (ticks >= maxTicks) {
 			ticks = 0;
-			descriptionIndex = isFirst ? 0 : Math.floor(Math.random() * descriptions.length);
+			descriptionIndex = getNextMessageIndex();
 			maxTicks = getMaxTicks();
-			isFirst = false;
 		} else {
 			ticks += 1;
 		}
-		const cursor = (ticks % 24) > 12 ? '|' : NBSP;
+
+		const current = descriptions[descriptionIndex];
+		const spaces = countSpaces(current);
+		const chars = current.length - spaces;
+
+		const spaceTicks = spaces * TICKS_PER_SPACE;
+		const charTicks = chars * TICKS_PER_CHAR;
+
+		const postTypeTicks = ticks - (spaceTicks + charTicks);
+		const isPaused = postTypeTicks > 0 && postTypeTicks < PAUSE_TICKS;
+		const isBlinking = (postTypeTicks % BLINK_LEN) < (BLINK_LEN * BLINK_RATIO);
+		const cursor = (isBlinking || !isPaused) ? '|' : NBSP;
 		description = (descriptions[descriptionIndex].slice(0, getNumCharsToShow()) + cursor).padEnd(descriptions[0].length + 1, NBSP) || '';
 	}, TICK_LENGTH);
 
-	// 1 tick per backspace / nbsp space
-	// 3 ticks per typed character
-	// wait 12 ticks when fully typed
+	function getNextMessageIndex() {
+		if (isFirst) {
+			isFirst = false;
+			return 0;
+		}
+		lastIndexes.unshift(descriptionIndex);
+		lastIndexes = lastIndexes.slice(0, UNIQUE_REQ);
+		if (lastIndexes.length >= descriptions.length) {
+			lastIndexes = [];
+		}
+		let nextIndex = -1;
+		while (nextIndex === -1 || lastIndexes.indexOf(nextIndex) !== -1) {
+			nextIndex = Math.floor(Math.random() * descriptions.length);
+		}
+		return nextIndex;
+	}
 
 	function getMaxTicks() {
 		const current = descriptions[descriptionIndex];
-		const spaces = countChar(current, NBSP);
+		const spaces = countSpaces(current);
 		const chars = current.length - spaces;
 		return spaces * TICKS_PER_SPACE + chars * TICKS_PER_CHAR + current.length * TICKS_PER_BACKSPACE + PAUSE_TICKS;
 	}
 
 	function getNumCharsToShow() {
 		const current = descriptions[descriptionIndex];
-		const spaces = countChar(current, NBSP);
+		const spaces = countSpaces(current);
 		const chars = current.length - spaces;
 
 		let toShow = 0;
@@ -70,8 +97,8 @@
 		}
 	}
 
-	function countChar(str, char) {
-		return str.split(char).length - 1;
+	function countSpaces(str) {
+		return (str.match(/\u00A0/g) || []).length;
 	}
 
 	function padToMax(strs) {

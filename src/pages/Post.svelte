@@ -31,7 +31,7 @@
 <div class="content-container" bind:this={content}></div>
 
 <style>
-    .content-creator :global(img) {
-        max-width: 35%;
+    .content-container :global(img) {
+        max-width: 100%;
     }
 </style>

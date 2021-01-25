@@ -9,15 +9,11 @@
 	const BLINK_LEN = 42;
 	const BLINK_RATIO = 1 / 2;
 
-	const descriptions = padToMax([
-		'Software Engineer',
-		'Game Developer',
-		'Person',
-		'Very Sleepy'
-	]);
+	const descriptions = padToMax(__descriptions);
 
-	let isFirst = true;
 	let descriptionIndex = 0;
+	let nextDescriptionIndex = 0;
+	let nextStartTicks = countSpaces(descriptions[0]) * TICKS_PER_SPACE;
 	let ticks = 0;
 	let maxTicks = -1;
 	let lastIndexes = [];
@@ -26,9 +22,11 @@
 
 	setInterval(() => {
 		if (ticks >= maxTicks) {
-			ticks = 0;
-			descriptionIndex = getNextMessageIndex();
+			ticks = nextStartTicks;
+			descriptionIndex = nextDescriptionIndex;
+			nextDescriptionIndex = getNextMessageIndex();
 			maxTicks = getMaxTicks();
+			nextStartTicks = getNextStartTicks();
 		} else {
 			ticks += 1;
 		}
@@ -48,10 +46,6 @@
 	}, TICK_LENGTH);
 
 	function getNextMessageIndex() {
-		if (isFirst) {
-			isFirst = false;
-			return 0;
-		}
 		lastIndexes.unshift(descriptionIndex);
 		lastIndexes = lastIndexes.slice(0, UNIQUE_REQ);
 		if (lastIndexes.length >= descriptions.length) {
@@ -68,7 +62,15 @@
 		const current = descriptions[descriptionIndex];
 		const spaces = countSpaces(current);
 		const chars = current.length - spaces;
-		return spaces * TICKS_PER_SPACE + chars * TICKS_PER_CHAR + current.length * TICKS_PER_BACKSPACE + PAUSE_TICKS;
+		const skippedBackspaces = Math.min(spaces, countSpaces(descriptions[nextDescriptionIndex]));
+		return spaces * TICKS_PER_SPACE + chars * TICKS_PER_CHAR + (current.length - skippedBackspaces) * TICKS_PER_BACKSPACE + PAUSE_TICKS;
+	}
+
+	function getNextStartTicks() {
+		const current = descriptions[descriptionIndex];
+		const spaces = countSpaces(current);
+		const skippedBackspaces = Math.min(spaces, countSpaces(descriptions[nextDescriptionIndex]));
+		return skippedBackspaces * TICKS_PER_SPACE;
 	}
 
 	function getNumCharsToShow() {

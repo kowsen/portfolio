@@ -9,6 +9,7 @@ import replace from '@rollup/plugin-replace';
 import cleaner from 'rollup-plugin-cleaner';
 
 import { parsePosts } from './parse-posts';
+import { DESCRIPTIONS } from './descriptions';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -49,7 +50,8 @@ export default {
 			] : []
 		}),
 		replace({
-			__posts: JSON.stringify(parsePosts())
+			__posts: JSON.stringify(parsePosts()),
+			__descriptions: JSON.stringify(DESCRIPTIONS)
 		}),
 		svelte({
 			compilerOptions: {

@@ -28,7 +28,9 @@
     });
 </script>
 
-<div class="content-container" bind:this={content}></div>
+<div class="content-container" bind:this={content}>
+    <!-- Build spinner. Just a typing out "..." -->
+</div>
 
 <style>
     .content-container :global(img) {

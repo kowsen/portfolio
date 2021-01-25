@@ -22,5 +22,7 @@
 </main>
 
 <style>
-
+    .post-container {
+        margin: 4px 0;
+    }
 </style>

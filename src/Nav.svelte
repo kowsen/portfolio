@@ -51,7 +51,7 @@
 		z-index: 0;
 		text-decoration: none;
 		font-weight: normal;
-		flex-grow: 1;
+		flex: 1;
 	}
 
 	:global(.nav-item:focus) {

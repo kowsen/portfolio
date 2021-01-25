@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "kylefolio",
     "public": "public",
     "ignore": [
       "firebase.json",

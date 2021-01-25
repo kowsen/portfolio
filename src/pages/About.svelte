@@ -6,10 +6,10 @@
 <span>Hiya, I'm Kyle!</span>
 
 <h3>No, like, what do you do and stuff?</h3>
-<span>Oh yeah, my name's Kyle Owsen and I'm an independent game developer coming off a stint as a frontend developer at Google. While I was there, I worked on the core team for the Google Cloud Console for about two and a half years. Before that, I built games like <a href="https://play.google.com/store/apps/details?id=com.kylebyte.mazegame">Maze Frenzy</a> and <a href="https://apocashop-game-f24cd.web.app">Apocashop</a> that you can find on my home page, and if you want to go even further back I worked on cutting edge education and whiteboarding software at SMART Technologies (as well as maintaining some less than cutting edge legacy codebases)</span>
+<span>Oh yeah, my name's Kyle Owsen and I'm an independent game developer coming off a stint as a frontend developer at Google. While I was there, I worked on the core team for the Google Cloud Console for about two and a half years. Before that, I built games like <a href="https://play.google.com/store/apps/details?id=com.kylebyte.mazegame">Maze Frenzy</a> and <a href="https://static.kylebyte.com/apocashop">Apocashop</a> that you can find on my home page, and if you want to go even further back I worked on cutting edge education and whiteboarding software at SMART Technologies (as well as maintaining some less than cutting edge legacy codebases)</span>
 
 <h3>What are you up to now?</h3>
-<span>I'm taking some time to work on making games again. I've just finished a demo for a webgame called <a href="https://fortune-city-f24cd.web.app">Fortune City</a> and I'm currently playing around with new technologies and new ideas to figure out what I want to do next!</span>
+<span>I'm taking some time to work on making games again. I've just finished a demo for a webgame called <a href="https://static.kylebyte.com/fortune">Fortune City</a> and I'm currently playing around with new technologies and new ideas to figure out what I want to do next!</span>
 
 <h3>Oh, so you're unemployed.</h3>
 <span>Well you don't have to say it like that.</span>

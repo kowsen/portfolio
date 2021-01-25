@@ -2,7 +2,7 @@ export const PROJECTS = [
 	{
 		name: 'Apocashop',
 		description: 'Lemonade Stand meets Papers, Please',
-		link: 'https://apocashop-game.web.app',
+		link: 'https://static.kylebyte.com/apocashop',
 		img: 'assets/apocashop.png'
 	},
 	{
@@ -14,7 +14,7 @@ export const PROJECTS = [
 	{
 		name: 'Fortune City',
 		description: 'Demo for a blackjack puzzle game',
-		link: 'https://fortune-city-f24cd.web.app',
+		link: 'https://static.kylebyte.com/fortune',
 		img: 'assets/fortune.png'
 	},
 	{

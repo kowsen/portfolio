@@ -49,5 +49,6 @@
 <style>
   main {
     margin-top: 8px;
+    margin-bottom: 24px;
   }
 </style>

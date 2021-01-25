@@ -30,6 +30,8 @@
 <style>
 	a {
 		grid-area: 1 / 1 / 2 / 2;
+		text-decoration: none;
+		user-select: none;
 	}
 
 	.project-contents {
@@ -71,11 +73,6 @@
 
 	.project-text, .project-background {
 		transition: filter 0.3s ease;
-	}
-
-	a {
-		text-decoration: none;
-		/*font-weight: normal;*/
 	}
 
 	.project-contents h3 {

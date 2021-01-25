@@ -49,6 +49,9 @@ hr {
 }
 
 @font-face {
-	font-family: 'IBM Plex Mono Medium';
-	src: url('IBMPlexMono-Medium.ttf') format('truetype');
+    font-family: 'IBM Plex Mono Medium';
+    src: url('ibmplexmono-medium-webfont.woff2') format('woff2'),
+         url('ibmplexmono-medium-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
 }

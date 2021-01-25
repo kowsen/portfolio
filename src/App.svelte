@@ -9,15 +9,19 @@
   import Error from './pages/Error.svelte';
   import Header from './Header.svelte';
 
+  import { getScrollbarWidth } from './util/scrollbar';
+
   export let url = '';
 
   const MIN_SUPPORTED_SIZE = 320;
   const MIN_LOGICAL_WIDTH = 473;
 
-  new ResizeObserver(() => {
-    const width = Math.max(document.documentElement.clientWidth, MIN_SUPPORTED_SIZE);
+  document.documentElement.style['padding-right'] = `calc(${getScrollbarWidth()}px - (100vw - 100%))`;
+
+  new ResizeObserver(([event]) => {
+    const width = Math.max(event.contentRect.width, MIN_SUPPORTED_SIZE);
     const scale = Math.min(width / MIN_LOGICAL_WIDTH, 1);
-    document.documentElement.style.transform = `scale(${scale})`;
+    document.documentElement.style.setProperty('--scale', scale);
   }).observe(document.documentElement);
 </script>
 
@@ -49,7 +53,7 @@
       <Error />
     </Route>
   </main>
-</Router>
+</Router> 
 
 <style>
   main {

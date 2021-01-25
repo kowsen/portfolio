@@ -6,6 +6,7 @@
   import Contact from './pages/Contact.svelte';
   import Blog from './pages/Blog.svelte';
   import Post from './pages/Post.svelte';
+  import Error from './pages/Error.svelte';
   import Header from './Header.svelte';
 
   export let url = '';
@@ -43,6 +44,10 @@
   	<Route path="blog/:id" let:params>
   		<Post id="{params.id}" />
   	</Route>
+
+    <Route>
+      <Error />
+    </Route>
   </main>
 </Router>
 

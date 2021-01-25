@@ -29,6 +29,7 @@
 	nav {
 		display: flex;
 		background-color: #ffc984;
+		user-select: none;
 	}
 
 	.nav-item-content {

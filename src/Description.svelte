@@ -128,6 +128,7 @@
 	h2 {
 		margin: 0 0 0 auto;
 		white-space: nowrap;
+		user-select: none;
 	}
 
 	@media only screen and (max-width: 600px) {

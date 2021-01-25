@@ -7,7 +7,7 @@ export const PROJECTS = [
 	},
 	{
 		name: 'Maze Frenzy',
-		description: 'Mobile endless runner in a maze',
+		description: 'Endless runner in an infinite maze',
 		link: 'https://play.google.com/store/apps/details?id=com.kylebyte.mazegame',
 		img: 'assets/frenzy.png'
 	},

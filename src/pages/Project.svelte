@@ -4,10 +4,20 @@
 	export let link;
 	export let img;
 
+	let linkElem;
+
 	$: imgStyle = `background-image: url("${img}")`;
+
+	function onTap(event) {
+		if (linkElem && document.activeElement !== linkElem) {
+			linkElem.focus();
+			event.stopPropagation();
+			event.preventDefault();
+		}
+	}
 </script>
 
-<a href={link}>
+<a href={link} bind:this={linkElem} on:touchend={onTap}>
 	<div class="project-contents">
 		<div class="project-background" style={imgStyle}></div>
 		<div class="project-text">
@@ -36,7 +46,7 @@
 		width: 100%;
 		height: 100%;
 		background-size: cover;
-		filter: opacity(10%);
+		filter: opacity(100%);
 	}
 
 	.project-text {
@@ -46,37 +56,17 @@
 		justify-content: center;
 		width: 100%;
 		height: 100%;
-		filter: opacity(100%);
+		filter: opacity(0%);
 	}
 
 	a:hover .project-background,
 	a:focus .project-background {
-		filter: opacity(100%);
+		filter: opacity(10%);
 	}
 
 	a:hover .project-text,
 	a:focus .project-text {
-		filter: opacity(0%);
-	}
-
-	@media (hover: hover) {
-		.project-background {
-	    	filter: opacity(100%);
-	    }
-
-	    .project-text {
-	    	filter: opacity(0%);
-	    }
-
-		a:hover .project-background,
-		a:focus .project-background {
-			filter: opacity(10%);
-		}
-
-		a:hover .project-text,
-		a:focus .project-text {
-			filter: opacity(100%);
-		}
+		filter: opacity(100%);
 	}
 
 	.project-text, .project-background {

@@ -124,7 +124,7 @@
 		white-space: nowrap;
 	}
 
-	@media only screen and (max-width: 540px) {
+	@media only screen and (max-width: 600px) {
 		h2 {
 			font-size: 1em;
 		}

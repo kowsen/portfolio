@@ -5,6 +5,7 @@ html {
 	font-family: 'IBM Plex Mono Medium', monospace;
 	background-color: #FFE2BD;
     color: #2e4756;
+    transform-origin: top left;
 }
 
 body {

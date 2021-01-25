@@ -9,6 +9,15 @@
   import Header from './Header.svelte';
 
   export let url = '';
+
+  const MIN_SUPPORTED_SIZE = 320;
+  const MIN_LOGICAL_WIDTH = 473;
+
+  new ResizeObserver(() => {
+    const width = Math.max(document.documentElement.clientWidth, MIN_SUPPORTED_SIZE);
+    const scale = Math.min(width / MIN_LOGICAL_WIDTH, 1);
+    document.documentElement.style.transform = `scale(${scale})`;
+  }).observe(document.documentElement);
 </script>
 
 <Router url="{url}">

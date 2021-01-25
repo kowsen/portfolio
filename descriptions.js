@@ -5,5 +5,6 @@ export const DESCRIPTIONS = [
 	'Very Sleepy',
 	'Software "Engineer"',
 	'Fan of Birds',
-	'Settler of Catan'
+	'Settler of Catan',
+	'Game Player'
 ];

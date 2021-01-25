@@ -1,4 +1,6 @@
 <script>
+	import { onDestroy } from 'svelte';
+	
 	const NBSP = '\u00A0';
 	const TICKS_PER_SPACE = 3;
 	const TICKS_PER_CHAR = 5;
@@ -20,7 +22,7 @@
 
 	let description = '';
 
-	setInterval(() => {
+	const textInterval = setInterval(() => {
 		if (ticks >= maxTicks) {
 			ticks = nextStartTicks;
 			descriptionIndex = nextDescriptionIndex;
@@ -114,6 +116,10 @@
 	function padStr(str, len) {
 		return str.padStart(len, NBSP);
 	}
+
+	onDestroy(() => {
+        clearInterval(textInterval);
+    });
 </script>
 
 <h2>{description}</h2>

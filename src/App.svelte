@@ -8,15 +8,11 @@
   import Post from './pages/Post.svelte';
   import Error from './pages/Error.svelte';
   import Header from './Header.svelte';
-
-  import { getScrollbarWidth } from './util/scrollbar';
-
+  
   export let url = '';
 
   const MIN_SUPPORTED_SIZE = 320;
   const MIN_LOGICAL_WIDTH = 473;
-
-  document.documentElement.style['padding-right'] = `calc(${getScrollbarWidth()}px - (100vw - 100%))`;
 
   new ResizeObserver(([event]) => {
     const width = Math.max(event.contentRect.width, MIN_SUPPORTED_SIZE);

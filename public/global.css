@@ -1,20 +1,20 @@
 html {
 	position: relative;
 	height: 100%;
+	width: 100%;
+	margin: 0;
 	font-family: 'IBM Plex Mono Medium', monospace;
 	background-color: #FFE2BD;
     color: #2e4756;
     transform-origin: top left;
     --scale: 1;
     transform: scale(var(--scale));
-    margin: 0;
 }
 
-@media screen and (min-width: 750px) {
-    html {
-        margin-left: calc((100vw - 100%) / var(--scale));
-        padding: 0 !important;
-    }
+@media screen and (max-width: 700px) {
+	body {
+		overflow-y: scroll;
+	}
 }
 
 body {

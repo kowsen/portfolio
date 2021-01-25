@@ -6,7 +6,7 @@
 
 Alrighty, let's see how many posts we end up writing before this gets abandoned.
 
-Hey anyone who's reading this! I've recently quit my job at Google (well, technically my last day's 2/5, but I feel like I've already quit) and after a short vacation I'm gonna put all my effort into designing and finishing a new game.
+Hey anyone who's reading this! I've recently quit my job at Google (well, technically my last day's 2/5, but close enough) and after a short vacation I'm gonna put all my effort into designing and finishing a new game.
 
 This is something I've been excited to do for a long time. Ever since I made [Apocashop](https://apocashop-game.web.app) in college I've known that making games could make me happy, and last summer I took a week off to build another game called [Fortune City](https://fortune-city-f24cd.web.app). I was never able to find the fun with that idea, but it helped me remember what I'd been missing at my job and while quitting might not be the smartest idea, I'd have a hard time living with myself if I didn't give this another try.
 
@@ -16,7 +16,7 @@ That's very well what this could turn into too, but I really feel like this time
 
 After getting to work with a bunch of really smart people for a few years, I'm a much better developer than I was then. I'm also generally in a better place in my life, and I can afford to keep this going longer than I could last time.
 
-And hey, if this doesn't work out, I can think of a lot of worse ways to ride out the quarantine times.
+And hey, if this doesn't work out, I can think of a lot of worse ways to ride out the quarantimes.
 
 So hopefully I'll be back here again soon to continue talking to myself. Love ya!
 

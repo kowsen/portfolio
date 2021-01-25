@@ -10,7 +10,7 @@ Hey anyone who's reading this! I've recently quit my job at Google (well, techni
 
 This is something I've been excited to do for a long time. Ever since I made [Apocashop](https://apocashop-game.web.app) in college I've known that making games could make me happy, and last summer I finally took a week off to build another one. The result was [Fortune City](https://fortune-city-f24cd.web.app), and while I wasn't able to find the fun with that idea, it helped me remember what I'd been missing at my job and brought me to a realization - even though quitting might not be the smartest thing to do right now, I'd have a hard time living with myself if I didn't give this another try while I can.
 
-I've tried this before. Between my previous job and Google I took a year off to make games that ended up mostly being a year of me watching tv, playing games, and having various existential crises before eventually cobbling together [Maze Frenzy](https://play.google.com/store/apps/details?id=com.kylebyte.mazegame) so I wouldn't have year long gap in my resume when I was applying to jobs.
+I've tried this before. Between my previous job and Google I took a year off to make games that ended up mostly being a year of me watching tv, playing games, and having various existential crises before eventually cobbling together [Maze Frenzy](https://play.google.com/store/apps/details?id=com.kylebyte.mazegame) so I wouldn't have a year long gap in my resume when I was applying to jobs.
 
 That's easily what this could turn into too, but I really feel like this time's gonna be different.
 

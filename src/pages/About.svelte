@@ -14,8 +14,8 @@
 <h3>Oh, so you're unemployed.</h3>
 <span>Well you don't have to say it like that.</span>
 
-<h3>I didn't mean anything by it, I just thought maybe you'd lead with that-</h3>
-<span>When I said I was an independent game developer and then linked to a bunch of webgames you've never heard of you probably should've filled in the blanks.</span>
+<h3>I didn't mean anything by it, I just thought maybe you'd lead with th—</h3>
+<span>—when I said I was an independent game developer and then linked to a bunch of games you've never heard of you probably should've filled in the blanks.</span>
 
 <h3>Fair enough. Anything fun about you?</h3>
 <span>Nothing you wouldn't expect. I'm a huge fan of retro games, Dungeons and Dragons, Star Trek, baseball, and all those other things that people with software engineer portfolio sites and a game dev hobby seem to like.</span>

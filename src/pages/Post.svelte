@@ -1,12 +1,15 @@
 <script>
     import { onMount } from 'svelte';
-	import DOMPurify from 'dompurify';
-	import marked from 'marked';
     import Spinner from './Spinner.svelte';
 
     export let id;
 
     let content = '';
+
+    async function parseMarkdown(md) {
+        const markdownUtil = await import('../util/markdown')
+        return markdownUtil.parseMarkdown(md)
+    }
 
     onMount(() => {
         fetch(`${location.origin}/posts/${id}.md`)
@@ -18,12 +21,12 @@
                 }
             })
             .then(res => res.text())
-            .then(md => marked(md))
-            .then(html => DOMPurify.sanitize(html))
+            .then(md => parseMarkdown(md))
             .then(safeHtml => {
                 content = safeHtml;
             })
-            .catch(() => {
+            .catch((e) => {
+                console.log(e);
                 content = 'Post not found. Check your URL.';
             });
     });

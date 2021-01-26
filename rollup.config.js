@@ -39,9 +39,9 @@ export default {
 	input: 'src/main.js',
 	output: {
 		sourcemap: !production,
-		format: 'iife',
+		format: 'es',
 		name: 'app',
-		file: 'public/build/bundle.js'
+		dir: 'public/build'
 	},
 	plugins: [
 		cleaner({

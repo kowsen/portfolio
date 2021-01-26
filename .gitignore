@@ -106,3 +106,4 @@ dist
 
 public/build
 public/posts
+public/**/*.map

@@ -78,7 +78,7 @@
 
 	.project-contents h3 {
 		font-size: 1.25em;
-		font-weight: bolder;
+		font-weight: bold;
 	}
 
 	.project-contents span {

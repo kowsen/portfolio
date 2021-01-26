@@ -1,7 +1,6 @@
 html {
 	position: relative;
 	height: 100%;
-	width: 100%;
 	margin: 0;
 	font-family: 'IBM Plex Mono Medium', monospace;
 	background-color: #FFE2BD;
@@ -14,6 +13,12 @@ html {
 @media screen and (max-width: 700px) {
 	body {
 		overflow-y: scroll;
+	}
+}
+
+@media screen and (min-width: 701px) {
+	html {
+		margin-left: calc(100vw - 100%);
 	}
 }
 

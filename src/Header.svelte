@@ -5,7 +5,9 @@
 </script>
 
 <div class="title">
-	<h1>KYLE OWSEN</h1>
+	<Link to="/" class="title-link">
+		<h1>KYLE OWSEN</h1>
+	</Link>
 	<Description />
 </div>
 
@@ -20,5 +22,10 @@
 	h1 {
 		margin: 0;
 		white-space: nowrap;
+	}
+
+	:global(.title-link) {
+		text-decoration: none;
+		user-select: none;
 	}
 </style>

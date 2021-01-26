@@ -59,6 +59,7 @@
 		width: 100%;
 		height: 100%;
 		filter: opacity(0%);
+		text-shadow: 2px 2px #ffe2bd;
 	}
 
 	a:hover .project-background,

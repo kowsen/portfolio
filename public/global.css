@@ -8,7 +8,6 @@ html {
     transform-origin: top left;
     --scale: 1;
     transform: scale(var(--scale));
-    font-weight: 500;
 }
 
 @media screen and (max-width: 700px) {

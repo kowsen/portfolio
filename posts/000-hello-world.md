@@ -2,9 +2,15 @@
 <!--- 01/24/2021 -->
 <!--- Kyle Owsen -->
 
+---
+
+**tl;dr** I quit my job to make games again and I'll be posting about my progress here.
+
+---
+
 ## Hello World!
 
-**tl;dr I'm making games again and I'll be posting about my progress here!**
+*01/24/2021*
 
 Alrighty, let's see how many posts we end up writing before this gets abandoned.
 

@@ -1,7 +1,7 @@
 <script>
     import { onMount } from 'svelte';
-	import DOMPurify from 'dompurify';
-	import marked from 'marked';
+	// import DOMPurify from 'dompurify';
+	// import marked from 'marked';
     import Spinner from './Spinner.svelte';
 
     export let id;
@@ -18,8 +18,8 @@
                 }
             })
             .then(res => res.text())
-            .then(md => marked(md))
-            .then(html => DOMPurify.sanitize(html))
+            // .then(md => marked(md))
+            // .then(html => DOMPurify.sanitize(html))
             .then(safeHtml => {
                 content = safeHtml;
             })

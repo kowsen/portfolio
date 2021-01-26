@@ -5,19 +5,33 @@
 	export let img;
 
 	let linkElem;
+	let isTapPrimed = false;
 
 	$: imgStyle = `background-image: url("${img}")`;
 
-	function onTap(event) {
-		if (linkElem && document.activeElement !== linkElem) {
+	function onTouchStart() {
+		isTapPrimed = true;
+	}
+
+	function onTouchMove() {
+		isTapPrimed = false;
+	}
+
+	function onTouchEnd(event) {
+		if (isTapPrimed && linkElem && document.activeElement !== linkElem) {
 			linkElem.focus();
 			event.stopPropagation();
 			event.preventDefault();
 		}
+		isTapPrimed = false;
 	}
 </script>
 
-<a href={link} bind:this={linkElem} on:touchend={onTap}>
+<a href={link}
+   bind:this={linkElem}
+   on:touchstart={onTouchStart}
+   on:touchmove={onTouchMove}
+   on:touchend={onTouchEnd}>
 	<div class="project-contents">
 		<div class="project-background" style={imgStyle}></div>
 		<div class="project-text">
@@ -62,14 +76,22 @@
 		text-shadow: 2px 2px #ffe2bd;
 	}
 
-	a:hover .project-background,
 	a:focus .project-background {
 		filter: opacity(10%);
 	}
 
-	a:hover .project-text,
 	a:focus .project-text {
 		filter: opacity(100%);
+	}
+
+	@media(hover: hover) and (pointer: fine) {
+		a:hover .project-background {
+			filter: opacity(10%);
+		}
+
+		a:hover .project-text{
+			filter: opacity(100%);
+		}
 	}
 
 	.project-text, .project-background {

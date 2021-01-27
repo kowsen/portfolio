@@ -1,29 +1,29 @@
 <script>
-  export let name
-  export let description
-  export let link
-  export let img
+  export let name;
+  export let description;
+  export let link;
+  export let img;
 
-  let linkElem
-  let isTapPrimed = false
+  let linkElem;
+  let isTapPrimed = false;
 
-  $: imgStyle = `background-image: url("${img}")`
+  $: imgStyle = `background-image: url("${img}")`;
 
   function onTouchStart() {
-    isTapPrimed = true
+    isTapPrimed = true;
   }
 
   function onTouchMove() {
-    isTapPrimed = false
+    isTapPrimed = false;
   }
 
   function onTouchEnd(event) {
     if (isTapPrimed && linkElem && document.activeElement !== linkElem) {
-      linkElem.focus()
-      event.stopPropagation()
-      event.preventDefault()
+      linkElem.focus();
+      event.stopPropagation();
+      event.preventDefault();
     }
-    isTapPrimed = false
+    isTapPrimed = false;
   }
 </script>
 

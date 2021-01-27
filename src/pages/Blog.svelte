@@ -1,18 +1,16 @@
 <script>
-  import { Link } from 'svelte-routing'
+  import { Link } from 'svelte-routing';
 
   // eslint-disable-next-line no-undef
-  const posts = [...__posts].sort(
-    (a, b) => getTime(b.date) - getTime(a.date)
-  )
+  const posts = [...__posts].sort((a, b) => getTime(b.date) - getTime(a.date));
 
   function getTime(dateStr) {
-    const splitDateStr = dateStr.split('/')
+    const splitDateStr = dateStr.split('/');
     return new Date(
       splitDateStr[2],
       splitDateStr[0] - 1,
       splitDateStr[1]
-    ).getTime()
+    ).getTime();
   }
 </script>
 

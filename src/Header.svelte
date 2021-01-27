@@ -1,7 +1,7 @@
 <script>
-  import { Link } from 'svelte-routing'
-  import Nav from './Nav.svelte'
-  import Description from './Description.svelte'
+  import { Link } from 'svelte-routing';
+  import Nav from './Nav.svelte';
+  import Description from './Description.svelte';
 </script>
 
 <div class="title">

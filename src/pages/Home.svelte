@@ -1,5 +1,5 @@
 <script>
-  import Project from './Project.svelte'
+  import Project from './Project.svelte';
 
   // eslint-disable-next-line no-undef
   const projects = __projects;

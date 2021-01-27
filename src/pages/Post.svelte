@@ -1,36 +1,36 @@
 <script>
-  import { onMount } from 'svelte'
-  import Spinner from './Spinner.svelte'
+  import { onMount } from 'svelte';
+  import Spinner from './Spinner.svelte';
 
-  export let id
+  export let id;
 
-  let content = ''
+  let content = '';
 
   async function parseMarkdown(md) {
     // eslint-disable import/first
-    const markdownUtil = await import('../util/markdown')
-    return markdownUtil.parseMarkdown(md)
+    const markdownUtil = await import('../util/markdown');
+    return markdownUtil.parseMarkdown(md);
   }
 
   onMount(() => {
     fetch(`${location.origin}/posts/${id}.md`)
       .then((res) => {
         if (res.ok) {
-          return res
+          return res;
         } else {
-          throw Error(`Request rejected with status ${res.status}`)
+          throw Error(`Request rejected with status ${res.status}`);
         }
       })
       .then((res) => res.text())
       .then((md) => parseMarkdown(md))
       .then((safeHtml) => {
-        content = safeHtml
+        content = safeHtml;
       })
       .catch((e) => {
-        console.log(e)
-        content = 'Post not found. Check your URL.'
-      })
-  })
+        console.log(e);
+        content = 'Post not found. Check your URL.';
+      });
+  });
 </script>
 
 <div class="content-container">

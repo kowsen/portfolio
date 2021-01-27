@@ -9,9 +9,13 @@
     ],
     "rewrites": [
       {
-        "source": "!/**.md",
-        "destination": "/index.html"
+        "source": "kyletest",
+        "destination": "/aardvark.html"
       }
+      // {
+      //   "source": "!/**.md",
+      //   "destination": "/index.html"
+      // }
     ]
   }
 }

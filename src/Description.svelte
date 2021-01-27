@@ -12,134 +12,100 @@
   const BLINK_RATIO = 1 / 2;
 
   // eslint-disable-next-line no-undef
-  const descriptions = padToMax(__descriptions);
+  const descriptions = __descriptions;
 
   let descriptionIndex = 0;
-  let nextDescriptionIndex = 0;
-  let nextStartTicks = countSpaces(descriptions[0]) * TICKS_PER_SPACE;
-  let ticks = 0;
-  let maxTicks = -1;
-  let lastIndexes = [];
 
-  let description = '';
+  let ticks = 0;
+  let lastIndexes = [0];
+
+  let nextDescriptionIndex = getNextMessageIndex();
+
+  $: displayLen = Math.max(...descriptions.map((str) => str.length));
+
+  $: current = descriptions[descriptionIndex].padStart(displayLen, NBSP);
+  $: spaces = countSpaces(current);
+  $: chars = displayLen - spaces;
+
+  $: spaceTicks = spaces * TICKS_PER_SPACE;
+  $: charTicks = chars * TICKS_PER_CHAR;
+  $: eraseTicks = displayLen * TICKS_PER_BACKSPACE;
+
+  $: next = descriptions[nextDescriptionIndex].padStart(displayLen, NBSP);
+  $: nextSpaces = countSpaces(next);
+  $: nextChars = displayLen - nextSpaces;
+
+  $: maxTicks =
+    spaceTicks +
+    charTicks +
+    (displayLen - Math.min(spaces, nextSpaces)) * TICKS_PER_BACKSPACE +
+    PAUSE_TICKS;
+
+  $: postTypeTicks = ticks - (spaceTicks + charTicks);
+  $: isPaused = postTypeTicks > 0 && postTypeTicks < PAUSE_TICKS;
+  $: isBlinking = postTypeTicks % BLINK_LEN < BLINK_LEN * BLINK_RATIO;
+
+  $: cursor = isBlinking || !isPaused ? '|' : NBSP;
+
+  let charsToShow = 0;
+  $: {
+    if (ticks < spaceTicks) {
+      // Typing spaces
+      charsToShow = Math.floor(ticks / TICKS_PER_SPACE);
+    } else if (ticks < spaceTicks + charTicks) {
+      // Typing message
+      charsToShow = spaces + Math.floor((ticks - spaceTicks) / TICKS_PER_CHAR);
+    } else if (ticks < spaceTicks + charTicks + PAUSE_TICKS) {
+      // Pausing
+      charsToShow = current.length;
+    } else if (ticks < spaceTicks + charTicks + PAUSE_TICKS + eraseTicks) {
+      // Erasing message
+      const backspaceTicks = ticks - spaceTicks - charTicks - PAUSE_TICKS;
+      const charsToBackspace = Math.floor(backspaceTicks / TICKS_PER_BACKSPACE);
+      charsToShow = current.length - charsToBackspace;
+    } else {
+      // At / after the end of the cycle
+      charsToShow = 0;
+    }
+  }
+
+  $: description = current.slice(0, charsToShow);
+
+  $: toPrint = `${description}${cursor}`.padEnd(displayLen + 1, NBSP);
 
   const textInterval = setInterval(() => {
     if (ticks >= maxTicks) {
-      ticks = nextStartTicks;
+      ticks = charsToShow * TICKS_PER_SPACE;
+      markIndexUsed(descriptionIndex);
       descriptionIndex = nextDescriptionIndex;
       nextDescriptionIndex = getNextMessageIndex();
-      maxTicks = getMaxTicks();
-      nextStartTicks = getNextStartTicks();
     } else {
       ticks += 1;
     }
-
-    const current = descriptions[descriptionIndex];
-    const spaces = countSpaces(current);
-    const chars = current.length - spaces;
-
-    const spaceTicks = spaces * TICKS_PER_SPACE;
-    const charTicks = chars * TICKS_PER_CHAR;
-
-    const postTypeTicks = ticks - (spaceTicks + charTicks);
-    const isPaused = postTypeTicks > 0 && postTypeTicks < PAUSE_TICKS;
-    const isBlinking = postTypeTicks % BLINK_LEN < BLINK_LEN * BLINK_RATIO;
-    const cursor = isBlinking || !isPaused ? '|' : NBSP;
-    const descriptionStart = descriptions[descriptionIndex].slice(
-      0,
-      getNumCharsToShow()
-    );
-    description = (descriptionStart + cursor).padEnd(
-      descriptions[0].length + 1,
-      NBSP
-    );
   }, TICK_LENGTH);
 
-  function getNextMessageIndex() {
-    lastIndexes.unshift(descriptionIndex);
+  onDestroy(() => {
+    clearInterval(textInterval);
+  });
+
+  function markIndexUsed(index) {
+    lastIndexes.unshift(index);
     lastIndexes = lastIndexes.slice(0, UNIQUE_REQ);
-    if (lastIndexes.length >= descriptions.length) {
-      lastIndexes = [];
-    }
-    let nextIndex = -1;
-    while (nextIndex === -1 || lastIndexes.indexOf(nextIndex) !== -1) {
-      nextIndex = Math.floor(Math.random() * descriptions.length);
-    }
-    return nextIndex;
   }
 
-  function getMaxTicks() {
-    const current = descriptions[descriptionIndex];
-    const spaces = countSpaces(current);
-    const chars = current.length - spaces;
-    const skippedBackspaces = Math.min(
-      spaces,
-      countSpaces(descriptions[nextDescriptionIndex])
-    );
-    return (
-      spaces * TICKS_PER_SPACE +
-      chars * TICKS_PER_CHAR +
-      (current.length - skippedBackspaces) * TICKS_PER_BACKSPACE +
-      PAUSE_TICKS
-    );
-  }
-
-  function getNextStartTicks() {
-    const current = descriptions[descriptionIndex];
-    const spaces = countSpaces(current);
-    const skippedBackspaces = Math.min(
-      spaces,
-      countSpaces(descriptions[nextDescriptionIndex])
-    );
-    return skippedBackspaces * TICKS_PER_SPACE;
-  }
-
-  function getNumCharsToShow() {
-    const current = descriptions[descriptionIndex];
-    const spaces = countSpaces(current);
-    const chars = current.length - spaces;
-
-    const spaceTicks = spaces * TICKS_PER_SPACE;
-    const charTicks = chars * TICKS_PER_CHAR;
-    const eraseTicks = current.length * TICKS_PER_BACKSPACE;
-
-    if (ticks < spaceTicks) {
-      return Math.floor(ticks / TICKS_PER_SPACE);
-    } else if (ticks < spaceTicks + charTicks) {
-      return spaces + Math.floor((ticks - spaceTicks) / TICKS_PER_CHAR);
-    } else if (ticks < spaceTicks + charTicks + PAUSE_TICKS) {
-      return current.length;
-    } else if (ticks < spaceTicks + charTicks + PAUSE_TICKS + eraseTicks) {
-      const backspaceTicks = ticks - spaceTicks - charTicks - PAUSE_TICKS;
-      const charsToBackspace = Math.floor(backspaceTicks / TICKS_PER_BACKSPACE);
-      return current.length - charsToBackspace;
-    } else {
-      return 0;
-    }
+  function getNextMessageIndex() {
+    const validIndexes = descriptions
+      .map((_, i) => i)
+      .filter((i) => !lastIndexes.includes(i));
+    return validIndexes[Math.floor(Math.random() * validIndexes.length)];
   }
 
   function countSpaces(str) {
     return (str.match(/\u00A0/g) || []).length;
   }
-
-  function padToMax(strs) {
-    let maxLen = 0;
-    for (const str of strs) {
-      maxLen = Math.max(str.length, maxLen);
-    }
-    return strs.map((str) => padStr(str, maxLen));
-  }
-
-  function padStr(str, len) {
-    return str.padStart(len, NBSP);
-  }
-
-  onDestroy(() => {
-    clearInterval(textInterval);
-  });
 </script>
 
-<h2>{description}</h2>
+<h2>{toPrint}</h2>
 
 <style>
   h2 {

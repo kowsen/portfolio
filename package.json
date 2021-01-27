@@ -6,7 +6,7 @@
     "dev": "rollup -c -w",
     "start": "sirv public --single",
     "lint": "eslint --fix src",
-    "prettier": "prettier --write src"
+    "format": "prettier --write src"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",

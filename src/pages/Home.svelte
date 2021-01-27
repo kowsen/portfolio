@@ -1,7 +1,8 @@
 <script>
   import Project from './Project.svelte'
 
-  const projects = window['__projects']
+  // eslint-disable-next-line no-undef
+  const projects = __projects;
 </script>
 
 <div class="projects">

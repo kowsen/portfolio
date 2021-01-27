@@ -1,7 +1,8 @@
 <script>
   import { Link } from 'svelte-routing'
 
-  const posts = [...window['__posts']].sort(
+  // eslint-disable-next-line no-undef
+  const posts = [...__posts].sort(
     (a, b) => getTime(b.date) - getTime(a.date)
   )
 

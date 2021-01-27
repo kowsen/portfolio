@@ -11,7 +11,8 @@
   const BLINK_LEN = 42
   const BLINK_RATIO = 1 / 2
 
-  const descriptions = padToMax(window['__descriptions'])
+  // eslint-disable-next-line no-undef
+  const descriptions = padToMax(__descriptions)
 
   let descriptionIndex = 0
   let nextDescriptionIndex = 0

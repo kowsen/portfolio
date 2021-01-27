@@ -1,3 +1,5 @@
 public
 scripts
 posts
+.eslintignore
+.prettierignore

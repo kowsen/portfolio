@@ -9,12 +9,6 @@
     "format": "prettier --write .",
     "fix": "npm run lint && npm run format"
   },
-  "lint-staged": {
-    "*": [
-      "npx prettier --write",
-      "eslint --fix-dry-run",
-    ]
-  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
@@ -42,5 +36,16 @@
     "marked": "^1.2.7",
     "sirv-cli": "^1.0.0",
     "svelte-routing": "^1.5.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*": [
+      "npx prettier --write",
+      "eslint --fix-dry-run"
+    ]
   }
 }

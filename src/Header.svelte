@@ -17,6 +17,7 @@
   .title {
     display: flex;
     align-items: center;
+    min-height: 42px;
   }
 
   h1 {

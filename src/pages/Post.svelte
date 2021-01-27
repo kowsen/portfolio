@@ -1,5 +1,5 @@
 <script>
-  import { navigate } from "svelte-routing";
+  import { navigate } from 'svelte-routing';
   import Spinner from './Spinner.svelte';
 
   export let id;
@@ -26,7 +26,7 @@
       content = safeHtml;
     })
     .catch(() => {
-      navigate("/invalid-post", { replace: true });
+      navigate('/invalid-post', { replace: true });
     });
 </script>
 

@@ -14,38 +14,56 @@
 
   // eslint-disable-next-line no-undef
   const descriptions = __descriptions;
+  const displayLen = Math.max(...descriptions.map((str) => str.length));
 
   const indexBag = getBag(descriptions.length, 0, UNIQUE_DESCRIPTIONS);
   const currentIndex = indexBag.current;
   const nextIndex = indexBag.next;
 
-  let ticks = 0;
+  let ticks = TICKS_PER_SPACE * (displayLen - descriptions[0].length);
 
-  $: displayLen = Math.max(...descriptions.map((str) => str.length));
+  let current = '';
+  let spaces = 0;
+  let chars = 0;
 
-  $: current = descriptions[$currentIndex].padStart(displayLen, NBSP);
-  $: spaces = countSpaces(current);
-  $: chars = displayLen - spaces;
+  let spaceTicks = 0;
+  let charTicks = 0;
+  let eraseTicks = 0;
 
-  $: spaceTicks = spaces * TICKS_PER_SPACE;
-  $: charTicks = chars * TICKS_PER_CHAR;
-  $: eraseTicks = displayLen * TICKS_PER_BACKSPACE;
+  let next = '';
+  let nextSpaces = 0;
+  let nextChars = 0;
 
-  $: next = descriptions[$nextIndex].padStart(displayLen, NBSP);
-  $: nextSpaces = countSpaces(next);
-  $: nextChars = displayLen - nextSpaces;
+  let maxTicks = 0;
 
-  $: maxTicks =
-    spaceTicks +
-    charTicks +
-    (displayLen - Math.min(spaces, nextSpaces)) * TICKS_PER_BACKSPACE +
-    PAUSE_TICKS;
+  $: {
+    current = descriptions[$currentIndex].padStart(displayLen, NBSP);
+    spaces = countSpaces(current);
+    chars = displayLen - spaces;
 
-  $: postTypeTicks = ticks - (spaceTicks + charTicks);
-  $: isPaused = postTypeTicks > 0 && postTypeTicks < PAUSE_TICKS;
-  $: isBlinking = postTypeTicks % BLINK_LEN < BLINK_LEN * BLINK_RATIO;
+    spaceTicks = spaces * TICKS_PER_SPACE;
+    charTicks = chars * TICKS_PER_CHAR;
+    eraseTicks = displayLen * TICKS_PER_BACKSPACE;
 
-  $: cursor = isBlinking || !isPaused ? '|' : NBSP;
+    next = descriptions[$nextIndex].padStart(displayLen, NBSP);
+    nextSpaces = countSpaces(next);
+    nextChars = displayLen - nextSpaces;
+
+    maxTicks =
+      spaceTicks +
+      charTicks +
+      (displayLen - Math.min(spaces, nextSpaces)) * TICKS_PER_BACKSPACE +
+      PAUSE_TICKS;
+  }
+
+  let cursor = NBSP;
+  $: {
+    const postTypeTicks = ticks - (spaceTicks + charTicks);
+    const isPaused = postTypeTicks > 0 && postTypeTicks < PAUSE_TICKS;
+    const isBlinking = postTypeTicks % BLINK_LEN < BLINK_LEN * BLINK_RATIO;
+
+    cursor = isBlinking || !isPaused ? '|' : NBSP;
+  }
 
   let charsToShow = 0;
   $: {
@@ -70,8 +88,7 @@
   }
 
   $: description = current.slice(0, charsToShow);
-
-  $: toPrint = `${description}${cursor}`.padEnd(displayLen + 1, NBSP);
+  $: endPadding = ''.padEnd(displayLen - charsToShow, NBSP);
 
   const textInterval = setInterval(() => {
     if (ticks >= maxTicks) {
@@ -91,7 +108,7 @@
   }
 </script>
 
-<h2>{toPrint}</h2>
+<h2>{description}{cursor}{endPadding}</h2>
 
 <style>
   h2 {

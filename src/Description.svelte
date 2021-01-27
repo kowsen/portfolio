@@ -1,5 +1,6 @@
 <script>
   import { onDestroy } from 'svelte';
+  import { getBag } from './util/bag';
 
   const NBSP = '\u00A0';
   const TICKS_PER_SPACE = 3;
@@ -7,23 +8,22 @@
   const TICKS_PER_BACKSPACE = 2;
   const PAUSE_TICKS = 250;
   const TICK_LENGTH = 30;
-  const UNIQUE_REQ = 2;
+  const UNIQUE_DESCRIPTIONS = 3;
   const BLINK_LEN = 42;
   const BLINK_RATIO = 1 / 2;
 
   // eslint-disable-next-line no-undef
   const descriptions = __descriptions;
 
-  let descriptionIndex = 0;
+  const indexBag = getBag(descriptions.length, 0, UNIQUE_DESCRIPTIONS);
+  const currentIndex = indexBag.current;
+  const nextIndex = indexBag.next;
 
   let ticks = 0;
-  let lastIndexes = [0];
-
-  let nextDescriptionIndex = getNextMessageIndex();
 
   $: displayLen = Math.max(...descriptions.map((str) => str.length));
 
-  $: current = descriptions[descriptionIndex].padStart(displayLen, NBSP);
+  $: current = descriptions[$currentIndex].padStart(displayLen, NBSP);
   $: spaces = countSpaces(current);
   $: chars = displayLen - spaces;
 
@@ -31,7 +31,7 @@
   $: charTicks = chars * TICKS_PER_CHAR;
   $: eraseTicks = displayLen * TICKS_PER_BACKSPACE;
 
-  $: next = descriptions[nextDescriptionIndex].padStart(displayLen, NBSP);
+  $: next = descriptions[$nextIndex].padStart(displayLen, NBSP);
   $: nextSpaces = countSpaces(next);
   $: nextChars = displayLen - nextSpaces;
 
@@ -76,9 +76,7 @@
   const textInterval = setInterval(() => {
     if (ticks >= maxTicks) {
       ticks = charsToShow * TICKS_PER_SPACE;
-      markIndexUsed(descriptionIndex);
-      descriptionIndex = nextDescriptionIndex;
-      nextDescriptionIndex = getNextMessageIndex();
+      indexBag.draw();
     } else {
       ticks += 1;
     }
@@ -87,18 +85,6 @@
   onDestroy(() => {
     clearInterval(textInterval);
   });
-
-  function markIndexUsed(index) {
-    lastIndexes.unshift(index);
-    lastIndexes = lastIndexes.slice(0, UNIQUE_REQ);
-  }
-
-  function getNextMessageIndex() {
-    const validIndexes = descriptions
-      .map((_, i) => i)
-      .filter((i) => !lastIndexes.includes(i));
-    return validIndexes[Math.floor(Math.random() * validIndexes.length)];
-  }
 
   function countSpaces(str) {
     return (str.match(/\u00A0/g) || []).length;

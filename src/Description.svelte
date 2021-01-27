@@ -20,48 +20,28 @@
   const currentIndex = indexBag.current;
   const nextIndex = indexBag.next;
 
+  $: current = descriptions[$currentIndex].padStart(displayLen, NBSP);
+  $: spaces = countSpaces(current);
+  $: chars = displayLen - spaces;
+
+  $: spaceTicks = spaces * TICKS_PER_SPACE;
+  $: charTicks = chars * TICKS_PER_CHAR;
+
+  $: next = descriptions[$nextIndex].padStart(displayLen, NBSP);
+
+  $: maxTicks =
+    spaceTicks +
+    charTicks +
+    (displayLen - Math.min(spaces, countSpaces(next))) * TICKS_PER_BACKSPACE +
+    PAUSE_TICKS;
+
   let ticks = TICKS_PER_SPACE * (displayLen - descriptions[0].length);
-
-  let current = '';
-  let spaces = 0;
-  let chars = 0;
-
-  let spaceTicks = 0;
-  let charTicks = 0;
-  let eraseTicks = 0;
-
-  let next = '';
-  let nextSpaces = 0;
-  let nextChars = 0;
-
-  let maxTicks = 0;
-
-  $: {
-    current = descriptions[$currentIndex].padStart(displayLen, NBSP);
-    spaces = countSpaces(current);
-    chars = displayLen - spaces;
-
-    spaceTicks = spaces * TICKS_PER_SPACE;
-    charTicks = chars * TICKS_PER_CHAR;
-    eraseTicks = displayLen * TICKS_PER_BACKSPACE;
-
-    next = descriptions[$nextIndex].padStart(displayLen, NBSP);
-    nextSpaces = countSpaces(next);
-    nextChars = displayLen - nextSpaces;
-
-    maxTicks =
-      spaceTicks +
-      charTicks +
-      (displayLen - Math.min(spaces, nextSpaces)) * TICKS_PER_BACKSPACE +
-      PAUSE_TICKS;
-  }
 
   let cursor = NBSP;
   $: {
     const postTypeTicks = ticks - (spaceTicks + charTicks);
     const isPaused = postTypeTicks > 0 && postTypeTicks < PAUSE_TICKS;
     const isBlinking = postTypeTicks % BLINK_LEN < BLINK_LEN * BLINK_RATIO;
-
     cursor = isBlinking || !isPaused ? '|' : NBSP;
   }
 
@@ -76,7 +56,10 @@
     } else if (ticks < spaceTicks + charTicks + PAUSE_TICKS) {
       // Pausing
       charsToShow = current.length;
-    } else if (ticks < spaceTicks + charTicks + PAUSE_TICKS + eraseTicks) {
+    } else if (
+      ticks <
+      spaceTicks + charTicks + PAUSE_TICKS + displayLen * TICKS_PER_BACKSPACE
+    ) {
       // Erasing message
       const backspaceTicks = ticks - spaceTicks - charTicks - PAUSE_TICKS;
       const charsToBackspace = Math.floor(backspaceTicks / TICKS_PER_BACKSPACE);

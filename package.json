@@ -7,7 +7,7 @@
     "start": "sirv public --single",
     "lint": "eslint --fix .",
     "format": "prettier --write .",
-    "style-lint": "stylelint '**/*.css' --fix",
+    "style-lint": "stylelint '**/*.(css|svelte)' --fix",
     "fix": "npm run lint && npm run style-lint && npm run format"
   },
   "devDependencies": {
@@ -53,7 +53,7 @@
     "*.{js,svelte,json,yml,md,css}": [
       "npx prettier --write"
     ],
-    "*.css": [
+    "*.{css,svelte}": [
       "stylelint"
     ]
   }

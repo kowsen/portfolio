@@ -78,6 +78,11 @@
     text-shadow: 2px 2px #ffe2bd;
   }
 
+  .project-text,
+  .project-background {
+    transition: filter 0.3s ease;
+  }
+
   a:focus .project-background {
     filter: opacity(10%);
   }
@@ -94,11 +99,6 @@
     a:hover .project-text {
       filter: opacity(100%);
     }
-  }
-
-  .project-text,
-  .project-background {
-    transition: filter 0.3s ease;
   }
 
   .project-contents h3 {

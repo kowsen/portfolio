@@ -32,12 +32,6 @@
     justify-content: center;
   }
 
-  .nav-item-content:hover,
-  :global(.nav-item:focus .nav-item-content),
-  :global(.nav-item[aria-current='page'] .nav-item-content) {
-    background-color: #ffa635;
-  }
-
   :global(.nav-item) {
     position: relative;
     z-index: 0;
@@ -48,5 +42,11 @@
 
   :global(.nav-item:focus) {
     z-index: 1;
+  }
+
+  .nav-item-content:hover,
+  :global(.nav-item:focus .nav-item-content),
+  :global(.nav-item[aria-current='page'] .nav-item-content) {
+    background-color: #ffa635;
   }
 </style>

@@ -1,4 +1,5 @@
 <script>
+  import { navigate } from "svelte-routing";
   import Spinner from './Spinner.svelte';
 
   export let id;
@@ -24,9 +25,8 @@
     .then((safeHtml) => {
       content = safeHtml;
     })
-    .catch((e) => {
-      console.log(e);
-      content = 'Post not found. Check your URL.';
+    .catch(() => {
+      navigate("/invalid-post", { replace: true });
     });
 </script>
 

@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import Spinner from './Spinner.svelte';
 
   export let id;
@@ -12,25 +11,23 @@
     return markdownUtil.parseMarkdown(md);
   }
 
-  onMount(() => {
-    fetch(`${location.origin}/posts/${id}.md`)
-      .then((res) => {
-        if (res.ok) {
-          return res;
-        } else {
-          throw Error(`Request rejected with status ${res.status}`);
-        }
-      })
-      .then((res) => res.text())
-      .then((md) => parseMarkdown(md))
-      .then((safeHtml) => {
-        content = safeHtml;
-      })
-      .catch((e) => {
-        console.log(e);
-        content = 'Post not found. Check your URL.';
-      });
-  });
+  fetch(`${location.origin}/posts/${id}.md`)
+    .then((res) => {
+      if (res.ok) {
+        return res;
+      } else {
+        throw Error(`Request rejected with status ${res.status}`);
+      }
+    })
+    .then((res) => res.text())
+    .then((md) => parseMarkdown(md))
+    .then((safeHtml) => {
+      content = safeHtml;
+    })
+    .catch((e) => {
+      console.log(e);
+      content = 'Post not found. Check your URL.';
+    });
 </script>
 
 <div class="content-container">

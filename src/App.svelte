@@ -9,6 +9,10 @@
   import Error from './pages/Error.svelte';
   import Header from './Header.svelte';
 
+  import './styles/overrides.css';
+  import './styles/scale.css';
+  import './styles/scroll.css';
+
   export let url = '';
 
   const MIN_SUPPORTED_SIZE = 320;

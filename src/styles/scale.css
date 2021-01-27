@@ -1,0 +1,7 @@
+html {
+  position: relative;
+  height: 100%;
+  transform-origin: top left;
+  --scale: 1;
+  transform: scale(var(--scale));
+}

@@ -18,7 +18,8 @@
     const width = Math.max(event.contentRect.width, MIN_SUPPORTED_SIZE);
     const scale = Math.min(width / MIN_LOGICAL_WIDTH, 1);
     document.documentElement.style.setProperty('--scale', scale);
-  }).observe(document.documentElement);
+  })
+  .observe(document.documentElement);
 </script>
 
 <Router {url}>

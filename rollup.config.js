@@ -3,11 +3,11 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
-import css from 'rollup-plugin-css-only';
 import copy from 'rollup-plugin-copy';
 import replace from '@rollup/plugin-replace';
 import cleaner from 'rollup-plugin-cleaner';
 import { spawn } from 'child_process';
+import scss from 'rollup-plugin-scss';
 
 import { parsePosts } from './parse-posts';
 import { DESCRIPTIONS } from './descriptions';
@@ -62,9 +62,10 @@ export default {
         dev: !production,
       },
     }),
-    // we'll extract any component CSS out into
-    // a separate file - better for performance
-    css({ output: 'bundle.css' }),
+    scss({
+      output: 'public/build/bundle.css',
+      outputStyle: 'compressed',
+    }),
 
     // If you have external dependencies installed from
     // npm, you'll most likely need these plugins. In

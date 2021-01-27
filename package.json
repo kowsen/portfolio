@@ -9,6 +9,12 @@
     "format": "prettier --write .",
     "fix": "npm run lint && npm run format"
   },
+  "lint-staged": {
+    "*": [
+      "npx prettier --write",
+      "eslint --fix-dry-run",
+    ]
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
@@ -17,6 +23,8 @@
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-svelte3": "^3.0.0",
+    "husky": "^4.3.8",
+    "lint-staged": "^10.5.3",
     "prettier": "^2.2.1",
     "prettier-plugin-svelte": "^2.1.1",
     "rollup": "^2.3.4",

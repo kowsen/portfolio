@@ -6,5 +6,6 @@ export const DESCRIPTIONS = [
   'Software "Engineer"',
   'Fan of Birds',
   'Settler of Catan',
-  'Thing Maker',
+  'Human Disaster',
+  '(╯°□°)╯  ┻━┻',
 ];

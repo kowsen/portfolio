@@ -7,5 +7,5 @@ export const DESCRIPTIONS = [
   'Fan of Birds',
   'Settler of Catan',
   'Human Disaster',
-  '(╯°□°)╯  ┻━┻',
+  '(╯°□°)╯︵ ┻━┻',
 ];

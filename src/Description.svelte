@@ -71,7 +71,7 @@
   }
 
   $: description = current.slice(0, charsToShow);
-  $: endPadding = ''.padEnd(displayLen - charsToShow, NBSP);
+  $: endPadding = current.slice(charsToShow, displayLen);
 
   const textInterval = setInterval(() => {
     if (ticks >= maxTicks) {
@@ -91,18 +91,25 @@
   }
 </script>
 
-<h2>{description}{cursor}{endPadding}</h2>
+<h2>{description}{cursor}<span class="padding-text">{endPadding}</span></h2>
 
 <style>
   h2 {
     margin: 0 0 0 auto;
     white-space: nowrap;
     user-select: none;
+    font-size: 1.5em;
+    line-height: 1.5em;
   }
 
   @media only screen and (max-width: 600px) {
     h2 {
       font-size: 1em;
+      line-height: 1em;
     }
+  }
+
+  .padding-text {
+    visibility: hidden;
   }
 </style>

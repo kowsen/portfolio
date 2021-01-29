@@ -8,10 +8,11 @@ import replace from '@rollup/plugin-replace';
 import cleaner from 'rollup-plugin-cleaner';
 import { spawn } from 'child_process';
 import scss from 'rollup-plugin-scss';
+import fg from 'fast-glob';
 
-import { parsePosts } from './parse-posts';
-import { DESCRIPTIONS } from './descriptions';
-import { PROJECTS } from './projects';
+import { parsePosts } from './scripts/parse-posts';
+import { parseDescriptions } from './scripts/parse-descriptions';
+import { parseProjects } from './scripts/parse-projects';
 
 // eslint-disable-next-line no-undef
 const production = !process.env.ROLLUP_WATCH;
@@ -39,6 +40,24 @@ function serve() {
   };
 }
 
+// Runs the rollup replace plugin, while also watching the passed
+// in files in the transform hook so we re-run replace.
+function replaceAndWatch(replaceOptions, toWatch) {
+  const base = replace(replaceOptions);
+
+  return {
+    name: 'replace-and-watch',
+    renderChunk: base.renderChunk,
+    async transform() {
+      const files = await fg(toWatch);
+      for (let file of files) {
+        this.addWatchFile(file);
+      }
+      return base.transform(...arguments);
+    },
+  };
+}
+
 export default {
   input: 'src/main.js',
   output: {
@@ -50,11 +69,6 @@ export default {
   plugins: [
     cleaner({
       targets: production ? ['./public/posts', './public/build'] : [],
-    }),
-    replace({
-      __posts: JSON.stringify(parsePosts()),
-      __descriptions: JSON.stringify(DESCRIPTIONS),
-      __projects: JSON.stringify(PROJECTS),
     }),
     svelte({
       compilerOptions: {
@@ -79,8 +93,17 @@ export default {
     }),
     commonjs(),
 
+    replaceAndWatch(
+      {
+        __posts: () => JSON.stringify(parsePosts()),
+        __descriptions: () => JSON.stringify(parseDescriptions()),
+        __projects: () => JSON.stringify(parseProjects()),
+      },
+      'data/**/*'
+    ),
+
     copy({
-      targets: [{ src: 'posts/**/*', dest: 'public/posts' }],
+      targets: [{ src: 'data/posts/**/*', dest: 'public/posts' }],
     }),
 
     // In dev mode, call `npm run start` once

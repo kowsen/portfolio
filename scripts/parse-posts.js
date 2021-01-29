@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-const DIRECTORY = './posts';
+const DIRECTORY = './data/posts';
 
 export function parsePosts() {
   const files = fs

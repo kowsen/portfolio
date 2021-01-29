@@ -1,0 +1,24 @@
+Apocashop
+Lemonade Stand meets Papers, Please
+https://static.kylebyte.com/apocashop
+assets/apocashop.png
+---
+Maze Frenzy
+Endless runner in an infinite maze
+https://play.google.com/store/apps/details?id=com.kylebyte.mazegame
+assets/frenzy.png
+---
+Fortune City
+Demo for a blackjack puzzle game
+https://static.kylebyte.com/fortune
+assets/fortune.png
+---
+Omnithon
+My old charity streaming group
+http://www.omnithon.com
+assets/omnithon.png
+---
+This Website
+Minimalist portfolio and blog
+https://github.com/kowsen/portfolio
+assets/code.png

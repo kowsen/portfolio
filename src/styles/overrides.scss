@@ -1,18 +1,13 @@
+html,
+body {
+  position: relative;
+  height: 100%;
+}
+
 html {
-  margin: 0;
   font-family: 'IBM Plex Mono', monospace;
   background-color: #ffe2bd;
   color: #2e4756;
-}
-
-body {
-  max-width: 650px;
-  min-width: 425px;
-  margin: 0 auto;
-  padding: 24px 24px 0 24px;
-  display: grid;
-  row-gap: 16px;
-  overflow-x: hidden;
 }
 
 a {

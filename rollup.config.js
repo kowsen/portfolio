@@ -65,6 +65,7 @@ export default {
     scss({
       output: 'public/build/bundle.css',
       outputStyle: 'compressed',
+      watch: 'src/styles',
     }),
 
     // If you have external dependencies installed from

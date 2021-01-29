@@ -1,0 +1,18 @@
+@import 'constants';
+
+html {
+  --page-width: 99999999999;
+  --scale: calc(
+    max(#{$min-viewport-width}, var(--page-width)) / #{$min-content-width}
+  );
+
+  transform-origin: top left;
+  /* prettier-ignore: renaming to force use CSS min function. */
+  transform: scale(Min(1, var(--scale)));
+}
+
+body {
+  max-width: $max-content-width + 0px;
+  min-width: $min-content-width + 0px;
+  margin: 0 auto;
+}

@@ -107,3 +107,4 @@ dist
 public/build
 public/posts
 public/**/*.map
+public/rss.xml

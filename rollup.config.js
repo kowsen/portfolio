@@ -109,7 +109,7 @@ export default {
 
     {
       name: 'generate-rss',
-      buildStart() {
+      buildEnd() {
         generateRss(parsePosts());
       },
     },

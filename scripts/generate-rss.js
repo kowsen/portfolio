@@ -1,7 +1,7 @@
 import RSS from 'rss';
 import * as fs from 'fs';
 
-const OUTPUT_FILE = 'public/build/rss.xml';
+const OUTPUT_FILE = './public/rss.xml';
 
 export function generateRss(posts) {
   var feed = new RSS({

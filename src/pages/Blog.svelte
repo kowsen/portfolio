@@ -15,6 +15,9 @@
 </script>
 
 <main>
+  <a class="rss" href="rss.xml">
+    <div class="rss-img" />
+  </a>
   {#each posts as post}
     <div class="post-container">
       <Link to="blog/{post.id}" class="font-bold">{post.title}</Link> ({post.date})
@@ -25,5 +28,24 @@
 <style>
   .post-container {
     margin: 4px 0;
+  }
+
+  .rss {
+    float: right;
+    width: 30px;
+    height: 30px;
+    margin-right: 20px;
+  }
+
+  .rss-img {
+    width: 100%;
+    height: 100%;
+    background-image: url('assets/rss-hover.png');
+    background-size: cover;
+  }
+
+  .rss-img:hover,
+  :global(.rss:focus .rss-img) {
+    background-image: url('assets/rss.png');
   }
 </style>

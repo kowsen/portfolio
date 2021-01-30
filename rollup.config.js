@@ -69,7 +69,9 @@ export default {
   },
   plugins: [
     cleaner({
-      targets: production ? ['./public/posts', './public/build'] : [],
+      targets: production
+        ? ['./public/posts', './public/build', './public/assets']
+        : [],
     }),
     svelte({
       compilerOptions: {
@@ -104,7 +106,10 @@ export default {
     ),
 
     copy({
-      targets: [{ src: 'data/posts/**/*', dest: 'public/posts' }],
+      targets: [
+        { src: 'data/posts/**/*', dest: 'public/posts' },
+        { src: 'data/assets', dest: 'public/build' },
+      ],
     }),
 
     {

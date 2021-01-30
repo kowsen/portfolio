@@ -17,6 +17,9 @@ export function generateRss(posts) {
     categories: ['Game Development'],
     pubDate: 'January 29, 2020 18:00:00 PST',
     ttl: '60',
+    custom_namespaces: {
+      media: 'http://search.yahoo.com/mrss/',
+    },
   });
 
   for (const post of posts) {

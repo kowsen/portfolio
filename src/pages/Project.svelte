@@ -7,7 +7,7 @@
   let linkElem;
   let isTapPrimed = false;
 
-  $: imgStyle = `background-image: url("${img}")`;
+  $: imgStyle = `background-image: url("build/${img}")`;
 
   function onTouchStart() {
     isTapPrimed = true;

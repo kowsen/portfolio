@@ -13,6 +13,7 @@ import fg from 'fast-glob';
 import { parsePosts } from './scripts/parse-posts';
 import { parseDescriptions } from './scripts/parse-descriptions';
 import { parseProjects } from './scripts/parse-projects';
+import { generateRss } from './scripts/generate-rss';
 
 // eslint-disable-next-line no-undef
 const production = !process.env.ROLLUP_WATCH;
@@ -105,6 +106,13 @@ export default {
     copy({
       targets: [{ src: 'data/posts/**/*', dest: 'public/posts' }],
     }),
+
+    {
+      name: 'generate-rss',
+      buildStart() {
+        generateRss(parsePosts());
+      },
+    },
 
     // In dev mode, call `npm run start` once
     // the bundle has been generated

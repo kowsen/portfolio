@@ -1,6 +1,7 @@
 <!--- Hello World! -->
 <!--- 01/24/2021 -->
 <!--- Kyle Owsen -->
+<!--- I quit my job to make games again and I'll be posting about my progress here. -->
 
 ---
 

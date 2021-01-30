@@ -17,6 +17,7 @@ function parsePost(path) {
     title: stripLine(lines[0]),
     date: stripLine(lines[1]),
     author: stripLine(lines[2]),
+    description: stripLine(lines[3]),
   };
 }
 

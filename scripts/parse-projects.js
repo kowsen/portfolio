@@ -6,7 +6,7 @@ export function parseProjects() {
   const data = fs.readFileSync(PROJECTS, 'utf8');
   const projects = data.split('---\n');
 
-  return projects.map(project => {
+  return projects.map((project) => {
     const lines = project.split('\n');
     return {
       name: lines[0],

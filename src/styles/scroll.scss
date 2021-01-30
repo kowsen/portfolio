@@ -1,12 +1,12 @@
 @import 'constants';
 
-@media not screen and (min-width: $max-content-width + 0px) {
+@media not screen and (min-width: $max-content-width + px) {
   body {
     overflow-y: scroll;
   }
 }
 
-@media screen and (min-width: $max-content-width + 0px) {
+@media screen and (min-width: $max-content-width + px) {
   html {
     margin-left: calc(100vw - 100%);
   }

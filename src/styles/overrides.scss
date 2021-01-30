@@ -1,13 +1,12 @@
+@import 'constants';
+
 html,
 body {
   position: relative;
   height: 100%;
-}
-
-html {
   font-family: 'IBM Plex Mono', monospace;
-  background-color: #ffe2bd;
-  color: #2e4756;
+  background-color: $background-color;
+  color: $text-color;
 }
 
 a {

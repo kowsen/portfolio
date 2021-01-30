@@ -1,6 +1,6 @@
 <script>
-  import { onDestroy } from 'svelte';
   import { getBag } from './util/bag';
+  import { setSafeInterval } from './util/safe-patch';
 
   const NBSP = '\u00A0';
   const TICKS_PER_SPACE = 3;
@@ -73,7 +73,7 @@
   $: description = current.slice(0, charsToShow);
   $: endPadding = current.slice(charsToShow, displayLen);
 
-  const textInterval = setInterval(() => {
+  setSafeInterval(() => {
     if (ticks >= maxTicks) {
       ticks = charsToShow * TICKS_PER_SPACE;
       indexBag.draw();
@@ -81,10 +81,6 @@
       ticks += 1;
     }
   }, TICK_LENGTH);
-
-  onDestroy(() => {
-    clearInterval(textInterval);
-  });
 
   function countSpaces(str) {
     return (str.match(/\u00A0/g) || []).length;

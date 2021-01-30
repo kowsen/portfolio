@@ -9,18 +9,10 @@
   import Error from './pages/Error.svelte';
   import Header from './Header.svelte';
 
+  import './setup-responsive';
   import './styles/overrides.scss';
-  import './styles/scale.scss';
-  import './styles/scroll.scss';
 
   export let url = '';
-
-  new ResizeObserver(([event]) => {
-    document.documentElement.style.setProperty(
-      '--page-width',
-      event.contentRect.width
-    );
-  }).observe(document.documentElement);
 </script>
 
 <div class="content">

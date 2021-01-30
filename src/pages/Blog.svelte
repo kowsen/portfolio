@@ -32,20 +32,23 @@
 
   .rss {
     float: right;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     margin-right: 20px;
   }
 
   .rss-img {
     width: 100%;
     height: 100%;
-    background-image: url('assets/rss-hover.png');
+    background-image: url('assets/rss.png');
     background-size: cover;
+    filter: invert(95%) sepia(65%) saturate(4128%) hue-rotate(301deg)
+      brightness(100%) contrast(126%);
   }
 
   .rss-img:hover,
   :global(.rss:focus .rss-img) {
-    background-image: url('assets/rss.png');
+    filter: invert(68%) sepia(73%) saturate(1431%) hue-rotate(335deg)
+      brightness(109%) contrast(101%);
   }
 </style>

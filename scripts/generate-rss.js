@@ -33,6 +33,17 @@ export function generateRss(posts) {
       author: post.author,
       url: `https://kylebyte.com/blog/${post.id}`,
       date,
+      custom_elements: [
+        {
+          'media:content': {
+            _attr: {
+              medium: 'image',
+              type: 'image/png',
+              url: 'https://kylebyte.com/favicon.png',
+            },
+          },
+        },
+      ],
     });
   }
 

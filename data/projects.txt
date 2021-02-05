@@ -13,6 +13,11 @@ Demo for a blackjack puzzle game
 https://static.kylebyte.com/fortune
 assets/fortune.png
 ---
+Voronoi Pop
+A game demo based on Voronoi diagrams
+https://static.kylebyte.com/shape
+assets/shape.png
+---
 Omnithon
 My old charity streaming group
 http://www.omnithon.com

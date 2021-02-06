@@ -9,6 +9,9 @@ import cleaner from 'rollup-plugin-cleaner';
 import { spawn } from 'child_process';
 import scss from 'rollup-plugin-scss';
 import fg from 'fast-glob';
+import babel from 'rollup-plugin-babel';
+import json from '@rollup/plugin-json';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 import { parsePosts } from './scripts/parse-posts';
 import { parseDescriptions } from './scripts/parse-descriptions';
@@ -63,9 +66,10 @@ export default {
   input: 'src/main.js',
   output: {
     sourcemap: !production,
-    format: 'es',
+    format: 'iife',
     name: 'app',
-    dir: 'public/build',
+    file: 'public/build/bundle.js',
+    inlineDynamicImports: true,
   },
   plugins: [
     cleaner({
@@ -73,6 +77,7 @@ export default {
         ? ['./public/posts', './public/build', './public/assets']
         : [],
     }),
+
     svelte({
       compilerOptions: {
         // enable run-time checks when not in production
@@ -95,6 +100,27 @@ export default {
       dedupe: ['svelte'],
     }),
     commonjs(),
+
+    nodePolyfills(),
+
+    babel({
+      extensions: ['.js', '.mjs', '.html', '.svelte'],
+      runtimeHelpers: true,
+      exclude: ['node_modules/@babel/**', /\/core-js\//], // <= /!\ NOT 'node_mobules/**'
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            // adapter to ensure IE 11 support
+            targets: '> 0.25%, not dead, IE 11',
+            "modules": false, "useBuiltIns": "usage", "corejs": 3
+          },
+        ],
+      ],
+      plugins: [
+        '@babel/plugin-syntax-dynamic-import',
+      ],
+    }),
 
     replaceAndWatch(
       {
@@ -129,7 +155,7 @@ export default {
 
     // If we're building for production (npm run build
     // instead of npm run dev), minify
-    production && terser(),
+    // production && terser(),
   ],
   watch: {
     clearScreen: false,

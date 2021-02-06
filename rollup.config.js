@@ -77,8 +77,7 @@ export default {
         ? ['./public/posts', './public/build', './public/assets']
         : [],
     }),
-    json(),
-    nodePolyfills(),
+
     svelte({
       compilerOptions: {
         // enable run-time checks when not in production
@@ -102,10 +101,12 @@ export default {
     }),
     commonjs(),
 
+    nodePolyfills(),
+
     babel({
       extensions: ['.js', '.mjs', '.html', '.svelte'],
       runtimeHelpers: true,
-      exclude: ['node_modules/@babel/**'], // <= /!\ NOT 'node_mobules/**'
+      exclude: ['node_modules/@babel/**', /\/core-js\//], // <= /!\ NOT 'node_mobules/**'
       presets: [
         [
           '@babel/preset-env',
@@ -118,12 +119,6 @@ export default {
       ],
       plugins: [
         '@babel/plugin-syntax-dynamic-import',
-        [
-          '@babel/plugin-transform-runtime',
-          {
-            useESModules: true,
-          },
-        ],
       ],
     }),
 

@@ -9,6 +9,9 @@ import cleaner from 'rollup-plugin-cleaner';
 import { spawn } from 'child_process';
 import scss from 'rollup-plugin-scss';
 import fg from 'fast-glob';
+import babel from 'rollup-plugin-babel';
+import json from '@rollup/plugin-json';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 import { parsePosts } from './scripts/parse-posts';
 import { parseDescriptions } from './scripts/parse-descriptions';
@@ -63,9 +66,10 @@ export default {
   input: 'src/main.js',
   output: {
     sourcemap: !production,
-    format: 'es',
+    format: 'iife',
     name: 'app',
-    dir: 'public/build',
+    file: 'public/build/bundle.js',
+    inlineDynamicImports: true,
   },
   plugins: [
     cleaner({
@@ -73,6 +77,8 @@ export default {
         ? ['./public/posts', './public/build', './public/assets']
         : [],
     }),
+    json(),
+    nodePolyfills(),
     svelte({
       compilerOptions: {
         // enable run-time checks when not in production
@@ -95,6 +101,30 @@ export default {
       dedupe: ['svelte'],
     }),
     commonjs(),
+
+    babel({
+      extensions: ['.js', '.mjs', '.html', '.svelte'],
+      runtimeHelpers: true,
+      exclude: ['node_modules/@babel/**'], // <= /!\ NOT 'node_mobules/**'
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            // adapter to ensure IE 11 support
+            targets: 'ie 9',
+          },
+        ],
+      ],
+      plugins: [
+        '@babel/plugin-syntax-dynamic-import',
+        [
+          '@babel/plugin-transform-runtime',
+          {
+            useESModules: true,
+          },
+        ],
+      ],
+    }),
 
     replaceAndWatch(
       {

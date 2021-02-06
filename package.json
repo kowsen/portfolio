@@ -29,6 +29,7 @@
     "lint-staged": "^10.5.3",
     "prettier": "^2.2.1",
     "prettier-plugin-svelte": "^2.1.1",
+    "resize-observer-polyfill": "^1.5.1",
     "rollup": "^2.3.4",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-cleaner": "^1.0.0",

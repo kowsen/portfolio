@@ -112,7 +112,7 @@
   textarea {
     resize: vertical;
     width: 100%;
-    min-height: 3em;
+    min-height: 5em;
     box-sizing: border-box;
   }
 

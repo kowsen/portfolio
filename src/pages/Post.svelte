@@ -1,6 +1,7 @@
 <script>
   import { navigate } from 'svelte-routing';
   import Spinner from '../util/Spinner.svelte';
+  import Comments from './Comments.svelte';
 
   export let id;
 
@@ -33,6 +34,7 @@
 <div class="content-container">
   {#if content}
     {@html content}
+    <Comments {id} />
   {:else}
     <Spinner />
   {/if}
@@ -41,7 +43,6 @@
 <style>
   .content-container :global(h3) {
     padding-bottom: 0.25em;
-    border-bottom: 1px solid #b7a082;
     margin-top: 1.5em;
     margin-bottom: 1em;
   }

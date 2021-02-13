@@ -24,7 +24,7 @@ th,
 td {
   text-align: left;
   vertical-align: top;
-  border: 1px solid;
+  border: 1px solid $line-color;
   padding: 0.4em;
 }
 
@@ -42,11 +42,15 @@ blockquote {
 
 hr {
   border: 0;
-  border-bottom: 1px solid #2e4756;
+  border-bottom: 1px solid $line-color;
+}
+
+.content-container h3 {
+  border-bottom: 1px solid $line-color;
 }
 
 .blog-image {
-  border: 1px solid;
+  border: 1px solid $line-color;
   padding: 0.4em;
   max-width: 350px;
   margin: 0.4em auto;

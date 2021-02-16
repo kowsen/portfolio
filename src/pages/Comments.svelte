@@ -1,4 +1,6 @@
 <script>
+  import Spinner from '../util/Spinner.svelte';
+
   const ADD_POST_URL =
     'https://us-central1-kylefolio.cloudfunctions.net/comments/add';
   const LIST_POST_URL =
@@ -6,7 +8,7 @@
 
   export let id;
 
-  let comments = [];
+  let comments = null;
   let errorMessage = '';
   let name = '';
   let comment = '';
@@ -86,14 +88,20 @@
   <span class="error">{errorMessage}</span>
 {/if}
 
-{#each comments as comment}
-  <h4>{comment.name}</h4>
-  <p class="date">
-    <em>{formatDate(comment.time)}</em>
-  </p>
-  <p class="comment">{comment.comment}</p>
-  <hr />
-{/each}
+{#if comments === null}
+  <div>
+    <Spinner />
+  </div>
+{:else}
+  {#each comments as comment}
+    <h4>{comment.name}</h4>
+    <p class="date">
+      <em>{formatDate(comment.time)}</em>
+    </p>
+    <p class="comment">{comment.comment}</p>
+    <hr />
+  {/each}
+{/if}
 
 <style>
   h4 {

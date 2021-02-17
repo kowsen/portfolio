@@ -89,7 +89,7 @@
 {/if}
 
 {#if comments === null}
-  <div>
+  <div class="spinner-container">
     <Spinner />
   </div>
 {:else}
@@ -150,5 +150,9 @@
 
   .error {
     color: red;
+  }
+
+  .spinner-container {
+    height: 40px;
   }
 </style>

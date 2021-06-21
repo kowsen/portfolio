@@ -3,6 +3,11 @@ Lemonade Stand meets Papers, Please
 https://static.kylebyte.com/apocashop
 assets/apocashop.png
 ---
+Super Ball & Chain
+A Top-Down Brawler made in 36 hours
+https://kylebyte.itch.io/super-ball-and-chain
+assets/ball.png
+---
 Maze Frenzy
 Endless runner in an infinite maze
 https://static.kylebyte.com/maze

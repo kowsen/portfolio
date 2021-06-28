@@ -23,6 +23,11 @@ A game demo based on Voronoi diagrams
 https://static.kylebyte.com/shape
 assets/shape.png
 ---
+Sounds Like Trouble
+An audio-only game made in 48 hours
+https://kylebyte.itch.io/sounds-like-trouble
+assets/trouble.png
+---
 Omnithon
 My old charity streaming group
 http://www.omnithon.com

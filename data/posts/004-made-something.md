@@ -15,6 +15,8 @@ A lot's changed since June - I'm back in the workforce and game design's back on
 
 [https://goodbirth.day/](https://goodbirth.day/)
 
-If anyone's out there, I hope the last six months have treated you well and that you get something out of this.
+If anyone's out there, I hope the last six months have treated you well and that this makes you chuckle.
+
+Love ya!
 
 \- Kyle

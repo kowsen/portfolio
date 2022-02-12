@@ -61,7 +61,7 @@
     "*.{js,svelte,json,yml,md,css,scss}": [
       "npx prettier --write"
     ],
-    "*.{css,scss,svelte}": [
+    "*.{css,scss}": [
       "stylelint"
     ]
   }

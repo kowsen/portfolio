@@ -87,15 +87,24 @@
   }
 </script>
 
-<h2>{description}{cursor}<span class="padding-text">{endPadding}</span></h2>
+<a href="https://static.kylebyte.com/adventure"
+  ><h2>
+    {description}{cursor}<span class="padding-text">{endPadding}</span>
+  </h2></a
+>
 
 <style>
-  h2 {
+  a {
+    text-decoration: none;
     margin: 0 0 0 auto;
+  }
+
+  h2 {
     white-space: nowrap;
     user-select: none;
     font-size: 1.5em;
     line-height: 1.5em;
+    margin: 0;
   }
 
   @media only screen and (max-width: 600px) {

@@ -7,10 +7,10 @@
 <h3>No, like, what do you do and stuff?</h3>
 <span
   >Oh yeah, my name's Kyle Owsen and I'm an independent game developer and a
-  software developer at a Seattle company called Qumulo. Before that, I was a
+  software developer at a company called Kumospace. Before that, I was a
   frontend developer at Google who worked on the core team for the Google Cloud
-  Console for about two and a half years. If you want to go even further back, I
-  built games like <a
+  Console for about two and a half years and did much of the same over at
+  Qumulo. If you want to go even further back, I built games like <a
     href="https://play.google.com/store/apps/details?id=com.kylebyte.mazegame"
     >Maze Frenzy</a
   >

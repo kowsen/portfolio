@@ -22,14 +22,13 @@
 
 <h3>What are you up to now?</h3>
 <span
-  >I'm taking some time between jobs to rest and recuperate, though I've been
-  getting a little antsy lately so I'll probably be looking for a new 9-5
-  sometime soon. On the side I'm still pursuing my love of game dev - I had a
-  lot of fun building
+  >Hobbies and looking for a job!I'm still pursuing my love of game dev - I had
+  a lot of fun building
   <a href="https://kylebyte.itch.io/super-ball-and-chain"
     >some games for game jams</a
-  > and I'm currently playing around with new technologies and new ideas to figure
-  out what I want to do next!</span
+  >
+  and you can <a href="/resume.pdf">check out my resume right here</a>! I'm also
+  trying to write a book, which it turns out is really hard.</span
 >
 
 <h3>So you're going to stick in the adult world next time?</h3>

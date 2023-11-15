@@ -14,6 +14,7 @@ import { parsePosts } from './scripts/parse-posts';
 import { parseDescriptions } from './scripts/parse-descriptions';
 import { parseProjects } from './scripts/parse-projects';
 import { generateRss } from './scripts/generate-rss';
+import { generateResume } from './scripts/build-resume';
 
 // eslint-disable-next-line no-undef
 const production = !process.env.ROLLUP_WATCH;
@@ -59,80 +60,83 @@ function replaceAndWatch(replaceOptions, toWatch) {
   };
 }
 
-export default {
-  input: 'src/main.js',
-  output: {
-    sourcemap: !production,
-    format: 'es',
-    name: 'app',
-    dir: 'public/build',
-  },
-  plugins: [
-    cleaner({
-      targets: production
-        ? ['./public/posts', './public/build', './public/assets']
-        : [],
-    }),
-    svelte({
-      compilerOptions: {
-        // enable run-time checks when not in production
-        dev: !production,
-      },
-    }),
-    scss({
-      output: 'public/build/bundle.css',
-      outputStyle: 'compressed',
-      watch: 'src/styles',
-    }),
+export default async function () {
+  await generateResume();
 
-    // If you have external dependencies installed from
-    // npm, you'll most likely need these plugins. In
-    // some cases you'll need additional configuration -
-    // consult the documentation for details:
-    // https://github.com/rollup/plugins/tree/master/packages/commonjs
-    resolve({
-      browser: true,
-      dedupe: ['svelte'],
-    }),
-    commonjs(),
-
-    replaceAndWatch(
-      {
-        __posts: () => JSON.stringify(parsePosts()),
-        __descriptions: () => JSON.stringify(parseDescriptions()),
-        __projects: () => JSON.stringify(parseProjects()),
-      },
-      'data/**/*'
-    ),
-
-    copy({
-      targets: [
-        { src: 'data/posts/**/*', dest: 'public/posts' },
-        { src: 'data/assets', dest: 'public/build' },
-        { src: 'data/resume.html', dest: 'public/resume.html' },
-      ],
-    }),
-
-    {
-      name: 'generate-rss',
-      buildEnd() {
-        generateRss(parsePosts());
-      },
+  return {
+    input: 'src/main.js',
+    output: {
+      sourcemap: !production,
+      format: 'es',
+      name: 'app',
+      dir: 'public/build',
     },
+    plugins: [
+      cleaner({
+        targets: production
+          ? ['./public/posts', './public/build', './public/assets']
+          : [],
+      }),
+      svelte({
+        compilerOptions: {
+          // enable run-time checks when not in production
+          dev: !production,
+        },
+      }),
+      scss({
+        output: 'public/build/bundle.css',
+        outputStyle: 'compressed',
+        watch: 'src/styles',
+      }),
 
-    // In dev mode, call `npm run start` once
-    // the bundle has been generated
-    !production && serve(),
+      // If you have external dependencies installed from
+      // npm, you'll most likely need these plugins. In
+      // some cases you'll need additional configuration -
+      // consult the documentation for details:
+      // https://github.com/rollup/plugins/tree/master/packages/commonjs
+      resolve({
+        browser: true,
+        dedupe: ['svelte'],
+      }),
+      commonjs(),
 
-    // Watch the `public` directory and refresh the
-    // browser on changes when not in production
-    !production && livereload('public'),
+      replaceAndWatch(
+        {
+          __posts: () => JSON.stringify(parsePosts()),
+          __descriptions: () => JSON.stringify(parseDescriptions()),
+          __projects: () => JSON.stringify(parseProjects()),
+        },
+        'data/**/*'
+      ),
 
-    // If we're building for production (npm run build
-    // instead of npm run dev), minify
-    production && terser(),
-  ],
-  watch: {
-    clearScreen: false,
-  },
-};
+      copy({
+        targets: [
+          { src: 'data/posts/**/*', dest: 'public/posts' },
+          { src: 'data/assets', dest: 'public/build' },
+        ],
+      }),
+
+      {
+        name: 'generate-rss',
+        buildEnd() {
+          generateRss(parsePosts());
+        },
+      },
+
+      // In dev mode, call `npm run start` once
+      // the bundle has been generated
+      !production && serve(),
+
+      // Watch the `public` directory and refresh the
+      // browser on changes when not in production
+      !production && livereload('public'),
+
+      // If we're building for production (npm run build
+      // instead of npm run dev), minify
+      production && terser(),
+    ],
+    watch: {
+      clearScreen: false,
+    },
+  };
+}

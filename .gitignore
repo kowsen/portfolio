@@ -1,3 +1,6 @@
+# I have a Mac now, look how fancy I am.
+.DS_Store
+
 # Logs
 logs
 *.log
@@ -108,3 +111,4 @@ public/build
 public/posts
 public/**/*.map
 public/rss.xml
+public/resume.pdf

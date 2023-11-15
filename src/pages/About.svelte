@@ -22,13 +22,12 @@
 
 <h3>What are you up to now?</h3>
 <span
-  >Hobbies and looking for a job!I'm still pursuing my love of game dev - I had
-  a lot of fun building
+  >Hobbies and looking for a job! You can <a href="/resume.pdf"
+    >check out my resume right here</a
+  >. I'm still pursuing my love of game dev - I had a lot of fun building
   <a href="https://kylebyte.itch.io/super-ball-and-chain"
     >some games for game jams</a
-  >
-  and you can <a href="/resume.pdf">check out my resume right here</a>! I'm also
-  trying to write a book, which it turns out is really hard.</span
+  >. I'm also trying to write a book, which it turns out is really hard.</span
 >
 
 <h3>So you're going to stick in the adult world next time?</h3>

@@ -6,11 +6,11 @@
 
 <h3>No, like, what do you do and stuff?</h3>
 <span
-  >Oh yeah, my name's Kyle Owsen and I'm an independent game developer and a
-  software developer at a company called Kumospace. Before that, I was a
-  frontend developer at Google who worked on the core team for the Google Cloud
-  Console for about two and a half years and did much of the same over at
-  Qumulo. If you want to go even further back, I built games like <a
+  >Oh yeah, my name's Kyle Owsen and I'm an independent game developer. Before
+  that, I was a frontend developer at Google who worked on the core team for the
+  Google Cloud Console for about two and a half years and did much of the same
+  over at the much cozier companies Qumulo and Kumospace. If you want to go even
+  further back, I built games like <a
     href="https://play.google.com/store/apps/details?id=com.kylebyte.mazegame"
     >Maze Frenzy</a
   >
@@ -22,15 +22,17 @@
 
 <h3>What are you up to now?</h3>
 <span
-  >I've currently rejoined the adult world and am pretty happy as a developer at
-  Kumospace. On the side I'm still pursuing my love of game dev - I had a lot of
-  fun building <a href="https://kylebyte.itch.io/super-ball-and-chain"
+  >I'm taking some time between jobs to rest and recuperate, though I've been
+  getting a little antsy lately so I'll probably be looking for a new 9-5
+  sometime soon. On the side I'm still pursuing my love of game dev - I had a
+  lot of fun building
+  <a href="https://kylebyte.itch.io/super-ball-and-chain"
     >some games for game jams</a
   > and I'm currently playing around with new technologies and new ideas to figure
   out what I want to do next!</span
 >
 
-<h3>So you're going to stick in the adult world this time?</h3>
+<h3>So you're going to stick in the adult world next time?</h3>
 <span>What's that supposed to mean?</span>
 
 <h3>Nothing nothing, it's just that the last few times you've done this—</h3>

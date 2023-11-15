@@ -109,6 +109,7 @@ export default {
       targets: [
         { src: 'data/posts/**/*', dest: 'public/posts' },
         { src: 'data/assets', dest: 'public/build' },
+        { src: 'data/resume.html', dest: 'public/resume.html' },
       ],
     }),
 

@@ -1,18 +1,15 @@
 ---
-import Bio from "../components/Bio.astro";
-import Header from "../components/Header.astro";
-import Layout from "../layouts/Layout.astro";
+import Splash from "../components/splash/Splash.astro";
+import Page from "../layouts/Page.astro";
 ---
 
-<Layout>
-  <!-- <Header /> -->
-  <Bio />
+<Page title="Kyle Owsen Portfolio">
+  <Splash />
   <div id="projects">And then there's other stuff here</div>
-</Layout>
+</Page>
 
 <style>
   #projects {
     height: 1600px;
-    background-color: #13191f;
   }
 </style>

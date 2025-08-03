@@ -1,0 +1,47 @@
+---
+import SplashAbout from "./SplashAbout.astro";
+import SplashBackground from "./SplashBackground.astro";
+import SplashButtons from "./SplashButtons.astro";
+import SplashNametag from "./SplashNametag.astro";
+import SplashProjects from "./SplashProjects.astro";
+---
+
+<div id="splash-container">
+  <SplashBackground />
+  <div id="splash-content">
+    <SplashNametag />
+    <SplashAbout />
+    <SplashButtons />
+    <SplashProjects />
+  </div>
+</div>
+
+<style>
+  #splash-container {
+    position: relative;
+    width: 100%;
+    min-height: 100svh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #splash-content {
+    /* Create new stacking context so content appears above the background. Filter and
+       backdrop-filter will do this automatically, but we shouldn't rely on that. */
+    z-index: 0;
+
+    max-width: 800px;
+    padding: 48px;
+    margin: 24px;
+    box-sizing: border-box;
+
+    backdrop-filter: brightness(0.4) contrast(0.9) blur(4px);
+    border-radius: 24px;
+
+    display: flex;
+    flex-direction: column;
+    font-size: 24px;
+  }
+</style>

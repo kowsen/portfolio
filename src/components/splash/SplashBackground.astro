@@ -1,0 +1,92 @@
+---
+import background1 from "../../assets/triangles/triangles1.webp";
+import background2 from "../../assets/triangles/triangles2.webp";
+import background3 from "../../assets/triangles/triangles3.webp";
+
+const IMAGES = [background1.src, background2.src, background3.src];
+const ANIMATION_STEP_LENGTH = 7;
+const ANIMATION_LENGTH = ANIMATION_STEP_LENGTH * 3;
+---
+
+<!-- I'm proud of this as a good example of how to not over-engineer something. All we do
+here is crossfade between three different images of triangle layouts. I generated three
+images that have some contrast with each other (one biases darker in the bottom left,
+the other the top right, and the third has fewer contiguous blocks of the same color),
+so we get a nice effect that looks like it's doing complicated rendering in realtime but
+is really just a single CSS animation. -->
+<div id="splash-background">
+  {
+    IMAGES.map((src, index) => {
+      return (
+        <div
+          class="splash-background-image"
+          style={{
+            backgroundImage: `url(${src})`,
+            animationDelay: `${-index * ANIMATION_STEP_LENGTH}s`,
+          }}
+        />
+      );
+    })
+  }
+</div>
+
+<style
+  define:vars={{
+    animationLength: `${ANIMATION_STEP_LENGTH * 3}s`,
+    // Animating between such similar colors is going to be a little jerky even at high framerates
+    // since there aren't a lot of display colors between them. This sets the animation to run at
+    // 2fps to save performance since it'll look pretty much the same anyways.
+    animationSteps: ANIMATION_LENGTH * 2,
+  }}
+>
+  #splash-background {
+    z-index: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    filter: brightness(0.6) contrast(0.9) saturate(0.6);
+  }
+
+  .splash-background-image {
+    position: absolute;
+    z-index: 1;
+    opacity: 0;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: 896px 517px;
+
+    animation-name: fadeAndReorder;
+    animation-duration: var(--animationLength);
+    animation-timing-function: steps(var(--animationSteps));
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes fadeAndReorder {
+    0% {
+      z-index: 1;
+      opacity: 0;
+    }
+    30% {
+      z-index: 1;
+      opacity: 1;
+    }
+    33% {
+      z-index: 1;
+    }
+    34% {
+      z-index: 0;
+    }
+    64% {
+      opacity: 1;
+    }
+    65% {
+      opacity: 0;
+    }
+  }
+</style>

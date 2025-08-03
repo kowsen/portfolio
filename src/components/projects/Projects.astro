@@ -1,0 +1,42 @@
+---
+import { getCollection, render } from "astro:content";
+import Row from "./Row.astro";
+
+const projects = await getCollection("projects");
+---
+
+<div id="projects">
+  <div id="projects-content">
+    <hr />
+    {
+      projects.map((project) => (
+        <>
+          <Row data={project.data} />
+          <hr />
+        </>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  #projects {
+    display: flex;
+    justify-content: center;
+  }
+
+  #projects-content {
+    display: flex;
+    flex-direction: column;
+    padding: 1.6em;
+    /* gap: 0.8em; */
+    flex-grow: 1;
+    max-width: var(--full-width);
+  }
+
+  hr {
+    width: 100%;
+    border: 1px dashed var(--pop-color);
+    margin: 0;
+  }
+</style>

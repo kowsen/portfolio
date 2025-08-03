@@ -1,0 +1,8 @@
+- Delete current project setup
+- Add project row display
+- Add way to pull in project data from yaml
+- Make project layout responsive
+- Add projects to static hosting
+- Get resume generation working with new build setup
+- Update resume
+- Merge new site to main

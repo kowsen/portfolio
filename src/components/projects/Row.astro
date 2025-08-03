@@ -1,0 +1,72 @@
+---
+import { Image } from "astro:assets";
+import apocashop from "../../assets/apocashop.png";
+import type { InferEntrySchema } from "astro:content";
+
+interface Props {
+  data: InferEntrySchema<"projects">;
+}
+
+const {
+  data: { title, tagline, description, link, image },
+} = Astro.props;
+---
+
+<a class="project-row" href={link}>
+  <Image src={image} alt="Apocashop" />
+  <div>
+    <p class="title">{title}</p>
+    <p class="tagline">{tagline}</p>
+    <p class="description">{description}</p>
+  </div>
+</a>
+
+<style>
+  .project-row {
+    display: flex;
+    align-items: center;
+    gap: 1.2em;
+    padding: 1em 0.6em;
+    transition: background-color 200ms ease;
+    user-select: none;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-color);
+  }
+
+  .project-row:hover {
+    background-color: var(--light-background-color);
+  }
+
+  .project-row:hover img {
+    transform: scale(1);
+  }
+
+  img {
+    width: 8em;
+    height: 8em;
+    border-radius: 1em;
+    transform: scale(0.9);
+    transition: transform 200ms ease;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .title {
+    font-weight: 600;
+    color: var(--pop-color);
+  }
+
+  .tagline {
+    font-size: 0.8em;
+    font-style: italic;
+    color: var(--dark-text-color);
+  }
+
+  .description {
+    font-size: 0.8em;
+    margin-top: 12px;
+  }
+</style>

@@ -1,25 +1,22 @@
 ---
-
+import { Content as AboutContent } from "../../data/about.md";
 ---
 
-<div>
+<div id="splash-about">
+  <AboutContent />
   <p>
-    and I'm a software engineer with <span class="emphasis"
-      >10&nbspyears of experience</span
-    >
-    designing scalable frontend architecture for <span class="emphasis"
-      >Google</span
-    >, <span class="emphasis">Meta</span>, <span class="emphasis">Amazon</span>,
-    and startups of all shapes and sizes.
-  </p>
-  <p>
-    I'm currently <span class="emphasis">looking for work</span>!
+    I'm currently <strong>looking for work</strong>!
   </p>
 </div>
 
 <style>
-  .emphasis {
+  /* Rule is global to punch through and style nested markdown */
+  :global(#splash-about strong) {
     font-weight: 600;
     color: var(--pop-color);
+  }
+
+  :global(#splash-about em) {
+    color: var(--dark-text-color);
   }
 </style>

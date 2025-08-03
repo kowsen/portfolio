@@ -2,12 +2,17 @@
 import Projects from "../components/projects/Projects.astro";
 import Splash from "../components/splash/Splash.astro";
 import Page from "../layouts/Page.astro";
+
+import { rawContent as aboutRawContent } from "../data/about.md";
+
+const pageDescription = aboutRawContent()
+  .replaceAll("&nbsp;", " ")
+  .replaceAll("*", "")
+  .replaceAll(/_.*?_/g, "")
+  .trim();
 ---
 
-<Page
-  title="Kyle Owsen Portfolio"
-  description="A software engineer with a decade of professional experience, and 30 years of experience making wacky stuff."
->
+<Page title="Kyle Owsen Portfolio" description={pageDescription}>
   <Splash />
   <Projects />
 </Page>

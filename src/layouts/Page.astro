@@ -22,6 +22,15 @@ const { title, description } = Astro.props;
       rel="stylesheet"
     />
     <title>{title}</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Kylebyte",
+        "url": "https://kylebyte.com/"
+      }
+    </script>
   </head>
   <body>
     <slot />

@@ -3,12 +3,20 @@ import LinkButton from "../LinkButton.astro";
 ---
 
 <div id="splash-projects-button-container">
-  <LinkButton href="#projects">
+  <button id="splash-projects-button">
     <span id="splash-projects-button-content"
       >I also make games, puzzles, and other neat&nbsp;stuff&nbsp;▼</span
     >
-  </LinkButton>
+  </button>
 </div>
+
+<script>
+  document
+    .getElementById("splash-projects-button")
+    ?.addEventListener("click", () => {
+      document.getElementById("projects")?.scrollIntoView();
+    });
+</script>
 
 <style>
   #splash-projects-button-container {

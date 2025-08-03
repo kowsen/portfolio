@@ -1,71 +1,18 @@
 {
-  "name": "svelte-app",
-  "version": "1.0.0",
+  "name": "portfolio-astro",
+  "type": "module",
+  "version": "0.0.1",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "start": "sirv public --single",
-    "lint": "eslint --fix .",
-    "format": "prettier --write .",
-    "style-lint": "stylelint '**/*.(css|scss|svelte)' --fix",
-    "fix": "npm run lint && npm run style-lint && npm run format"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^17.0.0",
-    "@rollup/plugin-node-resolve": "^11.0.0",
-    "@rollup/plugin-replace": "^2.3.4",
-    "eslint": "^7.18.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-config-prettier": "^7.2.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-svelte3": "^3.0.0",
-    "fast-glob": "^3.2.5",
-    "husky": "^4.3.8",
-    "lint-staged": "^10.5.3",
-    "postcss-scss": "^4.0.4",
-    "prettier": "^2.2.1",
-    "prettier-plugin-svelte": "^2.1.1",
-    "rollup": "^2.3.4",
-    "rollup-plugin-cleaner": "^1.0.0",
-    "rollup-plugin-copy": "^3.3.0",
-    "rollup-plugin-css-only": "^3.1.0",
-    "rollup-plugin-livereload": "^2.0.0",
-    "rollup-plugin-modify": "^3.0.0",
-    "rollup-plugin-scss": "^3.0.0",
-    "rollup-plugin-string": "^3.0.0",
-    "rollup-plugin-svelte": "^7.0.0",
-    "rollup-plugin-terser": "^7.0.0",
-    "rss": "^1.2.2",
-    "sass": "^1.49.0",
-    "stylelint": "^14.2.0",
-    "stylelint-config-prettier": "^8.0.2",
-    "stylelint-config-standard": "^20.0.0",
-    "stylelint-config-standard-scss": "^5.0.0",
-    "stylelint-scss": "^4.1.0",
-    "svelte": "^3.0.0"
+    "dev": "astro dev",
+    "build": "node scripts/build-resume.js && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
   },
   "dependencies": {
-    "body-parser": "^1.19.0",
-    "dompurify": "^2.2.6",
-    "marked": "^4.0.10",
-    "puppeteer": "^21.5.2",
-    "sirv-cli": "^1.0.0",
-    "svelte-routing": "^1.5.0"
+    "astro": "^5.12.7",
+    "sass": "^1.89.2"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,svelte}": [
-      "eslint --fix-dry-run"
-    ],
-    "*.{js,svelte,json,yml,md,css,scss}": [
-      "npx prettier --write"
-    ],
-    "*.{css,scss}": [
-      "stylelint"
-    ]
+  "devDependencies": {
+    "puppeteer": "^24.15.0"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "short_name": "Maze Frenzy",
+  "name": "Maze Frenzy Web",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "119x119",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "demo.html",
+  "display": "fullscreen",
+  "orientation": "portrait"
+}

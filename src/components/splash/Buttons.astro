@@ -1,0 +1,48 @@
+---
+import { Image } from "astro:assets";
+import email from "../../assets/email.png";
+import linkedin from "../../assets/linkedin.png";
+import github from "../../assets/github.png";
+import LinkButton from "../LinkButton.astro";
+---
+
+<div id="splash-buttons">
+  <LinkButton href="/resume.pdf"
+    ><span id="splash-resume-button-text">Resume</span></LinkButton
+  >
+  <div id="splash-button-separator"></div>
+  <LinkButton href="mailto:me@kycor.com">
+    <Image src={email} alt="Email" />
+  </LinkButton>
+  <LinkButton href="https://www.linkedin.com/in/kyle-owsen-7a6293a2">
+    <Image src={linkedin} alt="LinkedIn logo" />
+  </LinkButton>
+  <LinkButton href="https://github.com/kowsen">
+    <Image src={github} alt="Github logo" />
+  </LinkButton>
+</div>
+
+<style>
+  #splash-buttons {
+    display: flex;
+    gap: 0.4em;
+  }
+
+  #splash-resume-button-text {
+    padding: 0 0.4em;
+  }
+
+  #splash-button-separator {
+    width: 0.1em;
+    margin: 0.4em;
+    border-radius: 0.1em;
+    background-color: var(--pop-color);
+  }
+
+  img {
+    display: flex;
+    align-items: center;
+    width: 1.6em;
+    height: 1.6em;
+  }
+</style>

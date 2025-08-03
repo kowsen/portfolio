@@ -1,0 +1,46 @@
+---
+import About from "./About.astro";
+import Background from "./Background.astro";
+import Buttons from "./Buttons.astro";
+import Nametag from "./Nametag.astro";
+import ProjectButton from "./ProjectButton.astro";
+---
+
+<div id="splash-container">
+  <Background />
+  <div id="splash-content">
+    <Nametag />
+    <About />
+    <Buttons />
+    <ProjectButton />
+  </div>
+</div>
+
+<style>
+  #splash-container {
+    position: relative;
+    width: 100%;
+    min-height: 100svh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #splash-content {
+    /* Create new stacking context so content appears above the background. Filter and
+       backdrop-filter will do this automatically, but we shouldn't rely on that. */
+    z-index: 0;
+
+    max-width: var(--full-width);
+    padding: 2.4em;
+    margin: 1.2em;
+    box-sizing: border-box;
+
+    backdrop-filter: brightness(0.4) contrast(0.9) blur(4px);
+    border-radius: 1.2em;
+
+    display: flex;
+    flex-direction: column;
+  }
+</style>

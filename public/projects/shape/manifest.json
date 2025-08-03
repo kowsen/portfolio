@@ -1,0 +1,14 @@
+{
+  "short_name": "Shape Game",
+  "name": "Shape Game Web",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "229x229",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "index.html",
+  "display": "fullscreen",
+  "orientation": "portrait"
+}

@@ -1,0 +1,252 @@
+<html>
+  <head>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Fira+Sans&display=swap");
+
+      @media not print {
+        html {
+          display: flex;
+          justify-content: center;
+        }
+
+        body {
+          margin: 32px;
+          min-width: 480px;
+          max-width: 800px;
+        }
+      }
+
+      body {
+        font-family: "Fira Sans", sans-serif;
+      }
+
+      h1,
+      h2 {
+        font-family: "Cormorant Garamond", serif;
+      }
+
+      h1 {
+        font-weight: 700;
+        font-size: 42px;
+        margin: 0;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        text-transform: uppercase;
+        margin: 0;
+        font-size: 20px;
+      }
+
+      h2:first-letter {
+        font-size: 24px;
+      }
+
+      hr {
+        margin: 0 2px;
+        height: 0px;
+        border: none;
+        border-bottom: 2px solid #999;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .header {
+        text-align: center;
+      }
+
+      em {
+        font-size: 14px;
+      }
+
+      .section {
+        margin: 8px 0;
+      }
+
+      .entry {
+        margin: 12px 16px;
+      }
+
+      .justify-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 2px 0;
+      }
+
+      .line {
+        line-height: 1.25em;
+      }
+
+      .entry > ul {
+        margin: 4px 0;
+      }
+
+      ul {
+        margin: 0;
+        padding: 0 32px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <h1>Kyle Owsen</h1>
+      <a href="mailto:me@kylebyte.com">me@kylebyte.com</a> |
+      <a href="https://www.kylebyte.com">www.kylebyte.com</a>
+    </div>
+
+    <div class="section">
+      <h2>Experience</h2>
+      <hr />
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>Senior Software Engineer</strong>
+          <span>2024-2025</span>
+        </div>
+        <em>Meta</em>
+        <ul>
+          <li>
+            Identified shortfalls in the Marketplace organization's SEO strategy
+            and led the effort to fix them and reach parity with competitors
+          </li>
+          <ul>
+            <li>
+              These changes drove a majority of the team's quarterly goal for
+              daily active user increases
+            </li>
+          </ul>
+          <li>
+            Acted as a subject matter expert for the team's SEO efforts,
+            correcting bad assumptions about how impact should be measured
+            before experiments could corrupt quarterly data
+          </li>
+          <li>
+            Designed and built a data pipeline to allow the Marketplace org to
+            understand the product's SEO status and the impact of A/B
+            experiments
+          </li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>Senior Software Engineer</strong>
+          <span>2024</span>
+        </div>
+        <em>Amazon</em>
+        <ul>
+          <li>
+            Implemented design changes to the checkout page seen by every Amazon
+            customer
+          </li>
+          <li>
+            Contributed to the long-term effort to migrate Amazon checkout
+            infrastructure from Perl to Java
+          </li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>Technical Lead</strong>
+          <span>2022 - 2023</span>
+        </div>
+        <em>Kumospace</em>
+        <ul>
+          <li>
+            Built and led a team to handle integrations with external services
+            like Stripe and Teams
+          </li>
+          <li>
+            Established a tiered release process, reducing customer facing
+            outages by over 50%
+          </li>
+          <li>
+            Rebuilt the flagship product's pricing model to unblock self-service
+            paid user conversion
+          </li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>Senior Software Engineer</strong>
+          <span>2021 - 2022</span>
+        </div>
+        <em>Qumulo</em>
+        <ul>
+          <li>Led migration to modern React / Redux standards</li>
+          <li>
+            Retrofitted nonstandard infrastructure to allow for frontend
+            integration tests
+          </li>
+          <li>
+            Contributed across the entire stack, from the React frontend to the
+            C++ backend
+          </li>
+          <li>Hosted a new grad intern, led to full time offer</li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>Software Engineer</strong>
+          <span>2018 - 2021</span>
+        </div>
+        <em>Google</em>
+        <ul>
+          <li>
+            Led adoption of Redux and reactive state management for the core
+            Google Cloud team
+          </li>
+          <li>
+            Established a data-driven process to define KPIs and determine
+            launch readiness
+          </li>
+          <li>
+            Maintained and extended a library of Angular components used by all
+            of Google Cloud
+          </li>
+          <li>
+            Coordinated high impact changes across a dozen partner teams to
+            unblock a UI redesign
+          </li>
+        </ul>
+      </div>
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>Software Engineer</strong>
+          <span>2015 - 2017</span>
+        </div>
+        <em>SMART Technologies</em>
+        <ul>
+          <li>
+            Led development of a realtime collaborative whiteboarding and
+            conferencing app
+          </li>
+          <li>Maintained, debugged, and extended a 20 year old C++ codebase</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Education</h2>
+      <hr />
+
+      <div class="entry">
+        <div class="justify-line">
+          <strong>University of Washington</strong>
+          <span>Seattle, WA</span>
+        </div>
+        <div class="justify-line">
+          <em>Bachelor of Science, Computer Engineering</em>
+          <em>2016</em>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

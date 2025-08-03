@@ -1,0 +1,335 @@
+<html>
+  <head>
+    <title>▦◊▞▲◓■◔◖</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: monospace;
+        overflow: hidden;
+        font-display: block;
+        position: relative;
+        background-color: #333;
+      }
+
+      canvas {
+        filter: grayscale(0) contrast(1);
+        transition: filter 0.4s ease-in-out;
+      }
+
+      .hbd {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        font-size: 8vmin;
+        text-align: center;
+        user-select: none;
+      }
+
+      .name {
+        display: none;
+      }
+
+      h1 {
+        filter: drop-shadow(1vmin 2vmin 0 black);
+        line-height: 20vmin;
+        /* transform: rotate(-10deg); */
+        transition: color 0.05s ease-in-out, opacity 0.4s ease-in-out;
+      }
+
+      .curtain {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        /* background-color: #277da1; */
+        text-align: center;
+        gap: 4vmin;
+        /* cursor: pointer; */
+        transition: opacity 0.4s ease-in-out;
+        opacity: 1;
+      }
+
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      img {
+        width: 30vmin;
+        pointer-events: none;
+      }
+
+      .welcome {
+        color: white;
+      }
+
+      .warning {
+        font-size: 6vmin;
+      }
+
+      p {
+        margin: 0;
+        pointer-events: none;
+        filter: drop-shadow(0.25vmin 0.5vmin 0 black);
+        color: white;
+      }
+
+      span.secret {
+        margin: 0;
+        filter: drop-shadow(0.1vmin 0.3vmin 0 black);
+        user-select: all;
+        font-size: 4vmin;
+        display: flex;
+        flex-direction: column;
+        gap: 2vmin;
+        text-align: left;
+      }
+
+      .hbd-text {
+        opacity: 0;
+        transition: opacity 500ms ease;
+      }
+    </style>
+  </head>
+  <canvas class="boring"></canvas>
+  <div class="hbd hbd-text">
+    <h1>YOU WIN<span class="name"></span></h1>
+    <span class="secret">WINNERS: ??????</span>
+  </div>
+  <audio loop>
+    <source src="./cosmonut.ogg" type="audio/ogg" />
+    <source src="./cosmonut.mp3" type="audio/mpeg" />
+    Your browser does not support the audio element.
+  </audio>
+  <div class="curtain hbd">
+    <!-- <h1 class="welcome">⏯️</h1>
+    <p class="warning">⚠️ 🔊🎵 ➕ 📸🌈 ⚠️</p> -->
+  </div>
+  <script>
+    const BEND = 0.3;
+    const MAX_ROTATE = Math.PI / 4;
+    const COLORS = [
+      "#F94144",
+      "#F3722C",
+      "#F8961E",
+      "#F9844A",
+      "#F9C74F",
+      "#90BE6D",
+      "#43AA8B",
+      "#4D908E",
+      "#577590",
+      "#277DA1",
+    ];
+    const SPEED = 0.005;
+    const MAX_VOLUME = 0.5;
+
+    const canvas = document.querySelector("canvas");
+    const ctx = canvas.getContext("2d");
+    const text = document.querySelector(".hbd-text");
+    const welcomeText = document.querySelector(".welcome");
+    const warningText = document.querySelector(".warning");
+    const curtain = document.querySelector(".curtain");
+    const audio = document.querySelector("audio");
+    const name = document.querySelector(".name");
+    const secret = document.querySelector(".secret");
+    audio.volume = 0;
+
+    audio.addEventListener("timeupdate", () => {
+      const buffer = 0.44;
+      if (audio.currentTime > audio.duration - buffer) {
+        audio.currentTime = 0;
+        audio.play();
+      }
+    });
+
+    function start() {
+      // audio.play();
+      curtain.classList.add("hidden");
+      text.style.opacity = 1;
+      canvas.classList.remove("boring");
+      isPlaying = true;
+      window.requestAnimationFrame(tick);
+    }
+
+    // curtain.addEventListener("click", start);
+
+    let isPlaying = false;
+    window.addEventListener("pageshow", () => {
+      audio.volume = 0;
+      audio.pause();
+      audio.currentTime = 0;
+      curtain.classList.remove("hidden");
+      text.style.opacity = 0;
+      canvas.classList.add("boring");
+      updateName();
+      isPlaying = false;
+      frame(true);
+
+      start();
+    });
+
+    function updateName() {
+      const nameText = window.location.pathname.slice(1, 13).toUpperCase();
+      if (nameText.length > 0) {
+        name.textContent = `, ${nameText}`;
+      } else {
+        name.textContent = "";
+      }
+
+      const winners = JSON.parse(
+        new URLSearchParams(window.location.search).get("winners")
+      );
+      secret.innerHTML = ``;
+      for (let i = 0; i < 3; i++) {
+        const winner = `${i + 1}. ` + (winners[i] ?? "?????");
+        const winnerEl = document.createElement("span");
+        winnerEl.textContent = winner;
+        secret.appendChild(winnerEl);
+      }
+    }
+    updateName();
+
+    let fullSideLength = 0;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    let resizeDebounceTimeout = -1;
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      fullSideLength = Math.max(window.innerWidth, window.innerHeight);
+      xOffset =
+        window.innerWidth < window.innerHeight
+          ? (window.innerHeight - window.innerWidth) / 2
+          : 0;
+      yOffset =
+        window.innerHeight < window.innerWidth
+          ? (window.innerWidth - window.innerHeight) / 2
+          : 0;
+      frame(true);
+    }
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeDebounceTimeout);
+      setTimeout(resizeCanvas, 300);
+    });
+
+    function absX(x) {
+      return fullSideLength * x - xOffset;
+    }
+
+    function absY(y) {
+      return fullSideLength * y - yOffset * 1.25;
+    }
+
+    function getCoordinates(originX, originY, x, y, rotation) {
+      const sin = Math.sin(rotation);
+      const cos = Math.cos(rotation);
+      return [
+        absX(originX + x * cos - y * sin),
+        absY(originY + x * sin + y * cos),
+      ];
+    }
+
+    function drawSquare(x, y, size, rotation, color) {
+      ctx.beginPath();
+
+      //polygon1--- usually the outside polygon, must be clockwise
+      ctx.moveTo(absX(0), absY(0));
+      ctx.lineTo(absX(1), absY(0));
+      ctx.lineTo(absX(1), absY(1));
+      ctx.lineTo(absX(0), absY(1));
+      ctx.lineTo(absX(0), absY(0));
+      ctx.closePath();
+
+      //polygon2 --- usually hole,must be counter-clockwise
+      ctx.moveTo(...getCoordinates(x, y, -size / 2, -size / 2, rotation));
+      ctx.lineTo(...getCoordinates(x, y, -size / 2, size / 2, rotation));
+      ctx.lineTo(...getCoordinates(x, y, size / 2, size / 2, rotation));
+      ctx.lineTo(...getCoordinates(x, y, size / 2, -size / 2, rotation));
+      ctx.lineTo(...getCoordinates(x, y, -size / 2, -size / 2, rotation));
+      ctx.closePath();
+
+      //  add as many holes as you want
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawLayer(progress, color) {
+      const x = 0.4 + BEND * (1 - progress) * (1 - progress);
+      const y = 0.4 + BEND * (1 - progress) * (1 - progress);
+      const size = progress;
+      const rotation = MAX_ROTATE * (1 - progress) * (1 - progress);
+      drawSquare(x, y, size, rotation, color);
+    }
+
+    const layers = [0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.72, 0.84, 0.96, 1.08];
+    function getStartIndex() {
+      let minValue = layers[0];
+      let minIndex = 0;
+      for (let i = 1; i < layers.length; i++) {
+        if (layers[i] < minValue) {
+          minIndex = i;
+          minValue = layers[i];
+        }
+      }
+      return minIndex;
+    }
+
+    const FRAME_CUTOFF = 16.666;
+    let lastFrame = -1;
+    function tick(timestamp) {
+      if (!isPlaying) {
+        lastFrame = -1;
+        return;
+      }
+
+      const currentFrame = Math.floor(timestamp / FRAME_CUTOFF);
+      if (currentFrame !== lastFrame) {
+        lastFrame = currentFrame;
+        frame(false);
+      }
+
+      window.requestAnimationFrame(tick);
+    }
+
+    let nextFrameTimeout = -1;
+    function frame(isStatic) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let startIndex = getStartIndex();
+      ctx.rect(0, 0, canvas.width, canvas.height);
+      const baseColor =
+        COLORS[(startIndex + layers.length - 1) % layers.length];
+      ctx.fillStyle = baseColor;
+      ctx.fill();
+      text.style.color = baseColor;
+      for (let i = 0; i < layers.length; i++) {
+        const index = (i + startIndex) % layers.length;
+        const progress = layers[index];
+        const color = COLORS[index];
+        drawLayer(progress * progress, color);
+        if (!isStatic) {
+          layers[index] = (layers[index] + SPEED) % 1.2;
+        }
+      }
+      if (!isStatic) {
+        audio.volume = Math.min(audio.volume + 0.02, MAX_VOLUME);
+      }
+    }
+    resizeCanvas();
+  </script>
+</html>

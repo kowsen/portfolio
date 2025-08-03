@@ -1,0 +1,68 @@
+<html><head>
+	<link rel='icon' type='image/png' href='favicon.png' />
+		<style>
+/*			body {
+				background-image: url("backmaze.png");
+				background-repeat: repeat;
+				filter: blur(20px);
+			}*/
+			#background-container {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				z-index: 0;
+				background-image: url("backmaze.png");
+				background-repeat: repeat;
+				background-size: 200px 200px;
+				background-position: center; 
+				filter: brightness(30%);
+			}
+			#content-container {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				z-index: 1;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+			}
+			.content-row {
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				margin: 2vmin;
+			}
+			.badge-link {
+				width: 70vmin;
+				max-width: 623px;
+			}
+			.badge-image {
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="background-container"></div>
+		<div id="content-container">
+			<div class="content-row">
+				<a href="https://play.google.com/store/apps/details?id=com.kylebyte.mazegame" class="badge-link">
+					<img src="google-play-badge.png" class="badge-image" alt="Get it on Google Play">
+				</a>
+			</div>
+			<div class="content-row">
+				<a href="demo.html" class="badge-link">
+					<img src="demo-badge.png" class="badge-image" alt="Play it now">
+				</a>
+			</div>
+			<div class="content-row">
+				<a href="https://itunes.apple.com/us/app/maze-frenzy/id1380567811?ls=1&amp;mt=8" class="badge-link">
+					<img src="app-store-badge.png" class="badge-image" alt="Download on the App Store">
+				</a>
+			</div>
+		</div>
+	
+</body></html>

@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <style>
+      body, .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .section {
+        display: flex;
+        gap: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="remaining"></div>
+    <div class="controls">
+      <div class="section">
+        <input id="guess" />
+        <button onclick="addGuessFromInput()">ADD GUESS</button>
+      </div>
+      <div class="section">
+        <button onclick="clearGuesses()">FAILED</button>
+        <button onclick="markGreen()">GREEN</button>
+        <button onclick="markPurple()">PURPLE</button>
+      </div>
+    </div>
+    <div id="guesses"></div>
+
+    <script>
+      let remaining = '';
+      function updateRemaining(value) {
+        remaining = value;
+        document.getElementById('remaining').innerText = `POSSIBLE LETTERS: ${value}`;
+      }
+
+      let guesses = [];
+      function clearGuesses() {
+        const container = document.getElementById('guesses');
+        container.innerHTML = '';
+        guesses = [];
+      }
+      function addGuess(value) {
+        value = value.trim().toUpperCase();
+        guesses.push(value);
+        const container = document.getElementById('guesses');
+        container.innerHTML = '';
+        for (const guess of guesses) {
+          const el = document.createElement('p');
+          el.innerText = guess;
+          container.appendChild(el);
+        }
+      }
+
+      function markGreen() {
+        const megaGuess = guesses.join('');
+        const newRemaining = remaining.split('').filter(char => !megaGuess.includes(char)).join('');
+        updateRemaining(newRemaining);
+        clearGuesses();
+      }
+
+      function markPurple() {
+        const megaGuess = guesses.join('');
+        const newRemaining = remaining.split('').filter(char => megaGuess.includes(char)).join('');
+        updateRemaining(newRemaining);
+        clearGuesses();
+      }
+
+      updateRemaining('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      function addGuessFromInput() {
+        const guessInput = document.getElementById('guess');
+        addGuess(guessInput.value);
+        guessInput.value = '';
+      }
+      document.getElementById('guess').addEventListener('keydown', (e) => {
+        if (e.keyCode === 13) {
+          addGuessFromInput();
+        }
+      });
+    </script>
+  </body>
+</html>

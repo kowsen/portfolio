@@ -1,0 +1,84 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style>
+  html,
+  body {
+    /* --background-color: #22262c; */
+    --background-color: #171b20;
+    /* --light-background-color: #2a2f36; */
+    --light-background-color: #22262c;
+    --text-color: #e0e1dd;
+    --dark-text-color: #9a9b99;
+    --pop-color: #d0842a;
+    --dark-pop-color: #7d4f19;
+
+    --background-filter: brightness(0.6) contrast(0.9) saturate(0.6);
+    --full-width: 1000px;
+
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--text-color);
+    scroll-behavior: smooth;
+
+    font-size: 24px;
+  }
+
+  @media only screen and (max-width: 600px) {
+    body {
+      font-size: 16px;
+    }
+  }
+
+  :global(p) {
+    font-size: 1.2em;
+  }
+
+  :global(button) {
+    font-family: "IBM Plex Mono", monospace;
+    background-color: transparent;
+    border: 1px solid var(--dark-pop-color);
+    color: var(--pop-color);
+    padding: 0.4em;
+    font-size: 1em;
+    border-radius: 0.4em;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  :global(button:hover) {
+    border-color: var(--pop-color);
+  }
+
+  :global(button:active) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+</style>

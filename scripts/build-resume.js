@@ -5,7 +5,10 @@ const RESUME_HTML = "./public/resume.html";
 const RESUME_PDF = "./public/resume.pdf";
 
 async function generateResume() {
-  const browser = await puppeteer.launch({ headless: "new" });
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
   const page = await browser.newPage();
 
   const resumeHtml = fs.readFileSync(RESUME_HTML, "utf-8");

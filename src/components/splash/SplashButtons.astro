@@ -7,7 +7,9 @@ import LinkButton from "../LinkButton.astro";
 ---
 
 <div id="splash-buttons">
-  <LinkButton id="splash-resume-button" href="/resume.pdf"> Resume </LinkButton>
+  <LinkButton href="/resume.pdf"
+    ><span id="splash-resume-button-text">Resume</span></LinkButton
+  >
   <div id="splash-button-separator"></div>
   <LinkButton href="mailto:me@kycor.com">
     <Image src={email} alt="Email" />
@@ -23,24 +25,24 @@ import LinkButton from "../LinkButton.astro";
 <style>
   #splash-buttons {
     display: flex;
-    gap: 8px;
+    gap: 0.4em;
   }
 
-  #splash-resume-button {
-    padding: 8px 12px;
+  #splash-resume-button-text {
+    padding: 0 0.4em;
   }
 
   #splash-button-separator {
-    width: 4px;
-    margin: 8px;
-    border-radius: 2px;
+    width: 0.2em;
+    margin: 0.4em;
+    border-radius: 0.1em;
     background-color: var(--pop-color);
   }
 
   img {
     display: flex;
     align-items: center;
-    width: 32px;
-    height: 32px;
+    width: 1.6em;
+    height: 1.6em;
   }
 </style>

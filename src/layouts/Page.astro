@@ -38,6 +38,18 @@ const { title } = Astro.props;
     font-family: "IBM Plex Mono", monospace;
     color: var(--text-color);
     scroll-behavior: smooth;
+
+    font-size: 20px;
+  }
+
+  @media only screen and (max-width: 560px) {
+    body {
+      font-size: 16px;
+    }
+  }
+
+  :global(p) {
+    font-size: 1.2em;
   }
 
   :global(button) {
@@ -45,9 +57,9 @@ const { title } = Astro.props;
     background-color: transparent;
     border: 1px solid var(--dark-pop-color);
     color: var(--pop-color);
-    padding: 8px;
-    font-size: 20px;
-    border-radius: 8px;
+    padding: 0.4em;
+    font-size: 1em;
+    border-radius: 0.4em;
     cursor: pointer;
     font-weight: 600;
   }

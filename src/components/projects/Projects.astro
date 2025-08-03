@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import Row from "./Row.astro";
 
 const projects = await getCollection("projects");
+projects.sort((a, b) => (a.filePath ?? "").localeCompare(b.filePath ?? ""));
 ---
 
 <div id="projects">
@@ -29,7 +30,6 @@ const projects = await getCollection("projects");
     display: flex;
     flex-direction: column;
     padding: 1.6em;
-    /* gap: 0.8em; */
     flex-grow: 1;
     max-width: var(--full-width);
   }

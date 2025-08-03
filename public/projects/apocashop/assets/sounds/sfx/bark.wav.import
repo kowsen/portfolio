@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/bark.wav-bdc4be7595f06b7f52d6a77953126446.sample"
+
+[deps]
+
+source_file="res://dev/bkp/Apocashop/game/assets/sounds/sfx/bark.wav"
+dest_files=[ "res://.import/bark.wav-bdc4be7595f06b7f52d6a77953126446.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

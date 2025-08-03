@@ -1,0 +1,58 @@
+html, body {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	background-color: #222;
+}
+
+.indexable:nth-child(1) {
+	--index: 0;
+	--odd: 0;
+}
+
+.indexable:nth-child(2) {
+	--index: 1;
+	--odd: 1;
+}
+
+.indexable:nth-child(3) {
+	--index: 2;
+	--odd: 0;
+}
+
+.indexable:nth-child(4) {
+	--index: 3;
+	--odd: 1;
+}
+
+.indexable:nth-child(5) {
+	--index: 4;
+	--odd: 0;
+}
+
+.indexable:nth-child(6) {
+	--index: 5;
+	--odd: 1;
+}
+
+.indexable:nth-child(7) {
+	--index: 6;
+	--odd: 0;
+}
+
+.indexable:nth-child(8) {
+	--index: 7;
+	--odd: 1;
+}
+
+.indexable:nth-child(9) {
+	--index: 8;
+	--odd: 0;
+}
+
+.indexable:nth-child(10) {
+	--index: 9;
+	--odd: 1;
+}

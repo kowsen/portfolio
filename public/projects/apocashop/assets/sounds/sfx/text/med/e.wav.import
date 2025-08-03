@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/e.wav-128a844e59e2167367c51a3827f17e1c.sample"
+
+[deps]
+
+source_file="res://dev/bkp/Apocashop/game/assets/sounds/sfx/text/med/e.wav"
+dest_files=[ "res://.import/e.wav-128a844e59e2167367c51a3827f17e1c.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

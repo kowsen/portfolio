@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/notify.wav-786cf83d11bc5e74d6220696524cb239.sample"
+
+[deps]
+
+source_file="res://dev/bkp/Apocashop/game/assets/sounds/sfx/notify.wav"
+dest_files=[ "res://.import/notify.wav-786cf83d11bc5e74d6220696524cb239.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/c.wav-dfe4d2f895301c945eb5101fe903369a.sample"
+
+[deps]
+
+source_file="res://dev/bkp/Apocashop/game/assets/sounds/sfx/text/dog/c.wav"
+dest_files=[ "res://.import/c.wav-dfe4d2f895301c945eb5101fe903369a.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

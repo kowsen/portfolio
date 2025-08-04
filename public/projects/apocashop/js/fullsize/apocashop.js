@@ -1,0 +1,7245 @@
+const registerOnGlobalClick = (() => {
+  let hasGlobalClickHappened = false;
+  let listeners = [];
+  let globalListener = () => {
+    window.removeEventListener("click", globalListener);
+    hasGlobalClickHappened = true;
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  window.addEventListener("click", globalListener);
+
+  return (newListener) => {
+    if (hasGlobalClickHappened) {
+      newListener();
+    } else {
+      listeners.push(newListener);
+    }
+  };
+})();
+
+registerOnGlobalClick(() => {
+  document.getElementById("curtain").classList.add("hidden");
+});
+
+!(function () {
+  var M = {
+    DEBUG_MODE: !0,
+    SOUNDENABLED: !0,
+    MENDOZA: 12,
+    EXTRACAP: 7,
+    RESOLUTION: [800, 600],
+    VERSION: "TESTING",
+    ISSCALED: !0,
+    ISALBINO: !1,
+    ISKONGREGATE: !1,
+  };
+  function o(a) {
+    var n = [];
+    (this.submit = function (e, t) {
+      if (M.ISKONGREGATE)
+        if (void 0 === a.kong) n.push({ key: e, val: t });
+        else {
+          if (0 < n.length) {
+            for (var o = 0; o < n.length; o++)
+              a.kong.stats.submit(n[o].key, n[o].val);
+            n = [];
+          }
+          a.kong.stats.submit(e, t);
+        }
+    }),
+      (a.kong = void 0),
+      M.ISKONGREGATE &&
+        kongregateAPI.loadAPI(function () {
+          (a.kong = kongregateAPI.getAPI()), he("LOADED KONGREGATE API");
+        });
+  }
+  function a(t) {
+    this.loadState = {
+      preload: function () {
+        var e = t.add.sprite(63, 258, "loadingImage");
+        (e.alpha = 0.25),
+          t.add
+            .tween(e)
+            .to({ alpha: 1 }, 500, "Linear", !0, 0, -1)
+            .yoyo(!0, 500),
+          (t.stage.backgroundColor = "#92CD9A"),
+          (t.input.mouse.capture = !0),
+          (t.displayManager = new i(t)),
+          (t.assetManager = new s(t)),
+          (t.reset = new ae()),
+          t.displayManager.prepareStage(),
+          (t.kongregate = new o(t)),
+          t.assetManager.load();
+      },
+      create: function () {
+        t.soundManager = new e(t, M.SOUNDENABLED, function () {
+          he("WAITING FOR KONGREGATE"), t.state.start("state_start");
+        });
+      },
+    };
+  }
+  function n(e) {
+    this.startState = {
+      create: function () {
+        registerOnGlobalClick(() => {
+          e.displayManager.putLoadingBackground(),
+            e.displayManager.prepareStage(),
+            e.displayManager.putTitleScreen(),
+            e.soundManager.playMusic(e.Music.TITLEMUS),
+            e.input.onDown.add(function () {
+              he("STARTING state_play"), e.state.start("state_play");
+            });
+        });
+      },
+    };
+  }
+  function r(X) {
+    var Q, Z, $;
+    this.playState = {
+      create: function () {
+        Phaser.Canvas.setImageRenderingCrisp(this.game.canvas),
+          X.displayManager.prepareGroups(),
+          X.displayManager.putEnvironment(),
+          X.displayManager.putUIComponents(),
+          X.displayManager.putScreenShade(2697513, 0.75);
+        var o = X.displayManager.shop,
+          s = {};
+        X.uiItemGroup = X.add.group();
+        X.depthGroups.uiGroup.add(X.uiItemGroup);
+        var e = 223,
+          t = 328;
+        (Q = X.add.sprite(e + 6, t + 32, "ui_funnel_sand_top")),
+          (Z = X.add.sprite(e + 6, t + 62, "ui_funnel_sand_buttom")),
+          Q.anchor.setTo(0, 1),
+          Z.anchor.setTo(0, 1);
+        var a = new Phaser.Rectangle(0, 0, Q.width, Q.height),
+          n = new Phaser.Rectangle(0, Z.height, Z.width, 0),
+          r = X.add.sprite(e, t, "ui_funnel"),
+          i = Q.height,
+          d = Z.height;
+        ($ = function (e) {
+          (a.y = Math.round((1 - e) * i)),
+            (a.height = Math.round(e * i)),
+            (n.y = Math.round(e * d)),
+            (n.height = Math.round((1 - e) * d));
+        }),
+          Q.crop(a),
+          Z.crop(n),
+          (X.clockUI = [r, Q, Z]),
+          X.depthGroups.uiGroup.add(Q),
+          X.depthGroups.uiGroup.add(Z),
+          X.depthGroups.uiGroup.add(r),
+          (Q.visible = !1),
+          (Z.visible = !1),
+          (r.visible = !1);
+        var l = X.add.group();
+        X.depthGroups.uiGroup.add(l), l.create(223, 330, "ui_calendar");
+        var u = X.add.text(249, 352, "0", {
+          font: "bold 32px Arial",
+          fill: "#cfcece",
+          boundsAlignH: "center",
+          boundsAlignV: "middle",
+        });
+        l.add(u), (l.visible = !1);
+        var c = X.add.group();
+        c.y = 400;
+        var h = c.create(800, 400, "ui_note_big");
+        (h.smoothed = !1), h.anchor.setTo(1, 1);
+        var f = X.add.sprite(0, 0);
+        (f.width = 800), (f.height = 600), (f.visible = !1);
+        var p = X.add.text(240, 50, "HELLO THERE", {
+          font: "18px yoster_islandregular",
+          fill: "#4d372c",
+          wordWrap: !0,
+          wordWrapWidth: 250,
+        });
+        c.add(p);
+        var g = X.add.text(525, 50, "HELLO THERE", {
+          font: "18px yoster_islandregular",
+          fill: "#4d372c",
+          wordWrap: !0,
+          wordWrapWidth: 250,
+        });
+        c.add(g);
+        var m = !1;
+        X.depthGroups.noteGroup.add(c), X.depthGroups.noteGroup.add(f);
+        var y = X.add.group();
+        X.depthGroups.uiGroup.add(y);
+        var v = X.add.group(),
+          b = X.add.group(),
+          w = X.add.group(),
+          T = X.add.group();
+        X.depthGroups.uiGroup.add(v),
+          X.depthGroups.uiGroup.add(b),
+          X.depthGroups.uiGroup.add(w),
+          X.depthGroups.uiGroup.add(T);
+        var x = T.create(800, 600, "ui_dialog"),
+          I = v.create(0, 600, "ui_table_background"),
+          k = w.create(0, 600, "ui_table_nogold");
+        x.anchor.setTo(1, 1), k.anchor.setTo(0, 1), I.anchor.setTo(0, 1);
+        function E() {
+          var e, t;
+          he("UI: note clicked; shown: " + m),
+            1 != _.alpha && (_.fadeIn.stop(), _.shake.stop(), (_.alpha = 1)),
+            m
+              ? (X.soundManager.playSound(X.Sounds.TAP),
+                (e = X.add
+                  .tween(c.position)
+                  .to({ y: 400 }, 300, Phaser.Easing.Quadratic.Out)),
+                (t = X.add
+                  .tween(_)
+                  .to({ y: 520 }, 200, Phaser.Easing.Quadratic.Out)),
+                (f.visible = !1))
+              : ((e = X.add
+                  .tween(c.position)
+                  .to({ y: 0 }, 200, Phaser.Easing.Quadratic.In)),
+                (t = X.add
+                  .tween(_)
+                  .to({ y: 700 }, 300, Phaser.Easing.Quadratic.Out)),
+                (f.visible = !0)),
+            e.start(),
+            t.start(),
+            (m = !m);
+        }
+        var _ = w.create(145, 600, "ui_note");
+        (_.inputEnabled = !0),
+          (f.inputEnabled = !0),
+          _.events.onInputDown.add(function () {
+            X.soundManager.playSound(X.Sounds.TAP), E();
+          }, this),
+          f.events.onInputDown.add(E, this);
+        var M = X.add.text(70, 540, "0", {
+          font: "30px yoster_islandregular",
+          fill: "#ebc36f",
+        });
+        M.setAmount = function (e) {
+          var t = e - parseInt(M.text),
+            o = X.time.create(!0);
+          if (20 < Math.abs(t) || "STOCKING" === X.currentScreen) {
+            S(e);
+            var a = X.depthGroups.uiGroup.create(
+                70 + 20 * Math.random(),
+                540 + Math.random() * M.width,
+                "ui_twinkle"
+              ),
+              n = 1.5 + 4 * Math.random();
+            a.scale.setTo(n, n),
+              setTimeout(function () {
+                a.destroy();
+              }, 50);
+          } else
+            (o.count = 0),
+              o.loop(
+                50,
+                function () {
+                  if (o.count < Math.abs(t)) {
+                    S(parseInt(M.text) + (0 < t ? 1 : -1)),
+                      o.count++,
+                      o.twinkle && o.twinkle.destroy(),
+                      (o.twinkle = X.depthGroups.uiGroup.create(
+                        70 + 20 * Math.random(),
+                        540 + Math.random() * M.width,
+                        "ui_twinkle"
+                      ));
+                    var e = 1.5 + 4 * Math.random();
+                    o.twinkle.scale.setTo(e, e);
+                  } else
+                    o.stop(), o.destroy(), o.twinkle && o.twinkle.destroy();
+                  he("UI: coin text now: " + M);
+                },
+                this
+              ),
+              o.start();
+        };
+        var S = function (e) {
+          var t = M.style;
+          0 <= parseInt(e) ? (t.fill = "#ebc36f") : (t.fill = "#DC143C"),
+            M.setStyle(t),
+            M.setText(e);
+        };
+        X.depthGroups.uiGroup.add(M);
+        var O = X.add.button(
+            660,
+            420,
+            "ui_button_accept",
+            function () {
+              X.dialog.main.isPrinting
+                ? (X.soundManager.playSound(X.Sounds.TAP),
+                  X.dialogManager.jumpMain())
+                : (X.soundManager.playSound(X.Sounds.ACCEPT),
+                  X.eventManager.notify(X.Events.INPUT.YES));
+            },
+            this,
+            1,
+            0,
+            2
+          ),
+          C = X.add.button(
+            660,
+            480,
+            "ui_button_reject",
+            function () {
+              X.dialog.main.isPrinting
+                ? (X.soundManager.playSound(X.Sounds.TAP),
+                  X.dialogManager.jumpMain())
+                : (X.soundManager.playSound(X.Sounds.REJECT),
+                  X.eventManager.notify(X.Events.INPUT.NO));
+            },
+            this,
+            1,
+            0,
+            2
+          ),
+          D = X.add.button(
+            800,
+            540,
+            "ui_button_question",
+            function () {
+              X.soundManager.playSound(X.Sounds.TAP),
+                1 != D.alpha && (D.fadeIn.stop(), (D.alpha = 1)),
+                X.questionManager.toggleQuestions();
+            },
+            this,
+            1,
+            0,
+            2
+          ),
+          A = X.add.button(
+            660,
+            440,
+            "ui_button_continue",
+            function () {
+              X.soundManager.playSound(X.Sounds.TAP),
+                X.dialog.main.isPrinting
+                  ? X.dialogManager.jumpMain()
+                  : X.eventManager.notify(X.Events.INPUT.CONTINUE);
+            },
+            this,
+            1,
+            0,
+            2
+          );
+        function N(e) {
+          (O.visible = e),
+            (C.visible = e),
+            X.tutorial.questionVisible && (D.visible = e),
+            (A.visible = !e);
+        }
+        function P(e) {
+          (O.inputEnabled = e),
+            (C.inputEnabled = e),
+            (D.inputEnabled = e),
+            (A.inputEnabled = e);
+        }
+        X.depthGroups.uiGroup.add(O),
+          X.depthGroups.uiGroup.add(C),
+          X.depthGroups.uiGroup.add(D),
+          X.depthGroups.uiGroup.add(A),
+          O.scale.setTo(2, 2),
+          C.scale.setTo(2, 2),
+          D.scale.setTo(2, 2),
+          (D.alpha = 0),
+          (D.fadeIn = X.add
+            .tween(D)
+            .to(
+              { alpha: 0.9 },
+              500,
+              Phaser.Easing.Linear.None,
+              !1,
+              0,
+              1e3,
+              !0
+            )),
+          (D.dragIn = X.add
+            .tween(D)
+            .to({ x: 660 }, 500, Phaser.Easing.Linear.None, !1)),
+          (O.smoothed = !1),
+          (C.smoothed = !1),
+          (D.smoothed = !1);
+        var G = X.add.emitter(0, 0, 200);
+        G.makeParticles("ui_coin"), (G.gravity = 130);
+        var L = 0,
+          R = 0,
+          H = X.add.group(),
+          j = X.add.sprite(X.world.centerX, 20, "ui_levelup");
+        j.scale.setTo(0.75, 0.75), (j.x -= j.width / 2 - 12), (j.visible = !1);
+        function U(e, t) {
+          X.soundManager.playSound(X.Sounds.BLIP),
+            X.eventManager.notify(X.Events.LEVEL.ACCEPT, e.key),
+            0 < e.key.indexOf("shop") &&
+              (o.kill(),
+              ((o = X.add.sprite(
+                e.nextPos[0],
+                e.nextPos[1],
+                e.nextVisual
+              )).smoothed = !1),
+              (o.alpha = 1),
+              (o.visible = !0),
+              X.depthGroups.shopGroup.add(o),
+              R++),
+            (G.x = e.x + e.width / 2),
+            (G.y = e.y + e.height / 2),
+            G.start(!0, 1e3, null, 15),
+            F(!1);
+        }
+        function F(e) {
+          P(!e),
+            e
+              ? (X.displayManager.toggleScreenShade(!0),
+                X.soundManager.playSound(X.Sounds.POWERUP),
+                (G.x = 100),
+                (G.y = 75),
+                G.start(!0, 4e3, null, 50),
+                (G.x = X.width - 100),
+                (G.y = 75),
+                G.start(!0, 4e3, null, 50),
+                (H = X.add.group()),
+                (function (e, t) {
+                  for (var o = t[L] || ["time"], a = 0; a < o.length; a++) {
+                    var n = X.add.button(
+                      X.world.centerX,
+                      X.world.centerY + 100,
+                      "upgrade_" + o[a],
+                      U,
+                      this,
+                      1,
+                      0,
+                      0
+                    );
+                    (n.x -=
+                      ((n.width + 10) * o.length) / 2 - (n.width + 10) * a),
+                      (n.y -= n.height / 2),
+                      (n.nextVisual =
+                        "shop_" +
+                        (de[o[a]][R] || de[o[a]][de[o[a]].length - 1]).name),
+                      (n.nextPos = (
+                        de[o[a]][R] || de[o[a]][de[o[a]].length - 1]
+                      ).position),
+                      (n.visible = !0),
+                      (n.inputEnabled = !0),
+                      (n.descText = X.add.text(
+                        n.x + 65 - 200,
+                        n.y + 120,
+                        (de[o[a]][R] || de[o[a]][de[o[a]].length - 1]).effect +
+                          "\n\n" +
+                          (de[o[a]][R] || de[o[a]][de[o[a]].length - 1])
+                            .description,
+                        {
+                          font: "20px yoster_islandregular",
+                          fill: "#d3af7a",
+                          wordWrap: !0,
+                          wordWrapWidth: 400,
+                          align: "center",
+                        }
+                      )),
+                      (n.descText.visible = !1),
+                      n.events.onInputOver.add(function (e) {
+                        e.descText.visible = !0;
+                      }, n),
+                      n.events.onInputOut.add(function (e) {
+                        e.descText.visible = !1;
+                      }, n),
+                      H.add(n.descText),
+                      H.add(n);
+                  }
+                  L++;
+                })(0, se),
+                X.dayTimer.pause())
+              : (X.displayManager.toggleScreenShade(!1),
+                X.dayTimer.resume(),
+                (H.visible = !1),
+                H.callAll("kill")),
+            (j.visible = e);
+        }
+        var W,
+          B,
+          Y,
+          q,
+          z,
+          V = X.add.graphics(15, X.height / 2 - 6);
+        X.depthGroups.uiGroup.add(V),
+          V.lineStyle(1, 5060396, 1),
+          V.beginFill(16777162, 0.5),
+          (V.startx = V.x),
+          (V.starty = V.y),
+          (V.currwidth = 0),
+          (V.barwidth = 162),
+          (V.barheight = 9),
+          V.drawRect(V.startx, V.starty, 2, V.barheight);
+        !(function (e) {
+          (e.reset = new ae()),
+            (e.conditionManager = new Te(e)),
+            (e.eventManager = new ne(e)),
+            e.analytics ? e.analytics.setRunID() : (e.analytics = new re());
+          (function (s) {
+            ye = function (e, t) {
+              var o =
+                  (t = t || {}).item ||
+                  (function (e) {
+                    var t = 0;
+                    for (var o in e) t += e[o].priority || 0;
+                    var a = Math.random() * t,
+                      n = 0;
+                    for (var o in e)
+                      if (((n += e[o].priority || 0), a < n)) return o;
+                    return "INVALID ITEM";
+                  })(e.itemData),
+                a =
+                  t.offers ||
+                  (function (e, t) {
+                    var o = [],
+                      a = e[t].min,
+                      n = Math.ceil((ie[t].price + ie[t].jPrice) / 2),
+                      r = e[t].max + 1,
+                      i = Math.floor((a + r) / 2),
+                      s = Math.floor((i + r) / 2);
+                    le(0.8)
+                      ? o.push(ce(a, n))
+                      : le(0.85)
+                      ? o.push(ce(n, s))
+                      : o.push(ce(s, r));
+                    for (; o[o.length - 1] < r; ) {
+                      var d = (r - o[o.length - 1]) / (r - a);
+                      if (!le((d = Math.min(0.6 + c, 3 * Math.pow(d, 3)))))
+                        break;
+                      le(0.7)
+                        ? o.push(ce(o[o.length - 1] + 1, s))
+                        : o.push(ce(o[o.length - 1] + 1, r));
+                    }
+                    return o;
+                  })(e.itemData, o);
+              return {
+                type: "interact",
+                appearanceInfo: t.appearanceInfo || n(o, a),
+                item: o,
+                offers: a,
+                offerText: t.offerText || be(o, a),
+                success: t.success || l(),
+                fail: t.fail || u(),
+                questions: t.questions || d(e),
+                appearConditions: t.appearConditions || !1,
+                sellConditions: t.sellConditions || !1,
+                refuseConditions: t.refuseConditions || !1,
+                stallTime: t.stallTime || !1,
+                stallConditions: t.stallConditions || !1,
+                isHero: t.isHero || !1,
+                isFalseHero: t.isFalseHero || !1,
+              };
+            };
+            var n,
+              r,
+              i,
+              d,
+              l,
+              u,
+              c = 0;
+            s.eventManager.register(s.Events.LEVEL.ACCEPT, function (e) {
+              0 <= e.indexOf("shop") && (c += 0.1 / 3);
+            }),
+              (be = function (e, t) {
+                var o = [];
+                o.push(r(e, t[0]));
+                for (var a = 1; a < t.length; a++) o.push(i(t[a]));
+                return o;
+              }.bind(this)),
+              (function () {
+                var i = s.assetManager.assets.npc;
+                (n = function (e, t) {
+                  Math.max.apply(this, t);
+                  var o = "";
+                  for (var a in i)
+                    if ("hand" != a) {
+                      var n = s.assetManager.assets.npc[a];
+                      o += a + "|" + s.rnd.integerInRange(1, n) + ",";
+                    }
+                  var r = (function () {
+                    var e = { r: 255, g: 255, b: 255 },
+                      t = 6 * Math.random() - 3;
+                    Math.random() < 0.5
+                      ? ((e.r = 224.3 + 9.6 * t),
+                        (e.g = 193.1 + 17 * t),
+                        (e.b = 177.6 + 21 * t))
+                      : ((e.r = 168.8 + 38.5 * t),
+                        (e.g = 122.5 + 32.1 * t),
+                        (e.b = 96.7 + 26.3 * t));
+                    return e;
+                  })();
+                  return (o +=
+                    "skin|(" +
+                    r.r.toFixed(2) +
+                    "," +
+                    r.g.toFixed(2) +
+                    "," +
+                    r.b.toFixed(2) +
+                    ")");
+                }),
+                  (ve = function (e) {
+                    e.appearanceInfo = n(e.item, e.offers);
+                  });
+              })(),
+              (function () {
+                var i = [
+                    "Can I get [x] for [y] gold?",
+                    "Could I get [x] for [y] gold?",
+                    "How's [y] gold for [x] sound?",
+                    "Would you part with [x] for [y] gold?",
+                    "Can I get [x]? [Y] gold.",
+                    "Need [x]. [Y] gold?",
+                    "How about [y] gold for [x]?",
+                  ],
+                  s = [
+                    "Hiya! ",
+                    "Howdy! ",
+                    "Greetings. ",
+                    "Hi. ",
+                    "Hola! ",
+                    "Aloha! ",
+                    "How's it going?/",
+                    "Nice day out!/",
+                    "Good day./",
+                  ];
+                r = function (e, t) {
+                  (e = e || "ERROR"), (t = fe(t) || "ERROR"), (e = pe(e));
+                  var o = Math.floor(Math.random() * s.length),
+                    a = Math.random() < 0.5 ? s[o] : "";
+                  o = Math.floor(Math.random() * i.length);
+                  var n = i[o],
+                    r =
+                      "string" == typeof t
+                        ? t.charAt(0).toUpperCase() + t.slice(1)
+                        : t;
+                  return (
+                    a + n.replace("[x]", e).replace("[y]", t).replace("[Y]", r)
+                  );
+                };
+              })(),
+              (function () {
+                var a = [
+                  "Alright, you got me. [X] gold?",
+                  "Fine, fine. [X] gold?",
+                  "Alright, alright. [X] gold?",
+                  "How about [x] gold?",
+                  "[X] gold is the best I can do.",
+                  "[X] gold or I walk away.",
+                  "Hmm. How about [x] gold?",
+                  "[X] gold. No more.",
+                  "Fine. [X] gold then.",
+                  "Alright, [x] gold then?",
+                  "[X] gold. That's my final offer.",
+                  "[X] gold is all I can offer.",
+                  "[X] gold is all I can afford.",
+                  "Okay then. [X] gold?",
+                  "Hmm. [X] gold?",
+                ];
+                i = function (e) {
+                  var t =
+                      "string" == typeof (e = fe(e) || "ERROR")
+                        ? e.charAt(0).toUpperCase() + e.slice(1)
+                        : e,
+                    o = Math.floor(Math.random() * a.length);
+                  return a[o].replace("[x]", e).replace("[X]", t);
+                };
+              })(),
+              (function () {
+                var o = {
+                  day: [
+                    "Um, good?",
+                    "Not particularly exciting.",
+                    "None of your business.",
+                    "Not bad.",
+                    "Eh.",
+                    "Meh.",
+                    "It's alright.",
+                    "Good, thanks.",
+                    "Doing well.",
+                    "Can't complain.",
+                    "Pretty alright.",
+                    "What's it to you?",
+                    "Why do you care?",
+                    "Boring.",
+                    "Wet",
+                  ],
+                  news: [
+                    "I don't get out much.",
+                    "No idea.",
+                    "Probably some new cataclysm. We seem to get a lot of them.",
+                    "Dunno.",
+                    "Your shop opened? That's sort of news.",
+                    "I'm still alive. News enough for me.",
+                    "You probably know more than I do.",
+                  ],
+                  color: [
+                    "Red.",
+                    "Blue?",
+                    "Chartreuse. @@@Don't you dare judge me.",
+                    "Purple.",
+                    "Sky color.",
+                    "Ground color.",
+                    "The color of apples.",
+                    "Green.",
+                    "Goldenrod.",
+                    "Pewter.",
+                    "Cerulean.",
+                    "Fuscia.",
+                    "Viridian.",
+                    "Vermillion.",
+                    "Cinnibar.",
+                    "Saffron.",
+                    "Pink, I guess.",
+                    "Teal, no doubt.",
+                    "Purple and gold.",
+                    "Grey!",
+                    "The color of snow.",
+                    "White.",
+                    "Orchid.",
+                    "Khaki!",
+                  ],
+                  number: [
+                    "Seven.",
+                    "Six.",
+                    "Negative one.",
+                    "Zero.",
+                    "Pi.",
+                    "i",
+                    "Fourty seven.",
+                    "Ninety three.",
+                    "Sixty two.",
+                    "One hundred.",
+                    "Seven point two. Don't ask why.",
+                  ],
+                  alphabet: [
+                    "abcdefghijklmnopqrstuvwxyz",
+                    "abcefghijklmnpqrtuvwxyz",
+                    "bcghjlmprstvxz . . . I think that's all of them?",
+                    "abcdhiklmnopqrstuvwxyz",
+                  ],
+                };
+                function n(e) {
+                  var t = o[e];
+                  return t ? t[Math.floor(Math.random() * t.length)] : "ERROR";
+                }
+                d = function (e) {
+                  var t = e.questions,
+                    o = {};
+                  for (var a in t) o[a] = n(a);
+                  return o;
+                };
+              })(),
+              (function () {
+                var t = [
+                  "Pleasure doing business.",
+                  "Alright, thanks a lot.",
+                  "Thanks! I needed this.",
+                  "Thanks a bunch, friend.",
+                  "Thank you!",
+                  "Thanks, see ya!",
+                  "Thanks.",
+                  "You're the best, pal.",
+                  "Thanks a bunch.",
+                  "Yes! I needed this.",
+                  "Good.",
+                  "Thanks a lot.",
+                  "Thanks, pal.",
+                  "Deal.",
+                ];
+                l = function () {
+                  var e = Math.floor(Math.random() * t.length);
+                  return t[e];
+                };
+              })(),
+              (function () {
+                var t = [
+                  "Heh, good luck getting more than that.",
+                  "Seriously, more? No way.",
+                  "You just lost my business.",
+                  "There's no way I can afford more.",
+                  "Terrible experience. Zero stars.",
+                  "This is a disappointment.",
+                  "Do I look rich to you?",
+                  "Welp, nevermind.",
+                  "More? Unbelievable.",
+                  "Nope, too much.",
+                  "No deal.",
+                  "No way.",
+                  "Heh, good luck with that.",
+                  "Nope, can't afford that.",
+                ];
+                u = function () {
+                  var e = Math.floor(Math.random() * t.length);
+                  return t[e];
+                };
+              })();
+          })(e),
+            (function (s) {
+              var o,
+                a,
+                r,
+                n = new ke(s),
+                i = new Ie(s),
+                d = new Ee(s);
+              (we = function (e) {
+                var t = o[e] ? o[e] : ue(l);
+                t.isPreset.length ||
+                  (function (e) {
+                    e.length = 5e4;
+                  })(t),
+                  t.isPreset.items ||
+                    (function (e, t) {
+                      for (var o = 0; o < t.items.length; o++) {
+                        var a = t.items[o],
+                          n = Math.round((ie[a].price + ie[a].jPrice) / 2);
+                        e.itemData[a] = {
+                          min: Math.floor(n / 2),
+                          max: Math.ceil(2 * n),
+                          priority: 100 / (o + 1),
+                        };
+                      }
+                    })(t, a(t));
+                return (
+                  t.isPreset.tax || r(t, e),
+                  t.isPreset.jeff || d.insertJeff(t, e),
+                  t.isPreset.hero || n.insertHeroes(t, Math.ceil(e / 3)),
+                  t.isPreset.plot || i.garnishDay(t, e),
+                  t
+                );
+              }),
+                (function () {
+                  var n = [
+                      "ruffians",
+                      "beholders",
+                      "ill-mannered honey badgers",
+                    ],
+                    r = [
+                      "The town is being menaced by [x].",
+                      "Our town's being attacked by [x].",
+                      "Your shop is being threatened by [x]",
+                      "The town is imperiled by [x]",
+                    ],
+                    i = [
+                      "People seem to really want [x]s.",
+                      "The townspeople are clamoring for [x]s.",
+                      "Everyone in town wants [ax].",
+                      "[x]s have been in high demand.",
+                      "People are searching for [x]s",
+                    ];
+                  a = function (e) {
+                    var t,
+                      o = {
+                        threat: me(n),
+                        items: ge(s.playerState.getAvalItems()).slice(0, 3),
+                      };
+                    e.clues.crisis.push(
+                      (function (e) {
+                        return me(r).replace("[x]", e);
+                      })(o.threat)
+                    );
+                    for (var a = 0; a < 2; a++)
+                      e.clues.crisis.push(
+                        ((t = o.items[a]),
+                        void 0,
+                        me(i).replace("[ax]", pe(t)).replace("[x]", t))
+                      );
+                    return o;
+                  };
+                })(),
+                (function () {
+                  function n(e, t, o) {
+                    return { text: e, gold: t, conditions: o };
+                  }
+                  r = function (e, t) {
+                    var o = 10 * Math.ceil((1 + t) / 4),
+                      a = 10 * Math.ceil((2 + t) / 4);
+                    e.wrapup.push(
+                      n(
+                        "You are forced by King Zoran to pay " +
+                          o +
+                          " gold in taxes.",
+                        -o
+                      )
+                    ),
+                      o != a &&
+                        e.wrapup.push(
+                          n(
+                            "You are warned that tomorrow, Zoran will want " +
+                              a +
+                              " gold.",
+                            0
+                          )
+                        );
+                  };
+                })();
+              var l = {
+                isPreset: {},
+                itemData: {},
+                sequence: {},
+                conditions: {},
+                clues: { hero: [], crisis: [] },
+                questions: {},
+                wrapup: [],
+              };
+              o = [
+                {
+                  itemData: { sword: { min: 2, max: 11, priority: 5 } },
+                  isPreset: {
+                    length: !0,
+                    items: !0,
+                    tax: !0,
+                    jeff: !0,
+                    hero: !0,
+                    plot: !0,
+                  },
+                  sequence: {
+                    0: {
+                      category: "dayOne",
+                      hero: "introJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    1: {
+                      hero: { item: "sword", offers: [7] },
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    2: {
+                      hero: {
+                        item: "sword",
+                        offers: [1, 8],
+                        sellConditions: ["tutorialFailed"],
+                        refuseConditions: ["tutorialFailed"],
+                      },
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    3: {
+                      category: "dayOne",
+                      hero: "messUpJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    4: {
+                      category: "dayOne",
+                      hero: "tutorialWoman",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    6: {
+                      hero: {
+                        item: "chicken",
+                        offers: [3, 6],
+                        sellConditions: ["soldChicken"],
+                      },
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    7: {
+                      category: "dayOne",
+                      hero: "chickenJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    8: {
+                      category: "dayOne",
+                      hero: "badCousin",
+                      fuzz: 3,
+                      force: !0,
+                    },
+                    11: {
+                      category: "dayOne",
+                      hero: "tutorialWomanAngry",
+                      fuzz: 3,
+                      force: !0,
+                    },
+                    12: {
+                      category: "dayOne",
+                      hero: "tutorialWomanHappy",
+                      fuzz: 3,
+                      force: !0,
+                    },
+                    9999: {
+                      category: "dayOne",
+                      hero: "endOfTutorialJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                  },
+                  conditions: {
+                    tutorialItemGive: {
+                      components: ["tutorialBegin"],
+                      chance: 1,
+                      events: ["Events.TUTORIAL.BEGIN"],
+                      isLongTerm: !1,
+                    },
+                    dayOneRobbery: {
+                      components: ["soldCousin"],
+                      chance: 1,
+                      isLongTerm: !0,
+                    },
+                    uglyHackTracking: {
+                      components: ["tutorialFailed"],
+                      chance: 1,
+                      events: ["Events.TUTORIAL.FAILED"],
+                      isLongTerm: !1,
+                    },
+                  },
+                  clues: {
+                    hero: [
+                      "My cousin is rather rude.",
+                      "My cousin will offer ten gold.",
+                      "My cousin's favorite color is 'Mac and Cheese'",
+                    ],
+                    crisis: [""],
+                  },
+                  questions: {
+                    day: "How was your day?",
+                    color: "Favorite color?",
+                  },
+                  wrapup: [
+                    {
+                      text: "You're forced by King Zoran to pay five gold in taxes.",
+                      gold: -5,
+                    },
+                    {
+                      conditions: ["soldCousin"],
+                      text: "Your store is robbed in the night. The robber leaves a note on Mac and Cheese colored paper.",
+                      gold: -10,
+                    },
+                  ],
+                  length: 4e4,
+                },
+                {
+                  isPreset: {
+                    length: !0,
+                    items: !0,
+                    tax: !0,
+                    jeff: !0,
+                    hero: !0,
+                    plot: !1,
+                  },
+                  itemData: {
+                    sword: { min: 2, max: 11, priority: 5 },
+                    chicken: { min: 1, max: 9, priority: 2 },
+                  },
+                  sequence: {
+                    0: {
+                      category: "dayTwo",
+                      hero: "introJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    4: {
+                      category: "dayTwo",
+                      hero: "rhymeMan",
+                      fuzz: 7,
+                      force: !0,
+                    },
+                    6: {
+                      category: "dayTwo",
+                      hero: "badRhymeMan",
+                      fuzz: 7,
+                      force: !1,
+                    },
+                    9999: {
+                      category: "dayTwo",
+                      hero: "endJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                  },
+                  conditions: {},
+                  clues: {
+                    hero: [
+                      "The hero speaks only in rhyme.",
+                      "The hero does not use made up words to force a rhyme.",
+                    ],
+                    crisis: [
+                      "Goblins have been harassing townspeople.",
+                      "As a result, swords are in high demand.",
+                    ],
+                  },
+                  questions: {
+                    day: "How was your day?",
+                    color: "Favorite color?",
+                  },
+                  wrapup: [
+                    {
+                      text: "You're forced by King Zoran to pay five gold in taxes.",
+                      gold: -5,
+                    },
+                    {
+                      text: "You are informed that tomorrow, the king will raise the tax to ten gold.",
+                    },
+                    {
+                      conditions: ["soldHero"],
+                      text: "Thanks to the sword you sold to the hero, goblins are driven from the town.",
+                    },
+                    {
+                      conditions: ["refusedHero"],
+                      text: "Unfortunately, the hero did not have a sword and the town was overrun by goblins.//Your store was pillaged in the night.",
+                      gold: -7,
+                    },
+                  ],
+                  length: 4e4,
+                },
+                {
+                  isPreset: {
+                    length: !0,
+                    items: !1,
+                    tax: !0,
+                    jeff: !0,
+                    hero: !1,
+                    plot: !1,
+                  },
+                  itemData: {},
+                  sequence: {
+                    0: {
+                      category: "dayThree",
+                      hero: "introJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    6: {
+                      category: "dayThree",
+                      hero: "startDog",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    7: {
+                      category: "dayThree",
+                      hero: "jeffDog",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    8: {
+                      category: "dayThree",
+                      hero: "dogChoice",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    9: {
+                      category: "dayThree",
+                      hero: "jeffHappy",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    9999: {
+                      category: "dayThree",
+                      hero: "endJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                  },
+                  conditions: {
+                    dog_have: {
+                      components: ["gotDog"],
+                      events: ["Events.DOG.APPEAR"],
+                      chance: 1,
+                      isLongTerm: !0,
+                    },
+                  },
+                  clues: { hero: [], crisis: [] },
+                  questions: {},
+                  wrapup: [
+                    {
+                      text: "You're forced by King Zoran to pay 10 gold in taxes.",
+                      gold: -10,
+                    },
+                  ],
+                  length: 4e4,
+                },
+                !1,
+                !1,
+                !1,
+                !1,
+                {
+                  isPreset: {
+                    length: !0,
+                    items: !1,
+                    tax: !0,
+                    jeff: !0,
+                    hero: !0,
+                    plot: !1,
+                  },
+                  itemData: {},
+                  sequence: {
+                    0: {
+                      category: "finalDay",
+                      hero: "introJeff",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    1: {
+                      category: "finalDay",
+                      hero: "introZoran",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                    9999: {
+                      category: "finalDay",
+                      hero: "endZoran",
+                      fuzz: 0,
+                      force: !0,
+                    },
+                  },
+                  clues: {
+                    hero: [
+                      "The hero wears a grey hat with a feather",
+                      "The hero owns an item shop.",
+                      "The hero makes sure the townspeople are properly equipped.",
+                    ],
+                    crisis: [],
+                  },
+                  questions: {},
+                  wrapup: [],
+                  length: 6e4,
+                },
+              ];
+            })(e),
+            (e.interactionManager = new Me(e)),
+            (e.questionManager = new xe(e)),
+            (e.dialogManager = new _e(e)),
+            (e.playerState = new Se(e)),
+            (e.wrapupManager = new De(e)),
+            (e.stock = new Oe(e)),
+            (e.jeff = new Ce(e)),
+            (e.endingScreen = new te(e)),
+            (e.stockUI = new oe(e)),
+            (e.endState = new ee(e));
+        })(X);
+        var J = !(X.tutorial = { questionVisible: !1 });
+        function K(e) {
+          for (var t = "", o = 0; o < e.length; o++)
+            "" !== e[o] && (t += "> " + e[o] + "\n");
+          return t;
+        }
+        (O.visible = !1),
+          (C.visible = !1),
+          (D.visible = !1),
+          (_.visible = !1),
+          X.eventManager.register(X.Events.DAY.START, function (e) {
+            X.soundManager.stopSound(),
+              X.displayManager.toggleCloudGeneration(!0),
+              X.displayManager.togglePedestGeneration(!0),
+              X.questionManager.populateQuestions(e.questions, y),
+              X.uiItemGroup.callAll("kill"),
+              (function (e, t) {
+                for (var o = 0; o < e; o++) {
+                  X.uiItemGroup
+                    .create(20, 40 + 50 * o, "ui_itemslot")
+                    .anchor.setTo(0, 0);
+                }
+                var a = -1;
+                for (var n in t) {
+                  a++;
+                  var r = X.uiItemGroup.create(24, 44 + 50 * a, "item_" + n);
+                  r.scale.setTo(2, 2), (r.smoothed = !1);
+                  var i = X.add.text(
+                    74,
+                    46 + 50 * a,
+                    t[n],
+                    { font: "20px yoster_islandregular", fill: "#d3af7a" },
+                    X.uiItemGroup
+                  );
+                  he("UI: itemKey " + n + "\nUI: itemCount " + t[n]),
+                    (s[n] = i);
+                }
+              })(X.playerState.getNumSlots(), X.playerState.getStockedItems()),
+              (g.text = K(e.clues.hero)),
+              (p.text = K(e.clues.crisis)),
+              (u.text = (X.interactionManager.getCurrentDay() + 1).toString()),
+              0 < (X.interactionManager.getCurrentDay() || 0) &&
+                !m &&
+                (E(), (J = !0));
+          }),
+          X.eventManager.register(
+            X.Events.INTERACT.OFFER,
+            function (e, t, o, a) {
+              N(!0),
+                X.dayTimer.pause(),
+                (X.dialog.main.isPrinting = !0),
+                X.dialogManager.printMain(o, a, function () {
+                  X.dayTimer.resume(), (X.dialog.main.isPrinting = !1);
+                });
+            }
+          ),
+          X.eventManager.register(X.Events.LEVEL.EXPUP, function (e) {
+            V.clear(),
+              V.lineStyle(1, 5060396, 1),
+              V.beginFill(16777162, 0.5),
+              V.drawRect(V.startx, V.starty, V.barwidth * e, V.barheight);
+          }),
+          X.eventManager.register(X.Events.LEVEL.LEVELUP, function () {
+            F(!0);
+          }),
+          X.eventManager.register(X.Events.INPUT.NO, function () {
+            W &&
+              currNPCHit &&
+              (he("currNPC.x: " + W.x),
+              currNPCHit.start(),
+              he("currNPC.x: " + W.x),
+              he(W));
+          }),
+          X.eventManager.register(X.Events.INVENTORY.SOLD, function (e, t) {
+            if (
+              (!(function (e) {
+                for (var t = X.add.group(), o = 0; o < e; o++)
+                  t.create(
+                    20 + 50 * Math.random(),
+                    450 + 30 * Math.random(),
+                    "ui_coin"
+                  );
+                var a = X.add
+                    .tween(t.position)
+                    .to({ y: t.y + 100 }, 800, Phaser.Easing.Quadratic.Out),
+                  n = X.add.tween(t).to({ alpha: 0 }, 500);
+                n.onComplete.add(function () {
+                  t.destroy();
+                }),
+                  a.start(),
+                  n.start();
+              })(t),
+              0 <= X.playerState.getAvalItems().indexOf(e))
+            ) {
+              var o = X.add.sprite(14, 14, "item_" + e);
+              o.scale.setTo(2, 2), (o.smoothed = !1);
+              var a = X.add
+                  .tween(o.scale)
+                  .to({ x: 8, y: 8 }, 700, Phaser.Easing.Linear.None, !0),
+                n = X.add
+                  .tween(o)
+                  .to(
+                    { x: 50, y: 450, alpha: 0 },
+                    700,
+                    Phaser.Easing.Quadratic.Out,
+                    !0
+                  );
+              n.onComplete.add(function () {
+                o.destroy();
+              }),
+                n.start(),
+                a.start();
+            }
+          }),
+          X.eventManager.register(X.Events.UPDATE.ITEMS, function (e) {
+            for (var t in e)
+              null != s[t] &&
+                s[t].setText((X.playerState.getItems()[t] || 0).toString());
+          }),
+          X.eventManager.register(X.Events.UPDATE.GOLD, function (e) {
+            M.setAmount(e), X.displayManager.updateCoins();
+          }),
+          X.eventManager.register(X.Events.INTERACT.DIALOG, function (e) {
+            N(!1),
+              X.dayTimer.pause(),
+              (X.dialog.main.isPrinting = !0),
+              X.dialogManager.printMain(e, !1, function () {
+                X.dialog.main.isPrinting = !1;
+              });
+          }),
+          X.eventManager.register(X.Events.TUTORIAL.BEGIN, function () {
+            (_.visible = !0),
+              (_.alpha = 0),
+              (_.fadeIn = X.add
+                .tween(_)
+                .to(
+                  { alpha: 0.9 },
+                  500,
+                  Phaser.Easing.Linear.None,
+                  !1,
+                  0,
+                  1e3,
+                  !0
+                )),
+              (_.dragIn = X.add
+                .tween(_)
+                .to({ y: 535 }, 500, Phaser.Easing.Linear.None, !1)),
+              (_.shake = X.add
+                .tween(_.position)
+                .to(
+                  { x: "10" },
+                  100,
+                  Phaser.Easing.Quadratic.None,
+                  !1,
+                  0,
+                  1e3,
+                  !0
+                )),
+              _.fadeIn.start(),
+              _.shake.start(),
+              (_.visible = !1),
+              _.dragIn.start(),
+              _.dragIn.onComplete.addOnce(function () {
+                (_.visible = !0), E();
+              }),
+              (X.tutorial.questionVisible = !0),
+              D.fadeIn.start(),
+              D.dragIn.start();
+          }),
+          X.eventManager.register(X.Events.TUTORIAL.FAILED, function () {
+            X.playerState.getGold() <= 1
+              ? (X.analytics.set("dimension3", "inexperiened"),
+                X.conditionManager.set("jeffReminder"),
+                X.analytics.track("interaction", "jeffReminder"))
+              : X.analytics.set("dimension3", "experiened");
+          }),
+          X.eventManager.register(X.Events.DOG.APPEAR, function () {
+            X.kongregate.submit("Dog", 1),
+              X.analytics.track("dog", "got"),
+              (X.displayManager.dog.visible = !0);
+          }),
+          X.reset.register(function () {
+            X.displayManager.dog.visible = !1;
+          }),
+          X.eventManager.register(
+            X.Events.INTERACT.NEW,
+            function (a, e, n, r, i) {
+              X.dialog.main.freeze(!0),
+                X.dialogManager.setMainSound(e),
+                X.questionManager.hideQuestions(),
+                P(!1),
+                he("GENERATING NPC IMG: " + a);
+              var s = !1;
+              switch (a) {
+                case "jeff":
+                  a = "gp_jeff_big";
+                  break;
+                case "dog":
+                  (a = "gp_dog_set"), function (e) {};
+                  break;
+                case "artifact":
+                  a = "hero_artifact";
+                  break;
+                case "cloak":
+                  a = "hero_cloak";
+                  break;
+                case "cloak_stache":
+                  a = "hero_cloak_stache";
+                  break;
+                case "guardian":
+                  a = "hero_guardian";
+                  break;
+                case "king_zoran":
+                  a = "hero_king_zoran";
+                  break;
+                case "treasure_hunter":
+                  a = "hero_treasure_hunter";
+                  break;
+                default:
+                  s = !0;
+              }
+              function t() {
+                var e,
+                  t = (function (e) {
+                    var t = (e = e.substring(
+                      e.indexOf("skin") + 6,
+                      e.length - 1
+                    )).split(",");
+                    return {
+                      r: parseFloat(t[0]),
+                      g: parseFloat(t[1]),
+                      b: parseFloat(t[2]),
+                    };
+                  })(a);
+                if (
+                  ((e = s
+                    ? X.displayManager.drawRandomNPC(
+                        a.substring(0, a.indexOf("skin") - 1),
+                        t
+                      )
+                    : a),
+                  (W = b.create(20, 360, e)),
+                  r && r.substring() && 10 == r.length)
+                ) {
+                  var o = X.displayManager.generateNPCHands(
+                    r.substring(0, 5),
+                    r.substring(5, 10),
+                    t
+                  );
+                  (q = b.create(20, 541, "ui_hands_background")),
+                    (z = b.create(50, 600, o)),
+                    q.anchor.setTo(0, 1),
+                    q.scale.setTo(3, 3),
+                    (q.alpha = 0),
+                    (q.visible = !1),
+                    (z.tweenIn = X.add.tween(z).to({ y: 390 }, 500)),
+                    (z.tweenOut = X.add.tween(z).to({ y: 600 }, 300)),
+                    (z.tweenVisible = X.add.tween(q).to({ alpha: 1 }, 500)),
+                    (z.tweenInvisible = X.add.tween(q).to({ alpha: 0 }, 250)),
+                    z.tweenIn.onComplete.addOnce(function () {
+                      X.time.events.add(
+                        Phaser.Timer.SECOND * (i || 1.5),
+                        function () {
+                          z.tweenOut.start();
+                        },
+                        this
+                      );
+                    }),
+                    z.tweenOut.onComplete.addOnce(function () {
+                      (q.visible = !1), z.destroy(), q.destroy();
+                    });
+                }
+                if (
+                  (!(function () {
+                    (B = X.add
+                      .tween(W)
+                      .from(
+                        { x: W.x - 300, y: W.y + 300 },
+                        550,
+                        Phaser.Easing.Quadratic.Out
+                      )),
+                      (Y = X.add.tween(W).to({ x: 320, y: 660 }, 550)),
+                      (currNPCHit = X.add
+                        .tween(W)
+                        .to({ x: W.x + 10 }, 30)
+                        .to({ x: W.x - 10, y: W.y }, 60)
+                        .to({ x: W.x + 10, y: W.y }, 60)
+                        .to({ x: W.x, y: W.y }, 30)),
+                      Y.onComplete.add(function () {
+                        W.destroy();
+                      }, this);
+                  })(),
+                  s)
+                )
+                  W.scale.setTo(3, 3);
+                else {
+                  switch (e) {
+                    case "gp_jeff_big":
+                      W.scale.setTo(2, 2);
+                      break;
+                    case "gp_dog_set":
+                      W.scale.setTo(1.5, 1.5);
+                  }
+                  W.smoothed = !1;
+                }
+                B.onComplete.add(function () {
+                  if (
+                    (r &&
+                      ((q.visible = !0),
+                      z.tweenIn.start(),
+                      z.tweenVisible.start()),
+                    P(!0),
+                    X.dialog.main.freeze(!1),
+                    n && "KILLMUSIC" !== n)
+                  ) {
+                    var e = X.Music[n];
+                    e && X.soundManager.playMusic(e);
+                  }
+                }),
+                  B.start();
+              }
+              W
+                ? (z && (z.tweenOut.start(), z.tweenInvisible.start()),
+                  Y.start(),
+                  Y.onComplete.addOnce(t),
+                  Y.onComplete.addOnce(function () {
+                    n && X.soundManager.stopMusic(200);
+                  }),
+                  m && !J ? E() : (J = !1))
+                : t();
+            }
+          ),
+          X.eventManager.register(X.Events.DAY.END, function () {
+            X.displayManager.toggleCloudGeneration(!1),
+              X.displayManager.togglePedestGeneration(!1),
+              m && E();
+          }),
+          (function (e) {
+            e.currentScreen = "";
+            var t = 0,
+              o = we(t);
+            (e.timesFailed = 0),
+              (e.timesWon = 0),
+              0 < t &&
+                debugGame &&
+                debugGame.eventManager.notify(debugGame.Events.TUTORIAL.BEGIN);
+            e.analytics.set("dimension1", t),
+              e.analytics.track("day", "begin" + t, e.playerState.getGold()),
+              e.kongregate.submit("DayReached", t);
+            function a() {
+              (e.currentScreen = "STOCKING"),
+                e.soundManager.stopMusic(500),
+                e.stockUI.startDay(o.clues.crisis, function () {
+                  n(o);
+                });
+            }
+            var n = function () {
+                (e.currentScreen = "SALES"),
+                  0 === t && e.soundManager.stopMusic(100),
+                  e.eventManager.notify(e.Events.WRAPUP.END),
+                  e.interactionManager.startDay(o, t, function () {
+                    e.eventManager.notify(e.Events.DAY.END), r();
+                  });
+              },
+              r = function () {
+                e.wrapupManager.startDay(o, function () {
+                  (e.currentScreen = "WRAPUP"),
+                    e.eventManager.notify(e.Events.WRAPUP.END),
+                    e.playerState.getGold() < 0
+                      ? (e.timesFailed++,
+                        e.analytics.set("dimension4", e.timesFailed),
+                        e.analytics.track("game", "fail", t),
+                        e.endStateWrapper.setGameResult(!1),
+                        e.endState.endState())
+                      : (t++,
+                        e.analytics.set("dimension1", t),
+                        e.analytics.track(
+                          "day",
+                          "begin" + t,
+                          e.playerState.getGold()
+                        ),
+                        e.kongregate.submit("DayReached", t),
+                        t <= 7
+                          ? 0 <= e.playerState.getGold() && ((o = we(t)), a())
+                          : (e.timesWon++,
+                            e.analytics.set("dimension4", e.timesWon),
+                            e.endStateWrapper.setGameResult(!0),
+                            e.endState.endState()));
+                });
+              };
+            debugGame && ((window.forceWrapup = r), (window.forceStock = a));
+            (e.restartDay = function () {
+              0 === t ? n() : a();
+            }),
+              n();
+          })(X);
+      },
+      update: function () {
+        $(X.dayTimer.getPercent()),
+          Q.updateCrop(),
+          Z.updateCrop(),
+          X.displayManager.updateSunPosition(X.dayTimer.getPercent()),
+          X.displayManager.updateSky(X.dayTimer.getPercent());
+      },
+    };
+  }
+  function ee(s) {
+    var d,
+      l,
+      u,
+      c,
+      h,
+      f = null,
+      p = null;
+    (this.gameWon = !1),
+      (this.setGameResult = function (e) {
+        gameWon = e;
+      });
+    this.endState = function () {
+      if (
+        ((s.currentScreen = "ENDSCREEN"),
+        (s.stage.backgroundColor = "#000000"),
+        (d = s.add.graphics(0, 0)).beginFill(0, 1),
+        d.drawRect(0, 0, 800, 600),
+        (l = s.add.text(400, 500, "Restart Game", {
+          font: "24px yoster_islandregular",
+          fill: "#FFFFFF",
+          align: "right",
+        })),
+        (u = s.add.text(400, 400, "Retry Day", {
+          font: "32px yoster_islandregular",
+          fill: "#FFFFFF",
+          align: "left",
+        })),
+        l.anchor.setTo(0.5, 0.5),
+        (l.inputEnabled = !0),
+        u.anchor.setTo(0.5, 0.5),
+        (u.inputEnabled = !0),
+        u.events.onInputOver.add(function () {
+          u.fill = "#d3af7a";
+        }, this),
+        l.events.onInputOver.add(function () {
+          l.fill = "#d3af7a";
+        }, this),
+        u.events.onInputOut.add(function () {
+          u.fill = "#FFFFFF";
+        }, this),
+        l.events.onInputOut.add(function () {
+          l.fill = "#FFFFFF";
+        }, this),
+        l.events.onInputDown.add(function () {
+          s.soundManager.stopMusic(),
+            s.analytics.track("game", "restartGame"),
+            i(),
+            s.reset.start(),
+            s.state.start("state_start");
+        }),
+        u.events.onInputDown.add(function () {
+          s.analytics.track("game", "restartLevel"),
+            s.soundManager.stopMusic(),
+            i(),
+            s.conditionManager.revertToCheckpoint(),
+            s.playerState.resetStats(),
+            s.stock.resetStock(s.playerState.getItems()),
+            s.restartDay();
+        }),
+        (c = s.add.image(0, 0, "endday_boxoutline")).scale.setTo(1.5, 1.5),
+        c.anchor.setTo(0.5, 0.5),
+        (h = s.add.image(0, 0, "endday_boxoutline")).scale.setTo(1.5, 1.5),
+        h.anchor.setTo(0.5, 0.5),
+        (c.x = l.x),
+        (h.x = u.x),
+        (c.y = l.y),
+        (h.y = u.y),
+        gameWon)
+      ) {
+        u.kill(), h.kill();
+        var e = 1 * s.playerState.getGold(),
+          t = s.playerState.getStockedItems();
+        for (var o in t) {
+          var a = t[o],
+            n = 0;
+          switch (o) {
+            case "sword":
+              n = 4.5;
+              break;
+            case "chicken":
+              n = 2.8;
+              break;
+            case "bow":
+              n = 6.4;
+              break;
+            case "shield":
+              n = 1.5;
+          }
+          e += a * n;
+        }
+        s.analytics.track("game", "won", e),
+          s.kongregate.submit("Highscore", Math.floor(e));
+        var r = "";
+        (r =
+          (e = 4 * Math.min(1, e / 200)) <= 1.8
+            ? "King Zoran sends you home,\nhoping you'll try again."
+            : e <= 2.5
+            ? "King Zoran sends you on our way\nwith a hefty sack of gold."
+            : e <= 3
+            ? "King Zoran stops making you pay taxes.\nWell, some of your taxes."
+            : e <= 3.5
+            ? "King Zoran sets you up with a shop in the \ncapital."
+            : e <= 3.9
+            ? "King Zoran makes you an official advisor."
+            : "King Zoran makes you an official advisor.\nSomeday, you and Jeff may even rule this\nkingdom."),
+          (p = s.add.text(
+            100,
+            200,
+            "You arrive at the palace.\nKing Zoran gives you an\nofficial rating of " +
+              parseFloat(Math.round(10 * e) / 10).toFixed(1) +
+              "/4.0\n\n" +
+              r,
+            { font: "28px yoster_islandregular", fill: "#e7bd68" }
+          ));
+      } else
+        s.soundManager.stopMusic(200),
+          s.soundManager.playSound(s.Sounds.GAMEOVER),
+          (f = s.add.text(100, 200, "GAME OVER: You have gone broke", {
+            font: "32px yoster_islandregular",
+            fill: "#FFFFFF",
+          }));
+      function i() {
+        d.kill(),
+          l.kill(),
+          u.kill(),
+          c.kill(),
+          h.kill(),
+          null != f && f.kill(),
+          (f = null) != p && p.kill(),
+          (p = null);
+      }
+    };
+  }
+  (M.DEBUG_MODE = !1),
+    (M.SOUNDENABLED = !0),
+    (M.VERSION = "0.6-om"),
+    navigator &&
+      ("Microsoft Internet Explorer" == navigator.appName ||
+        navigator.userAgent.match(/Trident/) ||
+        navigator.userAgent.match(/rv 11/)) &&
+      (M.SOUNDENABLED = !1),
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("gameDiv").addEventListener(
+        "contextmenu",
+        function (e) {
+          e.preventDefault();
+        },
+        !1
+      );
+      var e = new Phaser.Game(
+        M.RESOLUTION[0],
+        M.RESOLUTION[1],
+        Phaser.AUTO,
+        "gameDiv",
+        {
+          preload: function () {
+            e.load.image("loadingImage", "assets/loading/loading.png"),
+              e.add.text(1e3, 1e3, "fix", {
+                font: "1px yoster_islandregular",
+                fill: "#FFFFFF",
+              }),
+              M.SOUNDENABLED &&
+                (e.load.audio("textmeda", "assets/sounds/sfx/text/med/a.wav"),
+                e.load.audio("textmedb", "assets/sounds/sfx/text/med/b.wav"),
+                e.load.audio("textmedc", "assets/sounds/sfx/text/med/c.wav"),
+                e.load.audio("textmedd", "assets/sounds/sfx/text/med/d.wav"),
+                e.load.audio("textmede", "assets/sounds/sfx/text/med/e.wav"),
+                e.load.audio("textmedf", "assets/sounds/sfx/text/med/f.wav"),
+                e.load.audio("textmedg", "assets/sounds/sfx/text/med/g.wav"));
+          },
+          create: function () {
+            M.DEBUG_MODE ? (window.debugGame = e) : (window.debugGame = !1);
+            (e.stage.disableVisibilityChange = !0),
+              (e.loadStateWrapper = new a(e)),
+              (e.startStateWrapper = new n(e)),
+              (e.playStateWrapper = new r(e)),
+              (e.endStateWrapper = new ee(e)),
+              e.state.add("state_load", e.loadStateWrapper.loadState),
+              e.state.add("state_start", e.startStateWrapper.startState),
+              e.state.add("state_play", e.playStateWrapper.playState),
+              e.state.start("state_load"),
+              M.ISSCALED &&
+                ((e.stage.scale.pageAlignHorizontally = !0),
+                (e.stage.scale.pageAlignVeritcally = !0),
+                (e.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT),
+                window.addEventListener("resize", t),
+                t());
+          },
+        }
+      );
+      function t(e) {
+        var t = window.innerWidth,
+          o = window.innerHeight,
+          a = 800 / 600;
+        o * a < t
+          ? ((document.getElementById("gameDiv").style.height = "100vh"),
+            (document.getElementById("gameDiv").style.width = o * a + "px"),
+            (document.getElementById("gameDiv").style.top = ""),
+            (document.getElementById("gameDiv").style.left = "50%"),
+            (document.getElementById("gameDiv").style.margin =
+              "0 0 0 -" + (o * a) / 2 + "px"))
+          : ((document.getElementById("gameDiv").style.width = "100vw"),
+            (document.getElementById("gameDiv").style.height = t / a + "px"),
+            (document.getElementById("gameDiv").style.top = "50%"),
+            (document.getElementById("gameDiv").style.left = ""),
+            (document.getElementById("gameDiv").style.margin =
+              -t / a / 2 + "px 0 0 0"));
+      }
+    });
+  var C = {
+      PassiveLighter: "#ffffca",
+      PassiveLight: "#af9165",
+      PassiveMain: "#4d372c",
+      PassiveDark: "#4d372c",
+      PassiveDarker: "#4d361e",
+      PassiveDarkest: "#2e2821",
+      ActiveLight: "#cfcece",
+      ActiveMain: "#acacac",
+      ActiveDark: "#575757",
+      AccentAccept: "#92cb9a",
+      AccentReject: "#cb929a",
+      Background: "#92cb9a",
+      SkyDawnPrimary: "#92cb9a",
+      SkyDawnSecondary: "#a4dbb6",
+    },
+    h = {
+      dawn: { start: 0, end: 0.2 },
+      noon: { start: 0.15, end: 0.6 },
+      afternoon: { start: 0.4, end: 0.9 },
+      dusk: { start: 0.75, end: 1 },
+    };
+  function te(r) {
+    var t,
+      o,
+      i,
+      s,
+      d = 0;
+    function l(e) {
+      var t = { x: 50, y: M.RESOLUTION[1] - 34 - 4 * e };
+      9 <= e && e < 16
+        ? ((t.x = 62), (t.y = M.RESOLUTION[1] - 24 - 4 * (e - 9)))
+        : 16 <= e && ((t.x = 40), (t.y = M.RESOLUTION[1] - 22 - 4 * (e - 16)));
+      var o = r.add.image(t.x, t.y, "ui_coin_frame");
+      o.anchor.setTo(0, 1), i.add(o);
+    }
+    function u() {
+      s.events.onInputDown.removeAll(),
+        !0,
+        s.events.onInputDown.add(a, this),
+        r.eventManager.notify(r.Events.WRAPUP.NEXT);
+    }
+    function a() {
+      !1;
+    }
+    r.eventManager.register(r.Events.WRAPUP.START, function () {
+      s.events.onInputDown.removeAll(),
+        s.events.onInputDown.add(a, this),
+        r.dialogManager.printWrapup(""),
+        (d = r.playerState.getGold()),
+        (function () {
+          i.removeAll();
+          for (var e = 0; e < d / 2; e++) l(e);
+        })(),
+        (t.alpha = 0),
+        (t.visible = !0),
+        t.fadeIn.onComplete.addOnce(u),
+        t.fadeIn.start();
+    }),
+      r.eventManager.register(r.Events.WRAPUP.END, function () {
+        r.dialogManager.printWrapup(""), t.fadeOut.start();
+      }),
+      r.eventManager.register(r.Events.WRAPUP.MESSAGE, function (e, n) {
+        r.dialogManager.printWrapup(e, function () {
+          var e = d + n,
+            t = e - d,
+            o = Math.round(Math.abs(t / 2));
+          e < d && i.tweenHit.start();
+          var a = r.time.create(!0);
+          (a.count = 0),
+            a.loop(
+              100,
+              function () {
+                if (a.count < o) {
+                  if (
+                    (a.count++,
+                    0 < t && r.soundManager.playSound(r.Sounds.ACCEPT),
+                    0 < t && 0 <= d && l(i.length - 1),
+                    t < 0 && 0 < i.length)
+                  )
+                    r.soundManager.playSound(r.Sounds.REJECT),
+                      i.removeChildAt(i.length - 1).destroy();
+                  else t < 0 && r.soundManager.playSound(r.Sounds.COINLOST);
+                  d += 0 < t ? 1 : -1;
+                } else a.stop(), a.destroy(), (d = e);
+              },
+              this
+            ),
+            a.start(),
+            s.events.onInputDown.removeAll(),
+            s.events.onInputDown.add(u, this);
+        });
+      }),
+      (function () {
+        (t = r.add.group()),
+          (s = r.add.sprite(0, 0)),
+          (o = r.add.image(0, 0, "gp_moon")),
+          (i = r.add.group());
+        var e = r.add.graphics(0, 0);
+        e.beginFill(0, 1),
+          e.drawRect(0, 0, 800, 600),
+          (s.width = 800),
+          (s.height = 600),
+          s.events.onInputDown.add(u, this),
+          s.addChild(e),
+          (s.inputEnabled = !0),
+          (t.fadeIn = r.add.tween(t).to({ alpha: 1 }, 500)),
+          (t.realFadeOut = r.add.tween(t).to({ alpha: 0.9 }, 500)),
+          t.realFadeOut.onComplete.add(function () {
+            t.fadeOut.start();
+          }),
+          (t.fadeOut = r.add.tween(t).to({ alpha: 0 }, 500)),
+          t.fadeOut.onComplete.add(function () {
+            t.visible = !1;
+          }),
+          (i.tweenHit = r.add
+            .tween(i)
+            .to({ x: i.x + 10 }, 30)
+            .to({ x: i.x - 10, y: i.y }, 60)
+            .to({ x: i.x + 10, y: i.y }, 60)
+            .to({ x: i.x, y: i.y }, 30)),
+          t.add(s),
+          t.add(o),
+          t.add(i),
+          t.add(r.dialog.wrapup.box),
+          (t.visible = !1),
+          s.events.onInputDown.add(a, this);
+      })();
+  }
+  function i(f) {
+    var i,
+      n = this,
+      o = 16777215,
+      a = (O(5, 13), O(200, 300), O(1800, 3200), f.time.create(!1), !0);
+    O(4, 10), O(350, 400), O(1200, 2e3), f.time.create(!1);
+    (this.prepareStage = function () {
+      (f.renderer.renderSession.roundPixels = !0),
+        (f.stage.smoothed = !1),
+        (f.stage.backgroundColor = "#92cb9a");
+    }),
+      (this.tintClouds = function (e) {
+        this.clouds.setAll("tint", e), (o = e);
+      }),
+      (this.prepareGroups = function () {
+        f.depthGroups = {
+          titleGroup: f.add.group(),
+          envGroup: f.add.group(),
+          dialogGroup: f.add.group(),
+          shopGroup: f.add.group(),
+          pedestGroup: f.add.group(),
+          noteGroup: f.add.group(),
+          questionGroup: f.add.group(),
+          uiGroup: f.add.group(),
+          frontGroup: f.add.group(),
+          shadeGroup: f.add.group(),
+        };
+      }),
+      (this.putEnvironment = function () {
+        (this.imgBackgroundSky = f.add.group()),
+          (this.imgBackgroundSky.dawn = f.add.image(
+            0,
+            0,
+            "gp_background_sky_dawn"
+          )),
+          (this.imgBackgroundSky.noon = f.add.image(0, 0, "gp_background_sky")),
+          (this.imgBackgroundSky.afternoon = f.add.image(
+            0,
+            0,
+            "gp_background_sky_noon"
+          )),
+          (this.imgBackgroundSky.dusk = f.add.image(
+            0,
+            0,
+            "gp_background_sky_dusk"
+          )),
+          (this.imgSun = f.add.sprite(400, 100, "gp_sun")),
+          (this.clouds = f.add.group()),
+          (this.pedests = f.add.group()),
+          (this.cloudTimer = f.time.create(!1)),
+          (this.pedestTimer = f.time.create(!1)),
+          (this.imgBackgroundTown = f.add.image(0, 0, "gp_background_town")),
+          (this.shopKeeper = f.add.sprite(500, 272, "gp_shopkeeper")),
+          (this.dog = f.add.sprite(440, 300, "gp_dog_small")),
+          (this.dog.visible = !1),
+          (this.shop = f.add.sprite(0, 0, "shop_rock")),
+          (this.jeff = f.add.sprite(
+            this.shopKeeper.x + 56,
+            282,
+            "gp_jeff_noshadow"
+          )),
+          (this.jeffShadow = f.add.sprite(
+            this.shopKeeper.x + 43,
+            this.shopKeeper.y + this.shopKeeper.height - 7,
+            "gp_jeff_shadow"
+          )),
+          this.imgBackgroundSky.add(this.imgBackgroundSky.dawn),
+          this.imgBackgroundSky.add(this.imgBackgroundSky.noon),
+          this.imgBackgroundSky.add(this.imgBackgroundSky.afternoon),
+          this.imgBackgroundSky.add(this.imgBackgroundSky.dusk),
+          f.depthGroups.envGroup.add(this.imgBackgroundSky),
+          f.depthGroups.envGroup.add(this.imgSun),
+          f.depthGroups.envGroup.add(this.clouds),
+          f.depthGroups.envGroup.add(this.imgBackgroundTown),
+          f.depthGroups.envGroup.add(this.shopKeeper),
+          f.depthGroups.envGroup.add(this.dog),
+          f.depthGroups.envGroup.add(this.jeff),
+          f.depthGroups.envGroup.add(this.jeffShadow),
+          f.depthGroups.pedestGroup.add(this.pedests),
+          this.imgSun.anchor.setTo(0.5, 0.5),
+          (this.imgSun.blinking = !1),
+          this.imgSun.animations.add("blink", [0, 2], 2, !0),
+          (this.shop.smoothed = !1),
+          (this.shop.alpha = 0),
+          (this.shop.visible = !1),
+          (this.shop.shopFadeTween = f.add
+            .tween(this.shop)
+            .to({ alpha: 1 }, 2e3, Phaser.Easing.Linear.None, !1)),
+          (function (e, t) {
+            e.position.copyFrom(t),
+              (e.position.y += t.height - e.height / 2),
+              (e.position.x += t.width / 2 - e.width / 2);
+          })(this.shop, this.shopKeeper),
+          (this.dog.anim = this.dog.animations.add("doge")),
+          this.dog.animations.play("doge", 3, !0),
+          this.jeff.anchor.setTo(0.5, 0.5),
+          (this.jeff.floating = f.add
+            .tween(this.jeff)
+            .to({ y: 260 }, 2e3, Phaser.Easing.Quadratic.None, !0, 0, 1e3, !0)),
+          (this.jeff.tweenRotate = f.add
+            .tween(this.jeff)
+            .to({ angle: 1440 }, 1e3, Phaser.Easing.Linear.None)),
+          (this.jeff.itemMaking = !1),
+          (this.jeff.tweenBounce = f.add
+            .tween(this.jeff)
+            .to({ y: this.jeff.y - 10 }, 300, Phaser.Easing.Quadratic.In)
+            .to({ Y: this.jeff.y }, 400, Phaser.Easing.Quadratic.out)),
+          this.jeff.tweenRotate.onComplete.add(function () {
+            f.displayManager.jeff.tweenBounce.start();
+          }),
+          this.jeff.tweenBounce.onComplete.add(function () {
+            f.displayManager.jeff.itemMaking &&
+              (f.displayManager.jeff.floating.resume(),
+              (f.displayManager.jeff.itemMaking = !1));
+          }),
+          (this.jeffShadow.alpha = 0.6),
+          (this.jeffShadow.fadeIn = f.add
+            .tween(this.jeffShadow)
+            .to(
+              { alpha: 0.2 },
+              2e3,
+              Phaser.Easing.Quadratic.None,
+              !0,
+              0,
+              1e3,
+              !0
+            ));
+      }),
+      (this.putUIComponents = function () {
+        (this.soundControl = f.add.button(
+          M.RESOLUTION[0] - 8,
+          8,
+          "ui_sound",
+          this.soundControlClickCB,
+          this,
+          null,
+          null,
+          null
+        )),
+          (this.prevGold = 0),
+          (this.coins = f.add.group()),
+          M.SOUNDENABLED || (this.soundControl.visible = !1),
+          f.depthGroups.uiGroup.add(this.soundControl),
+          f.depthGroups.frontGroup.add(this.coins),
+          this.soundControl.anchor.setTo(1, 0),
+          (this.soundControl.alpha = 0.5),
+          (this.soundControl.frame = 1),
+          (this.soundControl.tweenHover = f.add
+            .tween(this.soundControl)
+            .to({ alpha: 1 }, 200, "Linear")),
+          (this.soundControl.tweenOut = f.add
+            .tween(this.soundControl)
+            .to({ alpha: 0.5 }, 400, "Linear")),
+          this.soundControl.events.onInputOver.add(
+            this.soundControlHoverCB,
+            this
+          ),
+          this.soundControl.events.onInputOut.add(this.soundControlOutCB, this),
+          (this.coins.tweenHit = f.add
+            .tween(this.coins)
+            .to({ x: this.coins.x + 10 }, 30)
+            .to({ x: this.coins.x - 10, y: this.coins.y }, 60)
+            .to({ x: this.coins.x + 10, y: this.coins.y }, 60)
+            .to({ x: this.coins.x, y: this.coins.y }, 30));
+      }),
+      (this.soundControlClickCB = function () {
+        f.soundManager.musicEnabled()
+          ? ((this.soundControl.frame = 0),
+            f.soundManager.toggleMusic(!1),
+            f.soundManager.toggleSound(!1))
+          : ((this.soundControl.frame = 1),
+            f.soundManager.toggleMusic(!0),
+            f.soundManager.toggleSound(!0)),
+          he("UI: sound toggle clicked!");
+      }),
+      (this.soundControlHoverCB = function () {
+        this.soundControl.tweenHover.start();
+      }),
+      (this.soundControlOutCB = function () {
+        this.soundControl.tweenOut.start();
+      });
+    var s = 0;
+    function d(e, t) {
+      if (
+        (he("UI: adding coins at index: " + e), n.coins && 60 < n.coins.length)
+      )
+        s++;
+      else {
+        var o = { x: 30, y: M.RESOLUTION[1] - 34 - 4 * e };
+        9 <= e && e < 16
+          ? ((o.x = 42), (o.y = M.RESOLUTION[1] - 24 - 4 * (e - 9)))
+          : 16 <= e &&
+            ((o.x = 20), (o.y = M.RESOLUTION[1] - 22 - 4 * (e - 16)));
+        var a = f.add.image(o.x, o.y, "ui_coin");
+        a.anchor.setTo(0, 1), t.add(a);
+      }
+    }
+    function l() {
+      0 < s ? s-- : n.coins.removeChildAt(n.coins.length - 1).destroy();
+    }
+    function r() {
+      f.kongregate.submit("CloudClicker", 1),
+        (this.cloud.inputEnabled = !1),
+        f.soundManager.playSound(f.Sounds.SWAG);
+      var e = O(5, 8);
+      he("UI: star cloud clicked! Rewarding " + e + " gold."),
+        f.analytics.track("cloud", "clicked");
+      for (var t = f.add.group(), o = 0; o < e; o++)
+        t.create(
+          this.cloud.x + O(-20, 20),
+          this.cloud.y + O(-20, 20),
+          "ui_coin"
+        );
+      var a = f.add
+          .tween(t.position)
+          .to(
+            { x: 10 - this.cloud.x, y: 570 - this.cloud.y },
+            800,
+            Phaser.Easing.Quadratic.Out
+          ),
+        n = f.add.tween(t).to({ alpha: 0 }, 500);
+      n.onComplete.add(function () {
+        t.destroy();
+      }),
+        a.start(),
+        n.start(),
+        f.playerState.addsubGold(e);
+      var r = this.cloud,
+        i = f.add
+          .tween(this.cloud)
+          .to({ y: "+10" }, 100)
+          .to({ y: 600 }, 700, Phaser.Easing.Bounce.Out);
+      i.onComplete.add(function () {
+        r.destroy();
+      }),
+        i.start(),
+        f.eventManager.notify(f.Events.UPDATE.GOLD, f.playerState.getGold());
+    }
+    (this.updateCoins = function () {
+      var e = f.playerState.getGold();
+      if (e - this.prevGold < 0 && this.prevGold <= 0)
+        f.soundManager.playSound(f.Sounds.COINLOST);
+      else {
+        var t = Math.max(e, 0),
+          o = t - this.prevGold,
+          a = Math.round(Math.abs(o / 2));
+        if (
+          (he("UI: coins changed! Diff: " + a),
+          he("UI: coins changed! Curr: " + t),
+          he("UI: coins changed! Prev: " + this.prevGold),
+          t < i && this.coins.tweenHit.start(),
+          20 < o || (0 < o && "STOCKING" === f.currentScreen))
+        ) {
+          for (var n = 0; n < a; n++) d(this.coins.length - 1, this.coins);
+          this.prevGold = t;
+        } else if (
+          (o < -20 || (o < 0 && "STOCKING" === f.currentScreen)) &&
+          this.coins.length + s >= a
+        ) {
+          for (n = 0; n < a; n++) l();
+          this.prevGold = t;
+        } else {
+          var r = f.time.create(!0);
+          (r.count = 0),
+            r.loop(
+              50,
+              function () {
+                r.count < a
+                  ? (r.count++,
+                    0 < o &&
+                      "SALES" === f.currentScreen &&
+                      f.soundManager.playSound(f.Sounds.COINS2),
+                    0 < o &&
+                      0 <= this.prevGold &&
+                      d(this.coins.length - 1, this.coins),
+                    o < 0 && 0 < this.coins.length
+                      ? ("SALES" === f.currentScreen &&
+                          f.soundManager.playSound(f.Sounds.REJECT),
+                        l())
+                      : o < 0 &&
+                        "SALES" === f.currentScreen &&
+                        f.soundManager.playSound(f.Sounds.COINLOST))
+                  : ((this.prevGold = t), r.stop(), r.destroy());
+              },
+              this
+            ),
+            r.start();
+        }
+      }
+    }),
+      (this.putLoadingBackground = function () {
+        var e = f.add.image(0, 500, "gp_background");
+        (e.arriveTween = f.add
+          .tween(e)
+          .to({ y: "-300" }, 300, Phaser.Easing.Quadratic.None, !0)),
+          M.ISALBINO &&
+            f.add.text(
+              310,
+              10,
+              "Permission to be hosted by albinoblacksheep.com",
+              { font: "18px yoster_islandregular", fill: C.PassiveMain }
+            );
+      }),
+      (this.putTitleScreen = function () {
+        var e = f.add.sprite(0, 0, "gp_title"),
+          t = f.add.sprite(400, 400, "gp_clickstart"),
+          o = f.add.sprite(400, 590, "gp_dev");
+        (e.alpha = 0),
+          (t.alpha = 0),
+          t.anchor.setTo(0.5, 0.5),
+          (t.blinkTween = f.add
+            .tween(t)
+            .to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, !0, 0, 500, !0)),
+          (e.shakeTween = f.add
+            .tween(e)
+            .to({ y: "-10" }, 1e3, Phaser.Easing.Quadratic.In, !0, 0, 500, !0)),
+          (e.fadeIn = f.add
+            .tween(e)
+            .to({ alpha: 1 }, 300, Phaser.Easing.Quadratic.None, !0)),
+          o.anchor.setTo(0.5, 1);
+      }),
+      (this.updateSunPosition = function (e) {
+        (this.imgSun.position.x = 1.05 * M.RESOLUTION[0] * (e - 0.05)),
+          (this.imgSun.position.y =
+            M.RESOLUTION[1] / 3 -
+            Math.sin((1 - e) * Math.PI) * (M.RESOLUTION[1] / 6));
+      }),
+      (this.updateSky = function (e) {
+        var t = 1 - e;
+        (this.imgBackgroundSky.dawn.alpha =
+          t >= h.dawn.start && t <= h.dawn.end ? 1 - t / h.dawn.end : 0),
+          (this.imgBackgroundSky.noon.alpha =
+            t >= h.noon.start && t <= h.noon.end
+              ? Math.sin(
+                  ((t - h.noon.start) / (h.noon.end - h.noon.start)) * Math.PI
+                )
+              : 0),
+          (this.imgBackgroundSky.afternoon.alpha =
+            t >= h.afternoon.start && t <= h.afternoon.end
+              ? Math.sin(
+                  ((t - h.afternoon.start) /
+                    (h.afternoon.end - h.afternoon.start)) *
+                    Math.PI
+                )
+              : 0),
+          (this.imgBackgroundSky.dusk.alpha =
+            t >= h.dusk.start
+              ? Math.sin(
+                  (((t - h.dusk.start) / (h.dusk.end - h.dusk.start)) *
+                    Math.PI) /
+                    2
+                )
+              : 0),
+          (this.imgBackgroundSky.dusk.alpha =
+            t >= h.dusk.end ? 1 : this.imgBackgroundSky.dusk.alpha);
+      }),
+      (this.putCloud = function () {
+        this.randomCloudAttr(), he("UI: Putting cloud at " + this.cloudY);
+        var e = "gp_cloud";
+        2 == O(1, 14) &&
+          a &&
+          ((e = "gp_cloud_star"), (this.cloudDur = O(3e3, 4200)));
+        var t = this.clouds.create(-58, this.cloudY, e);
+        (t.tint = o),
+          (t.floatTween = f.add
+            .tween(t)
+            .to({ x: M.RESOLUTION[0] }, this.cloudDur)),
+          t.floatTween.start(),
+          t.floatTween.onComplete.add(function () {
+            t.destroy();
+          }),
+          "gp_cloud_star" == e &&
+            ((t.inputEnabled = !0), t.events.onInputDown.add(r, { cloud: t })),
+          this.cloudGenerationOn &&
+            this.cloudTimer.add(
+              Phaser.Timer.SECOND * f.rnd.realInRange(3, 8),
+              this.putCloud,
+              this
+            );
+      }),
+      (this.toggleGoldenClouds = function (e) {
+        a = e;
+      }),
+      (this.toggleCloudGeneration = function (e) {
+        (this.cloudGenOn = e)
+          ? (this.putCloud(), this.cloudTimer.start())
+          : this.cloudTimer.running && this.cloudTimer.stop();
+      }),
+      (this.cloudGenerationOn = function () {
+        return this.cloudGenOn;
+      }),
+      (this.randomCloudAttr = function () {
+        (this.cloudIntv = O(1, 15)),
+          (this.cloudY = O(100, 240)),
+          (this.cloudDur = O(4e4, 8e4));
+      });
+    var u = 0;
+    function c(e, t, o, a) {
+      f.soundManager.playSound(f.Sounds.NOTIFY);
+      var n = f.add.group();
+      f.depthGroups.dialogGroup.add(n),
+        (function (e) {
+          (e.dialogIn = f.add
+            .tween(e)
+            .to({ alpha: 1 }, 500, Phaser.Easing.Bounce.In)),
+            (e.dialogPop = f.add
+              .tween(e.scale)
+              .from({ x: 0, y: 0 }, 700, Phaser.Easing.Bounce.Out)),
+            (e.dialogOut = f.add
+              .tween(e.scale)
+              .to({ x: 0, y: 0 }, 300, Phaser.Easing.Quadratic.Out)),
+            e.dialogOut.onComplete.add(function () {
+              e.destroy();
+            });
+        })(n);
+      n.create(e, t, "ui_jeff_dialog_corner");
+      var r = n.create(e + o + 12, t, "ui_jeff_dialog_corner"),
+        i =
+          (n.create(e, t + a - 8, "ui_jeff_dialog_tip"),
+          n.create(e + o + 12, t + a, "ui_jeff_dialog_corner"));
+      (r.angle += 90), (i.angle += 180);
+      for (var s = e + 12; s <= e + o; s += 2) {
+        n.create(s, t, "ui_jeff_dialog_border");
+        n.create(s, t + a, "ui_jeff_dialog_border").angle += 180;
+      }
+      for (var d = t + 12; d <= t + a; d += 2) {
+        if (
+          ((n.create(e, d, "ui_jeff_dialog_border").angle += 270),
+          d < t + a - 12)
+        )
+          n.create(e + o + 12, d, "ui_jeff_dialog_border").angle += 90;
+      }
+      var l = f.add.graphics(0, 0);
+      l.beginFill(16777162), l.drawRect(0, 0, o, a - 12);
+      var u = f.add.sprite(e + 6, t + 6);
+      u.addChild(l);
+      var c = f.add.graphics(0, 0);
+      c.beginFill(0), c.drawRect(0, 0, o, a - 12);
+      var h = f.add.sprite(e + 6, t + 6);
+      h.addChild(c),
+        (h.alphaset = 0),
+        (f.depthGroups.dialogGroup.jeffBox = h),
+        n.add(u),
+        n.add(h),
+        (n.x = e + o / 2),
+        (n.y = t + a / 2),
+        (n.pivot.x = e + o / 2),
+        (n.pivot.y = t + a / 2),
+        (n.alpha = 0),
+        he(
+          "UI: put Jeff dialog at " +
+            e +
+            ", " +
+            t +
+            " with width: " +
+            o +
+            " height: " +
+            a
+        );
+    }
+    (this.putPedestrian = function () {
+      if (!(10 < u)) {
+        u++, this.randomPedestAttr();
+        var e = this.pedests.create(-15, this.pedestY, "gp_passerby"),
+          t = this.pedestDur / 90;
+        e.anchor.setTo(0.5, 1),
+          (e.tint = 10066329 - 16384 * Math.random()),
+          (e.stepCount = 0),
+          he(
+            "UI: Putting pedestrian at " +
+              this.pedestY +
+              " with tint: " +
+              e.tint.toString(16)
+          ),
+          1 == O(1, 3)
+            ? (e.moveTween = f.add
+                .tween(e)
+                .to(
+                  { x: M.RESOLUTION[0] + 15 },
+                  this.pedestDur,
+                  Phaser.Easing.Linear.None,
+                  !0,
+                  0,
+                  -1
+                ))
+            : ((e.x = M.RESOLUTION[0] + 15),
+              (e.scale.x *= -1),
+              (e.moveTween = f.add
+                .tween(e)
+                .to(
+                  { x: -15 },
+                  this.pedestDur,
+                  Phaser.Easing.Linear.None,
+                  !0,
+                  0,
+                  -1
+                ))),
+          (e.walkTween = f.add
+            .tween(e)
+            .to({ y: "-4" }, t, Phaser.Easing.Quadratic.InOut, !0, 0, 500, !0)),
+          e.moveTween.onComplete.add(function () {
+            u--, e.destroy();
+          }),
+          e.walkTween.start(),
+          e.moveTween.start(),
+          this.pedestGenerationOn() &&
+            this.pedestTimer.add(
+              Phaser.Timer.SECOND * this.pedestIntv,
+              this.putPedestrian,
+              this
+            ),
+          this.pedests.sort("y", Phaser.Group.SORT_ASCENDING);
+      }
+    }),
+      (this.togglePedestGeneration = function (e) {
+        (this.pedestGenOn = e)
+          ? (this.putPedestrian(), this.pedestTimer.start())
+          : this.pedestTimer.running && this.pedestTimer.stop();
+      }),
+      (this.pedestGenerationOn = function () {
+        return this.pedestGenOn;
+      }),
+      (this.randomPedestAttr = function () {
+        (this.pedestIntv = O(2, 40)),
+          (this.pedestY = O(350, 420)),
+          (this.pedestDur = O(24e3, 48e3));
+      }),
+      (this.putScreenShade = function (e, t) {
+        this.screenShade && this.screenShade.destroy();
+        var o = f.add.graphics(0, 0);
+        o.beginFill(e),
+          o.drawRect(0, 0, M.RESOLUTION[0], M.RESOLUTION[1]),
+          o.endFill(),
+          (this.screenShade = f.depthGroups.shadeGroup.create(0, 0)),
+          this.screenShade.addChild(o),
+          (this.screenShade.alpha = t),
+          (this.screenShade.inputEnabled = !1),
+          (this.screenShade.visible = !1);
+      }),
+      (this.toggleScreenShade = function (e) {
+        (this.screenShade.visible = e), (this.screenShade.inputEnabled = e);
+      }),
+      (this.tintJeffBox = function (e) {
+        var t = f.depthGroups.dialogGroup.jeffBox;
+        void 0 !== t &&
+          (e
+            ? ((t.alpha = 0.7), (t.alphaset = 0.7))
+            : ((t.alpha = 0), (t.alphaset = 0)));
+      }),
+      (this.putJeffDialog = function (e, t, o, a, n) {
+        (n = n || function () {}), c(e, t, o, a);
+        for (var r = 0; r < f.depthGroups.dialogGroup.children.length; r++) {
+          var i = f.depthGroups.dialogGroup.children[r];
+          i.dialogIn.onComplete.add(n), i.dialogIn.start(), i.dialogPop.start();
+        }
+        f.depthGroups.dialogGroup.jeffBox.alpha =
+          f.depthGroups.dialogGroup.jeffBox.alphaset;
+      }),
+      (this.clearJeffDialog = function () {
+        for (var e = 0; e < f.depthGroups.dialogGroup.children.length; e++) {
+          f.depthGroups.dialogGroup.children[e].dialogOut.start();
+        }
+      }),
+      (this.drawRandomNPC = function (e, t) {
+        for (
+          var o = f.add.bitmapData(60, 70), a = e.split(","), n = 0;
+          n < a.length;
+          n++
+        ) {
+          var r = a[n].split("|"),
+            i = r[0],
+            s = parseInt(r[1]);
+          o.draw("npc-" + i + "-" + s);
+        }
+        return (
+          p(o, 190, 147, 125, 255, t.r, t.g, t.b, 255, 60, 70),
+          p(
+            o,
+            173,
+            122,
+            95,
+            255,
+            0.85 * t.r,
+            0.75 * t.g,
+            0.65 * t.b,
+            255,
+            60,
+            70
+          ),
+          o
+        );
+      }),
+      (this.generateNPCHands = function (e, t, o) {
+        var a = f.make.image(0, 0, "npc-hand"),
+          n = f.add.bitmapData(168, 198);
+        a.anchor.setTo(1, 0),
+          (a.scale.x = -1),
+          (a.smoothed = !1),
+          n.draw(a, 10, 100),
+          n.draw("npc-hand", 70, 100);
+        for (var r = 0; r < 5; r++) {
+          var i = "1" == e.charAt(r) ? "" : "-c",
+            s = "1" == t.charAt(r) ? "" : "-c",
+            d = f.make.image(0, 0, "npc-hand-" + r + i);
+          d.anchor.setTo(1, 0),
+            (d.scale.x = -1),
+            (d.smoothed = !1),
+            n.draw(d, 10, 100),
+            n.draw("npc-hand-" + r + s, 70, 100),
+            d.destroy();
+        }
+        return (
+          p(n, 190, 147, 125, 255, o.r, o.g, o.b, 255, 168, 198),
+          p(
+            n,
+            173,
+            122,
+            95,
+            255,
+            0.85 * o.r,
+            0.75 * o.g,
+            0.65 * o.b,
+            255,
+            168,
+            198
+          ),
+          a.destroy(),
+          n
+        );
+      }),
+      (this.generateItemDrop = function () {});
+  }
+  function e(n, e, t) {
+    var r = this,
+      a = !1,
+      i = !1,
+      s = e,
+      d = e,
+      o = 0.25,
+      l = 0.07;
+    if (
+      ((n.Music = {
+        WIN: "winending",
+        STOCK: "stockmusic",
+        TITLEMUS: "titleMusic",
+        ZORAN: "zoranmusic",
+        LV0: "lv0music",
+        LV1: "lv1music",
+        LV2: "lv2music",
+        LV3: "lv0music",
+        LV4: "lv4music",
+        LV5: "lv1music",
+        LV6: "lv2music",
+        LV7: "lv7music",
+      }),
+      (n.Sounds = {}),
+      M.SOUNDENABLED)
+    ) {
+      var u = [
+        c("textmeda"),
+        c("textmedb"),
+        c("textmedc"),
+        c("textmedd"),
+        c("textmede"),
+        c("textmedf"),
+        c("textmedg"),
+      ];
+      n.sound.setDecodedCallback(
+        u,
+        function () {
+          t(),
+            (n.Sounds = {
+              COINS1: c("coin1"),
+              COINS2: c("coin2"),
+              COINLOST: c("out"),
+              BOOM: c("notify"),
+              NOTIFY: c("notify"),
+              POWERUP: c("powerup"),
+              TAP: c("tap"),
+              BLIP: c("blip"),
+              ACCEPT: c("accept"),
+              REJECT: c("reject"),
+              SWAG: c("swag"),
+              GAMEOVER: c("gameover"),
+              TEXTMED: u,
+              TEXTHIGH: [
+                c("texthigha"),
+                c("texthighb"),
+                c("texthighc"),
+                c("texthighd"),
+                c("texthighe"),
+                c("texthighf"),
+                c("texthighg"),
+              ],
+              TEXTMELODY: [
+                c("textmelodya"),
+                c("textmelodyb"),
+                c("textmelodyc"),
+                c("textmelodyd"),
+                c("textmelodye"),
+                c("textmelodyf"),
+                c("textmelodyg"),
+              ],
+              TEXTMURPHY: [
+                c("textmurphya"),
+                c("textmurphyb"),
+                c("textmurphyc"),
+                c("textmurphyd"),
+                c("textmurphye"),
+                c("textmurphyf"),
+                c("textmurphyg"),
+              ],
+              TEXTSTITCH: [
+                c("textstitcha"),
+                c("textstitchb"),
+                c("textstitchc"),
+                c("textstitchd"),
+                c("textstitche"),
+                c("textstitchf"),
+                c("textstitchg"),
+              ],
+              TEXTDOG: [c("textdoga"), c("textdogb"), c("textdogc")],
+            });
+        },
+        this
+      );
+    } else t();
+    function c(e) {
+      return n.add.audio(e, o);
+    }
+    (this.playMusic = function (e, t, o) {
+      (t = t || 0), (o = o || o);
+      var a = e instanceof Array ? me(e) : e;
+      (a = (function (e) {
+        return n.add.audio(e, 0, !0);
+      })(a)),
+        r.stopMusic(o),
+        (i = a),
+        s &&
+          i.onDecoded.add(function () {
+            i === a && ((i.volume = 0 < t ? 0 : l), i.play(), i.fadeTo(t, l));
+          }, this);
+    }),
+      (this.stopMusic = function (e) {
+        if (((e = e || 0), i)) {
+          var t = i;
+          (i = !1),
+            t.fadeOut(e),
+            setTimeout(function () {
+              i !== t && t.stop();
+            }, e + 50);
+        }
+      }),
+      (this.toggleMusic = function (e) {
+        (s = e)
+          ? i && ((i.volume = 0), i.play(), i.fadeTo(300, l))
+          : i.fadeTo(300, 0);
+      }),
+      (this.musicEnabled = function () {
+        return s;
+      }),
+      (this.getMusicVolume = function () {
+        return l;
+      }),
+      (this.changeMusicVolume = function (e) {
+        (l = e), i && (i.volume = e);
+      }),
+      (this.playSound = function (e, t) {
+        if (d) {
+          var o = e instanceof Array ? me(e) : e;
+          t && (o.volume = t), (a = o).play();
+        }
+      }),
+      (this.stopSound = function () {
+        a && a.stop(), (a = !1);
+      }),
+      (this.toggleSound = function (e) {
+        (d = e) || r.stopSound();
+      }),
+      (this.soundEnabled = function () {
+        return d;
+      }),
+      (this.getSoundVolume = function () {
+        return o;
+      }),
+      (this.changeSoundVolume = function (e) {
+        (o = e), a && (a.volume = e);
+      });
+  }
+  function s(p) {
+    (this.game = p),
+      (this.assetFolder = "assets/"),
+      (this.spriteSheets = {
+        button_item_border: [22, 22],
+        button_add: [11, 11],
+        button_sub: [11, 11],
+        gp_dog_small: [48, 36],
+        upgrade_: [100, 100],
+        button_continue: [128, 128],
+        button_start: [160, 53],
+        button_accept: [63, 22],
+        button_reject: [63, 22],
+        button_question: [63, 22],
+        gp_sun: [96, 96],
+        ui_sound: [48, 48],
+        ui_stock_increase: [38, 28],
+        ui_stock_decrease: [38, 28],
+      }),
+      (this.assets = {
+        gameplay: [
+          "gp_title",
+          "gp_clickstart",
+          "gp_dev",
+          "gp_background",
+          "gp_background_town",
+          "gp_background_sky",
+          "gp_background_sky_dawn",
+          "gp_background_sky_noon",
+          "gp_background_sky_dusk",
+          "gp_sun",
+          "gp_moon",
+          "gp_cloud",
+          "gp_cloud_star",
+          "gp_shopkeeper",
+          "gp_passerby",
+          "gp_stock",
+          "gp_jeff",
+          "gp_jeff_noshadow",
+          "gp_jeff_shadow",
+          "gp_jeff_big",
+          "gp_dog_small",
+          "gp_dog_big",
+          "gp_dog_tail",
+          "gp_dog_tounge",
+          "gp_dog_claw_1",
+          "gp_dog_claw_2",
+          "gp_dog_set",
+        ],
+        ui: [
+          "endday_boxoutline",
+          "ui_itemslot",
+          "ui_itemslot_locked",
+          "ui_jeff_dialog_corner",
+          "ui_jeff_dialog_tip",
+          "ui_jeff_dialog_border",
+          "ui_dialog",
+          "ui_note",
+          "ui_note_big",
+          "ui_calendar",
+          "ui_table",
+          "ui_table_nogold",
+          "ui_levelup",
+          "ui_table_background",
+          "ui_clock",
+          "ui_coinstack_frame",
+          "ui_coin_frame",
+          "ui_coin_flat",
+          "ui_funnel",
+          "ui_funnel_sand_top",
+          "ui_funnel_sand_buttom",
+          "ui_hands_background",
+          "ui_button_accept",
+          "ui_button_reject",
+          "ui_button_question",
+          "ui_button_continue",
+          "ui_button_add",
+          "ui_button_sub",
+          "ui_button_item_border",
+          "ui_sound",
+          "ui_twinkle",
+          "ui_stock_increase",
+          "ui_stock_decrease",
+          "shop_rock",
+          "shop_wooden",
+          "shop_wooden_plus",
+          "shop_wooden_desk",
+          "shop_stone",
+          "upgrade_jeff",
+          "upgrade_shop",
+          "upgrade_itemslot",
+          "upgrade_time",
+          "ui_coin",
+          "ui_coinstack",
+          "ui_button_start",
+          "right_textbox",
+          "left_textbox",
+          "middle_textbox",
+        ],
+        hero: [
+          "hero_artifact",
+          "hero_cloak",
+          "hero_cloak_stache",
+          "hero_guardian",
+          "hero_king_zoran",
+          "hero_treasure_hunter",
+        ],
+        items: ["item_sword", "item_bow", "item_chicken", "item_shield"],
+        npc: {
+          face: 5,
+          misc: 7,
+          body: 8,
+          hair: 11,
+          eye: 10,
+          nose: 11,
+          mouth: 11,
+          hand: "npc_hand",
+        },
+        sounds: {
+          coin1: "sfx/coin.wav",
+          coin2: "sfx/coin2.wav",
+          out: "sfx/goldLost.wav",
+          boom: "sfx/boom.wav",
+          blip: "sfx/blip.wav",
+          notify: "sfx/notify.wav",
+          powerup: "sfx/powerup.wav",
+          tap: "sfx/tap.wav",
+          accept: "sfx/UI/accept.mp3",
+          reject: "sfx/UI/reject.mp3",
+          titleMusic: "mus/wintervillage.mp3",
+          lv0music: "mus/wecandoit.mp3",
+          lv1music: "mus/Review/cheerup.mp3",
+          lv2music: "mus/Review/8bit.mp3",
+          lv4music: "mus/ninja.mp3",
+          lv7music: "mus/darksanctum.mp3",
+          zoranmusic: "mus/royalentrance.mp3",
+          stockmusic: "mus/Review/whatanicesurprise.mp3",
+          gameover: "mus/gameover.mp3",
+          swag: "sfx/swag.wav",
+          texthigha: "sfx/text/high/a.wav",
+          texthighb: "sfx/text/high/b.wav",
+          texthighc: "sfx/text/high/c.wav",
+          texthighd: "sfx/text/high/d.wav",
+          texthighe: "sfx/text/high/e.wav",
+          texthighf: "sfx/text/high/f.wav",
+          texthighg: "sfx/text/high/g.wav",
+          textmelodya: "sfx/text/melody/a.wav",
+          textmelodyb: "sfx/text/melody/b.wav",
+          textmelodyc: "sfx/text/melody/c.wav",
+          textmelodyd: "sfx/text/melody/d.wav",
+          textmelodye: "sfx/text/melody/e.wav",
+          textmelodyf: "sfx/text/melody/f.wav",
+          textmelodyg: "sfx/text/melody/g.wav",
+          textmurphya: "sfx/text/murphy/a.wav",
+          textmurphyb: "sfx/text/murphy/b.wav",
+          textmurphyc: "sfx/text/murphy/c.wav",
+          textmurphyd: "sfx/text/murphy/d.wav",
+          textmurphye: "sfx/text/murphy/e.wav",
+          textmurphyf: "sfx/text/murphy/f.wav",
+          textmurphyg: "sfx/text/murphy/g.wav",
+          textstitcha: "sfx/text/stitch/a.wav",
+          textstitchb: "sfx/text/stitch/b.wav",
+          textstitchc: "sfx/text/stitch/c.wav",
+          textstitchd: "sfx/text/stitch/d.wav",
+          textstitche: "sfx/text/stitch/e.wav",
+          textstitchf: "sfx/text/stitch/f.wav",
+          textstitchg: "sfx/text/stitch/g.wav",
+          textdoga: "sfx/text/dog/a.wav",
+          textdogb: "sfx/text/dog/b.wav",
+          textdogc: "sfx/text/dog/c.wav",
+        },
+      }),
+      (this.load = function () {
+        for (var e in this.assets)
+          if (this.assets.hasOwnProperty(e))
+            if ("npc" == e)
+              for (var t in this.assets[e]) {
+                var o = this.assets[e][t];
+                if (o.substring) {
+                  var a = "assets/npc/" + t + "/" + o + ".png";
+                  p.load.image("npc-" + t, a);
+                  for (var n = 0; n < 5; n++) {
+                    var r = "assets/npc/" + t + "/" + o + "_" + n,
+                      i = "npc-" + t + "-" + n;
+                    p.load.image(i, r + ".png"),
+                      p.load.image(i + "-c", r + "_c.png"),
+                      he(
+                        "LOADING NPC HANDS [" +
+                          t +
+                          "] #" +
+                          n +
+                          "\t" +
+                          r +
+                          "\tid: " +
+                          i
+                      );
+                  }
+                } else
+                  for (n = 1; n <= o; n++) {
+                    var s = "assets/npc/" + t + "/" + n + ".png";
+                    p.load.image("npc-" + t + "-" + n, s),
+                      he("LOADING NPC PART [" + t + "] #" + n + "\t" + s);
+                  }
+              }
+            else if ("sounds" == e) {
+              if (M.SOUNDENABLED)
+                for (var i in this.assets[e]) {
+                  var d = "assets/" + e + "/" + this.assets[e][i];
+                  p.load.audio(i, d);
+                }
+            } else
+              for (var l = 0; l < this.assets[e].length; l++) {
+                var u = this.assets[e][l],
+                  c = this.assetFolder + e + "/" + u + ".png",
+                  h = !1;
+                for (var f in this.spriteSheets)
+                  if (0 <= u.indexOf(f)) {
+                    he("LOADING(spritesheet): " + c),
+                      this.game.load.spritesheet(
+                        u,
+                        c,
+                        this.spriteSheets[f][0],
+                        this.spriteSheets[f][1]
+                      ),
+                      (h = !0);
+                    break;
+                  }
+                h || (he("LOADING(image): " + c), this.game.load.image(u, c)),
+                  he("LOADED: " + u);
+              }
+      });
+  }
+  function oe(s) {
+    var r,
+      i,
+      d,
+      o,
+      l,
+      u,
+      e,
+      a,
+      t,
+      c,
+      n,
+      h = 30,
+      f = 50,
+      p = 50,
+      g = [275, 100];
+    function m(e) {
+      o = s.add.text(
+        200,
+        435,
+        (function (e) {
+          for (var t = "", o = 0; o < e.length; o++)
+            "" !== e[o] && (t += "> " + e[o] + "\n");
+          return t;
+        })(e),
+        {
+          font: "20px yoster_islandregular",
+          fill: "#3B3B3B",
+          wordWrap: !0,
+          wordWrapWidth: 400,
+        }
+      );
+    }
+    function y(e, t, o, a) {
+      d = (function (e, t) {
+        for (var o = {}, a = 0; a < e.length; a++) {
+          var n = s.add.sprite(0, 0, "item_" + e[a]);
+          (n.itemType = e[a]),
+            (n.num = void 0 === t[e[a]] ? 0 : t[e[a]] + 0),
+            (n.orignum = void 0 === t[e[a]] ? 0 : t[e[a]] + 0),
+            (n.smoothed = !1),
+            (n.count = s.add.text(0, 0, "×" + n.num, {
+              font: "30px yoster_islandregular",
+              fill: C.PassiveDark,
+            })),
+            (o[e[a]] = n);
+        }
+        return o;
+      })(o, a);
+      var n = (function (e) {
+        for (var t = [], o = [], a = [], n = 0; n < 4; n++) {
+          var r;
+          n < e
+            ? ((r = s.add.image(20, 40 + 70 * n, "ui_itemslot")), o.push(r))
+            : ((r = s.add.image(20, 40 + 70 * n, "ui_itemslot_locked")),
+              a.push(r)),
+            r.anchor.setTo(0, 0);
+        }
+        return t.push(o), t.push(a), t;
+      })(e);
+      (r = n[0]),
+        (i = n[1]),
+        (function (e) {
+          var t = Math.floor((s.width - p - g[0]) / (h + f)),
+            o = -1;
+          for (var a in e) {
+            o++,
+              s.physics.arcade.enable(e[a]),
+              (e[a].itemname = a),
+              (e[a].loaded = !1),
+              (e[a].inputEnabled = !0),
+              e[a].scale.setTo(2, 2),
+              e[a].input.enableDrag(),
+              e[a].events.onDragStop.add(O, this),
+              e[a].events.onDragStart.add(S, this),
+              (e[a].position.x = g[0] + (o % t) * 1.25 * (h + f)),
+              (e[a].position.y = g[1] + Math.floor(o / t) * (h + f)),
+              (e[a].count.x = e[a].position.x + h + 8),
+              (e[a].count.y = e[a].position.y),
+              (e[a].itemborder = s.add.image(
+                e[a].position.x - 6,
+                e[a].position.y - 6,
+                "ui_button_item_border"
+              )),
+              e[a].itemborder.scale.setTo(2, 2),
+              s.world.bringToTop(e[a].itemborder),
+              (e[a].increaseStock = s.add.button(
+                e[a].count.x,
+                e[a].count.y,
+                "ui_stock_increase",
+                _,
+                this,
+                1,
+                0,
+                2
+              )),
+              (e[a].decreaseStock = s.add.button(
+                e[a].count.x,
+                e[a].count.y + e[a].height,
+                "ui_stock_decrease",
+                M,
+                this,
+                1,
+                0,
+                2
+              )),
+              e[a].increaseStock.anchor.setTo(0, 1),
+              (e[a].increaseStock.item = e[a]),
+              (e[a].decreaseStock.item = e[a]),
+              (e[a].originalPosition = e[a].position.clone()),
+              (e[a].price = ie[a].price),
+              (e[a].priceText = s.add.group()),
+              e[a].priceText.position.setTo(
+                e[a].itemborder.x + 4,
+                e[a].itemborder.y + e[a].itemborder.height + 2
+              );
+            var n = s.add.text(0, 0, e[a].price + " ", {
+              font: "16px yoster_islandregular",
+              fill: "#ffffca",
+            });
+            e[a].priceText.add(n),
+              e[a].priceText.add(s.add.image(n.x + n.width, n.y, "ui_coin")),
+              (e[a].xtext = s.add.text(
+                e[a].position.x + e[a].width,
+                e[a].position.y + e[a].height + 5,
+                "×",
+                { font: "14px yoster_islandregular", fill: C.PassiveLight }
+              )),
+              (e[a].xtext.visible = !1),
+              (e[a].priceText.visible = !0),
+              (e[a].tinted = s.add.image(
+                e[a].position.x,
+                e[a].position.y,
+                e[a].key
+              )),
+              e[a].tinted.scale.setTo(2, 2),
+              (e[a].tinted.tint = 5060396),
+              s.world.bringToTop(e[a]),
+              e[a].events.onInputOver.add(x, e[a]),
+              e[a].events.onInputOut.add(I, e[a]),
+              (e[a].loader = null);
+          }
+        })(d),
+        (function (e) {
+          for (var t = 0; t < e.length; t++)
+            e[t].anchor.setTo(0, 0),
+              (e[t].name = e[t].key + ": " + t),
+              he("Loader name: " + e[t].name),
+              (e[t].num = s.add.text(
+                e[t].position.x + e[t].width / 2,
+                e[t].position.y + 8,
+                "X",
+                { font: "20px yoster_islandregular", fill: "#d3af7a" }
+              )),
+              (e[t].loaded = null),
+              s.physics.arcade.enable(e[t]);
+        })(r),
+        (l = s.add.text(70, 535, "0", {
+          font: "30px yoster_islandregular",
+          fill: C.PassiveLighter,
+        })),
+        (u = s.add.image(38, 502, "ui_coin_flat")),
+        c.add(u),
+        c.add(l),
+        l.setText(t),
+        l.anchor.setTo(0.5, 0.5),
+        w();
+    }
+    function v() {
+      if (
+        (function () {
+          for (var e = 0; e < r.length; e++)
+            if (r[e] && null != r[e].loaded) return !0;
+        })()
+      ) {
+        for (var e in (s.soundManager.stopMusic(500),
+        s.soundManager.playSound(s.Sounds.BLIP),
+        d))
+          d[e].priceText.visible = !1;
+        !(function () {
+          for (var e in d)
+            d[e].tinted.destroy(),
+              (d[e].xtext.visible = !1),
+              (d[e].count.visible = !1),
+              (d[e].priceText.visible = !1),
+              d[e].increaseStock.destroy(),
+              d[e].decreaseStock.destroy(),
+              d[e].itemborder.destroy(),
+              d[e].destroy();
+          for (var t = 0; t < r.length; t++) r[t].num.destroy(), r[t].destroy();
+          for (t = 0; t < i.length; t++) i[t].destroy();
+          l.destroy(), o.destroy();
+        })(),
+          c.fadeOut.start(),
+          s.eventManager.notify(
+            s.Events.STOCK.COMMIT,
+            (function () {
+              for (var e = [], t = 0; t < r.length; t++)
+                null != r[t].loaded && e.push(r[t].loaded.itemname);
+              return e;
+            })()
+          ),
+          n();
+      } else
+        !(function () {
+          s.soundManager.playSound(s.Sounds.NOTIFY);
+          var e = s.add.tween(a).to({ alpha: 1 }, 1e3);
+          e.onComplete.add(function () {
+            s.add.tween(a).to({ alpha: 0 }, 1e3).start();
+          }),
+            e.start();
+        })();
+    }
+    function b(e, t, o, a, n) {
+      var r = { step: 0 },
+        i = s.add.tween(r).to({ step: 100 }, a, Phaser.Easing.Quadratic.Out);
+      i.onUpdateCallback(function () {
+        e.tint = Phaser.Color.interpolateColor(t, o, 100, r.step);
+      }),
+        n && i.onComplete.addOnce(n),
+        (e.tint = t),
+        i.start();
+    }
+    function w() {
+      b(u, 13341338, 16777215, 1e3);
+    }
+    function T() {
+      b(u, 9620378, 16777215, 1e3);
+    }
+    function x(e, t) {}
+    function I(e, t) {}
+    function k(e) {
+      for (var t in e) void 0 !== d && null != d && (d[t].num = e[t] + 0);
+    }
+    function E(e, t) {
+      for (var o = 0; o < r.length; o++)
+        if (r[o].loaded && 0 <= r[o].loaded.itemname.indexOf(e)) {
+          r[o].num.setText(t);
+          break;
+        }
+    }
+    function _(e) {
+      if (e.item) {
+        var t = e.item.num;
+        s.eventManager.notify(s.Events.STOCK.ADD, e.item.itemname, 1);
+        var o = e.item.num;
+        e.item.count.setText("×" + o),
+          E(e.item.itemname, o),
+          t == o ? w() : T();
+      } else he("ERROR: !button.item");
+    }
+    function M(e) {
+      if (e.item) {
+        var t = e.item.num;
+        s.eventManager.notify(s.Events.STOCK.REMOVE, e.item.itemname, 1);
+        var o = e.item.num;
+        e.item.count.setText("×" + o),
+          E(e.item.itemname, o),
+          t == o
+            ? (function (e) {
+                b(e, 13341338, 16777215, 1e3);
+              })(e)
+            : T();
+      } else he("ERROR: !button.item");
+    }
+    function S(e, t) {
+      s.soundManager.playSound(s.Sounds.TAP), s.world.bringToTop(e);
+      for (var o = 0; o < r.length; o++)
+        Phaser.Rectangle.intersects(e.getBounds(), r[o].getBounds()) &&
+          ((r[o].num.text = "X"), (r[o].loaded = null));
+    }
+    function O(e, t) {
+      var o = !1;
+      Phaser.Rectangle.intersects(e.getBounds(), e.itemborder.getBounds())
+        ? ((loader = (function () {
+            for (var e = 0; e < r.length; e++)
+              if (null == r[e].loaded) return r[e];
+            return null;
+          })()),
+          (o = !0))
+        : (loader = (function (e, t) {
+            for (var o = 0; o < t.length; o++)
+              if (Phaser.Rectangle.intersects(e.getBounds(), t[o].getBounds()))
+                return t[o];
+            return;
+          })(e, r)),
+        (loader &&
+          void 0 !== loader &&
+          void 0 !== loader.loaded &&
+          null === loader.loaded &&
+          null === e.loader) ||
+        (void 0 === loader && null !== e.loader && !1 === o)
+          ? (void 0 === loader && (loader = e.loader),
+            e.position.copyFrom(loader.position),
+            (e.position.x += 4),
+            (e.position.y += 4),
+            (e.loaded = !0),
+            (e.loader = loader),
+            (e.xtext.x = e.position.x + e.width - 8),
+            (e.xtext.y = e.position.y - 3),
+            (e.xtext.visible = !0),
+            (loader.num.text = e.num + ""),
+            (loader.loaded = e))
+          : (e.position.copyFrom(e.originalPosition),
+            (e.loaded = !1),
+            (e.loader = null),
+            (e.xtext.visible = !1),
+            s.world.bringToTop(e.itemborder),
+            s.soundManager.playSound(s.Sounds.REJECT));
+    }
+    (this.startDay = function (e, t) {
+      (c.visible = !0),
+        (a.visible = !1),
+        c.fadeIn.start(),
+        s.soundManager.playMusic(s.Music.STOCK, 500),
+        (a.alpha = 0),
+        (a.visible = !0),
+        s.world.bringToTop(c),
+        m(e),
+        (n = t),
+        s.eventManager.notify(s.Events.STOCK.STARTDAY);
+    }),
+      (function () {
+        s.physics.startSystem(Phaser.Physics.ARCADE),
+          (c = s.add.group()),
+          (t = s.add.image(0, 0, "gp_stock")),
+          (e = s.add.button(620, 538, "ui_button_start", v, this, 1, 0, 2)),
+          (a = s.add.text(627, 542 - e.height / 2, "Stock Items", {
+            font: "20px yoster_islandregular",
+            fill: "#CC0000",
+          })),
+          c.add(t),
+          c.add(e),
+          c.add(a),
+          (a.alpha = 0),
+          (c.fadeIn = s.add.tween(c).to({ alpha: 1 }, 500)),
+          (c.fadeOut = s.add.tween(c).to({ alpha: 0 }, 500)),
+          c.fadeOut.onComplete.add(function () {
+            c.visible = !1;
+          }),
+          s.eventManager.register(s.Events.UPDATE.ITEMS, k),
+          s.eventManager.register(s.Events.UPDATE.STOCKGOLD, function (e) {
+            void 0 !== l && null != l && l.setText(e);
+          }),
+          s.eventManager.register(s.Events.STOCK.INIT, y),
+          (c.alpha = 0),
+          (c.visible = !1);
+      })();
+  }
+  function ae() {
+    var t = [];
+    (this.register = function (e) {
+      t.push(e);
+    }),
+      (this.start = function () {
+        for (var e = 0; e < t.length; e++) t[e]();
+      });
+  }
+  function ne(e) {
+    var a = this;
+    (e.Events = {
+      DAY: { START: [], END: [] },
+      INPUT: {
+        YES: [],
+        NO: [],
+        CONTINUE: [],
+        QUESTION: [],
+        ITEM: [],
+        PROFILE: [],
+      },
+      INTERACT: { NEW: [], DIALOG: [], OFFER: [] },
+      INVENTORY: { SOLD: [], NOTSOLD: [] },
+      UPDATE: { GOLD: [], ITEMS: [], STOCKGOLD: [], SHOP: [] },
+      STOCK: {
+        ADD: [],
+        REMOVE: [],
+        COMMIT: [],
+        OUTSTOCK: [],
+        INIT: [],
+        STARTDAY: [],
+      },
+      LEVEL: { LEVELUP: [], EXPUP: [], ACCEPT: [] },
+      TUTORIAL: { BEGIN: [], FAILED: [] },
+      WRAPUP: { START: [], NEXT: [], END: [], MESSAGE: [] },
+      TIMER: { JUMP: [], RESUME: [], PAUSE: [] },
+      DOG: { APPEAR: [] },
+    }),
+      (this.register = function (e, t) {
+        return e instanceof Array && "function" == typeof t
+          ? (he("REGISTERING CB FOR: " + r(e)), e.push(t), !0)
+          : (M.DEBUG_MODE && alert("REGISTERING INVALID CALLBACK"), !1);
+      }),
+      (this.remove = function (e, t) {
+        if (!(e instanceof Array) || "function" != typeof t)
+          return M.DEBUG_MODE && alert("REMOVING INVALID CALLBACK"), !1;
+        he("REMOVING CB FOR: " + r(e));
+        var o = e.indexOf(t);
+        -1 < o && e.splice(o, 1);
+      }),
+      (this.notify = function (e) {
+        if (!(e instanceof Array))
+          return M.DEBUG_MODE && alert("NOTIFYING INVALID CALLBACK"), !1;
+        for (var t = [], o = 1; o < arguments.length; o++) t.push(arguments[o]);
+        var a = e.slice();
+        he(
+          "NOTIFYING CB(s) FOR: " + r(e) + ", with args: " + JSON.stringify(t)
+        );
+        for (var n = 0; n < a.length; n++) a[n].apply(window, t);
+      }),
+      (this.notifyByName = function (e) {
+        for (var t = [n[e]], o = 1; o < arguments.length; o++)
+          t.push(arguments[o]);
+        return a.notify.apply(this, t);
+      });
+    var n = {};
+    function r(e) {
+      for (var t in n) if (n[t] === e) return t;
+      return !1;
+    }
+    !(function e(t, o) {
+      if (t instanceof Array) n[o] = t;
+      else for (var a in t) e(t[a], o + "." + a);
+    })(e.Events, "Events");
+  }
+  function re() {
+    var e = this,
+      a = M.VERSION;
+    function t() {
+      for (
+        var e = "",
+          t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+          o = 0;
+        o < 8;
+        o++
+      )
+        e += t.charAt(Math.floor(Math.random() * t.length));
+      return e;
+    }
+    (this.track = function (e, t, o) {
+      if ((he("Tracking: " + e + ", " + t + ", " + o), window.ga))
+        try {
+          ga("send", {
+            hitType: "event",
+            eventCategory: e,
+            eventAction: t,
+            eventLabel: a,
+            eventValue: o,
+          });
+        } catch (e) {}
+    }),
+      (this.set = function (e, t) {
+        if ((he("Tracking dimension: " + e + ", " + t), window.ga))
+          try {
+            ga("set", e, t), ga("send", "screenview");
+          } catch (e) {}
+      }),
+      (this.setRunID = function () {
+        e.set("dimension6", t());
+      }),
+      this.set("dimension2", t()),
+      this.set("dimension7", t());
+  }
+  var ie = {
+      sword: { price: 5, jPrice: 7 },
+      chicken: { price: 3, jPrice: 5 },
+      bow: { price: 4, jPrice: 6 },
+      water: { price: 2, jPrice: 3 },
+      meat: { price: 3, jPrice: 5 },
+      shield: { price: 6, jPrice: 8 },
+      staff: { price: 8, jPrice: 11 },
+      bone_sword: { price: 12, jPrice: 15 },
+    },
+    t =
+      "face|2,body|2,hair|2,eye|5,nose|11,mouth|3,misc|1,skin|(259.58,198.19,158.71)",
+    d =
+      "face|5,misc|6,body|3,hair|2,eye|2,nose|8,mouth|2,skin|(259.58,198.19,158.71)",
+    l =
+      "face|1,misc|6,body|5,hair|8,eye|3,nose|11,mouth|6,skin|(259.58,198.19,158.71)",
+    u =
+      "face|1,misc|5,body|4,hair|4,eye|4,nose|9,mouth|4,skin|(99.37,64.61,49.27)",
+    c =
+      "face|2,misc|7,body|6,hair|11,eye|2,nose|10,mouth|5,skin|(171.87,125.06,98.80)",
+    S = {
+      dayOne: {
+        introJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Hey kiddo, I'm Jeff the Magic Anvil!@@/Just accept it. We don't have time for questions.",
+            "It looks like you've got five swords there to sell./The going rate for those is five gold a piece.",
+            "Let's see how you do selling them!/Don't worry kid, I'll be right here if you need me.",
+          ],
+        },
+        messUpJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Kid, you might want to keep a closer eye on what they're offering.",
+            "Remember, those swords cost you five gold each.",
+          ],
+          appearConditions: ["jeffReminder"],
+        },
+        tutorialWoman: {
+          type: "dialog",
+          appearanceInfo: t,
+          dialog: [
+            "I don't have much time. My cousin's on his way. He wants a sword./@@Please don't sell him one.",
+            "I wrote clues to help you find him./If you turn him away, I'll make sure you're paid.",
+          ],
+          finishConditions: ["tutorialBegin"],
+        },
+        tutorialWomanHappy: {
+          type: "dialog",
+          appearanceInfo: t,
+          appearConditions: ["refuseCousin"],
+          dialog: "Thank you so much. Here's a little something for the help.",
+          endMoney: 7,
+        },
+        tutorialWomanAngry: {
+          type: "dialog",
+          appearanceInfo: t,
+          appearConditions: ["soldCousin"],
+          dialog:
+            "I can't believe you sold to my cousin. Did you even bother asking about his favorite color?",
+        },
+        badCousin: {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "random",
+          voice: "MURPHY",
+          offers: [10],
+          offerText:
+            "Give me a sword and you can have ten gold instead of a mouth full of teeth.",
+          success: "Heh, thanks.",
+          fail: "I'll be back.",
+          questions: { color: "Mac and Cheese.", default: "I don't care." },
+          items: { default: "I don't care." },
+          profiles: { default: "I don't care." },
+          sellConditions: ["soldCousin"],
+          refuseConditions: ["refuseCousin"],
+          isFalseHero: !0,
+        },
+        chickenJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Oh, I forgot to mention. I can make you anything that the people want and you don't have, for a price.",
+            "YOUR@ S@O@U@L@@/But for you kid, I'll also accept gold pieces.",
+            "If I see that you're out of what the customer wants, I'll be sure to shout my price at you.",
+            {
+              soldChicken:
+                "You're pretty lucky to have me, kid. @@Not many anvils can magic up a cooked chicken.",
+              default:
+                "You might want to try haggling and selling more next time.",
+            },
+          ],
+        },
+        endOfTutorialJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Nicely done, kid. We're still in business!/. . . Against all odds.",
+            {
+              soldCousin:
+                "We need to keep a closer eye out for who to sell to./I have an idea on how to fix that.",
+              default:
+                "We got lucky to get that tip about the cousin./I'll make sure we don't have to rely on luck again.",
+            },
+            "I'll research who we should and shouldn't sell to, and put it in that notebook.",
+            "Now let's get some sleep. We've got a long day ahead of us.",
+          ],
+        },
+      },
+      dayTwo: {
+        introJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Alright kiddo, time for another exciting day of shopkeeping.",
+            "Don't forget to check out your notebook. While you were resting your weak organic body, I was doing some research.",
+            "I read about a hero who was destined to save this town. You'd better make sure they get what they need.",
+            "Don't worry, the timer isn't running yet, so you can study up for as long as you need.",
+          ],
+        },
+        rhymeMan: {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "random",
+          offers: [4],
+          offerText:
+            "Hello shopkeeper, I hope you're not bored./For four gold, I would like to buy a sword!",
+          success: "Thank you sir!/Were I a cat, I would purr!",
+          fail: "I do not have the cash,/my apologies for being brash!",
+          questions: {
+            color:
+              "Though it may fill some with dread,/I must say, my favorite color is red!",
+            day: "My day has been fun, not too short not too long./If this takes much longer, I may break out in song!",
+            default:
+              "Of that, I have not been taught,/and thus I sadly know naught.",
+          },
+          items: {
+            sword:
+              "Swords are great for stabbing./Note: they are not meant for grabbing!",
+            default:
+              "I do not know what to make of that,/but I am glad to have had this chat!",
+          },
+          profiles: {
+            goblin:
+              "Ah, my mortal enemy is that./I wish to engage one in single combat.",
+            default: "What a face, what a smile!/And what dashing style!",
+          },
+          sellConditions: ["soldHero"],
+          refuseConditions: ["refusedHero"],
+          isHero: !0,
+        },
+        badRhymeMan: {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "random",
+          offers: [2],
+          offerText:
+            "Ahoy there friend, this is a good month./I'd like a sword for two gold please./@Urm, @@@dunth?",
+          success: "Thank you my friend!",
+          fail: "Fine, I'll go elsewhere.",
+          questions: {
+            color:
+              "Though I love many colors, my favorite is orange./It's the greatest of colors, because it's so . . . @@@@florange?",
+            day: "Good.",
+            default: "What?",
+          },
+          items: {
+            sword:
+              "Swords are the best, I need one. @@@@Um.@@@@@/Rhyming is hard, and I've run out of rhymes.",
+            default: "Erm, @@cool?",
+          },
+          profiles: {
+            goblin: "Eek! Get it away, get it away!",
+            default: "Yup, that's a person?",
+          },
+          sellConditions: ["soldFalse"],
+          refuseConditions: ["refusedFalse"],
+          isFalseHero: !0,
+        },
+        endJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            {
+              soldHero: "Nice work, kid. Glad you read my instructions.",
+              default:
+                "Well, we made it. Wish you had read my instructions though.",
+            },
+            {
+              dayOneRobbery:
+                "Hope we don't get robbed again. Haven't felt right since Mr. Mac and Cheese tried to steal me.",
+              default: "Let's hope our streak of good luck continues.",
+            },
+          ],
+        },
+      },
+      dayThree: {
+        introJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Alright kiddo, third day's the charm. Let's do this.",
+            "Remember, if you're not sure if someone's the hero, you might want to question them or look at them closely.",
+          ],
+        },
+        endJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            {
+              soldHero: "Nice work, kid. Let's get some sleep.",
+              default: "We made it, kiddo. Let's hope we don't get robbed.",
+            },
+          ],
+        },
+        startDog: {
+          type: "dialog",
+          appearanceInfo: "dog",
+          voice: "DOG",
+          dialog: ["*Arf!* @*Arf!*"],
+        },
+        jeffDog: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Oh my gosh, can we keep it, can we keep it?",
+            "Please please please please please please please please please.",
+          ],
+        },
+        dogChoice: {
+          type: "interact",
+          item: "chicken",
+          appearanceInfo: "dog",
+          voice: "DOG",
+          offers: [0],
+          offerText:
+            "*Arf!*@@/(It looks like the dog will want a free chicken in exchange for staying.)",
+          success: "*Arf!*",
+          fail: "*Arf.*",
+          questions: { default: "*Arf!*" },
+          items: { default: "*Arf!*" },
+          profiles: { default: "*Arf!*" },
+          sellConditions: ["gotDog"],
+          refuseConditions: ["lostDog"],
+        },
+        jeffHappy: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            {
+              gotDog: "YES, this is the best day./I will name her 'Dog'.",
+              default: "This is the worst day ever.",
+            },
+            {
+              gotDog: "Dogs are one of the few things I can't create.",
+              default: ". . .",
+            },
+            {
+              gotDog: "Well, I can,@@@ but I can only make dead ones.",
+              default: "I am irate.",
+            },
+          ],
+        },
+      },
+      randomGenHero: {},
+      jeffPoolStart: {
+        genericJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Alright kiddo, time for another fun filled day. Let's do this.",
+          ],
+        },
+        genericJeff2: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Hey kid, you ready for another day?",
+            "Well, if you aren't, then too bad. The sun waits for nobody.",
+          ],
+        },
+        genericJeff3: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Let's do this thing, kid.",
+            "I have a feeling this is our lucky day.",
+          ],
+        },
+        genericJeff4: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          appearSong: "CURRENTLEVEL",
+          dialog: [
+            "Kiddo, this is the first day of the rest of our lives. Let's make it count.",
+          ],
+        },
+      },
+      jeffPoolEnd: {
+        endJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Hey kid, it's getting late. I think it's time to get some sleep.",
+          ],
+        },
+        endJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Kiddo, I think it's time to close up shop. It's getting dark out.",
+          ],
+        },
+        endJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Kid, I don't need sleep, but you do. It's time to pack up shop.",
+          ],
+        },
+        endJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Not a bad day out there. Let's get some rest and start back up tomorrow morning.",
+          ],
+        },
+      },
+      finalDay: {
+        introJeff: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Hey kiddo, time for another beautiful day./Doesn't something about today seem diff~~",
+          ],
+        },
+        introZoran: {
+          type: "dialog",
+          appearanceInfo: "king_zoran",
+          appearSong: "ZORAN",
+          voice: "MURPHY",
+          leaveSong: "LV7",
+          dialog: [
+            "Hello there, humble shopkeeper. I am your glorious ruler, King Zoran.",
+            "I've heard good things about you and your shop and I am here to see for myself what you are capable of.",
+            "Impress me, and I will find work for you and your metal friend in the royal palace, but be warned, I am not easily impressed.",
+            "Good luck.",
+          ],
+        },
+        endZoran: {
+          type: "dialog",
+          appearanceInfo: "king_zoran",
+          appearSong: "ZORAN",
+          voice: "MURPHY",
+          dialog: [
+            {
+              gold_100:
+                "Well done, shopkeeper./You have proven yourself worthy to stand at my side.",
+              gold_50:
+                "I am mildly impressed, shopkeeper. I am sure we can find a place for you in the capital.",
+              gold_20: "That wasn't a bad effort, shopkeeper. ",
+              default: "I am disappointed, shopkeeper. I expected more.",
+            },
+            {
+              gold_20:
+                "Come, let us go to the palace. There is much to see there.",
+              default:
+                "Feel free to restart the game and try again. I will be waiting.",
+            },
+          ],
+        },
+      },
+      vocabMan: {
+        hero: {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [2],
+          offerText: "Get @bow,@@ two @gold?",
+          success: "Two gold, @bow get!",
+          fail: "Two gold bow . . .",
+          questions: { color: "@@Gold!", number: "@@Two!", default: ". . ." },
+          sellConditions: ["soldHero"],
+          refuseConditions: ["refusedHero"],
+          isHero: !0,
+        },
+        villain: {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [3],
+          offerText: "Three gold, bow get?",
+          success: "Thanks!",
+          fail: "Ugh, fine.",
+          questions: { color: "Red!", number: "Four!", default: "Huh?" },
+          isFalseHero: !0,
+        },
+        villain2: {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [1],
+          offerText: "One gold to get bow?",
+          success: "Thank you!",
+          fail: "Darn.",
+          questions: { color: "Gold!", number: "One!", default: "Huh?" },
+          isFalseHero: !0,
+        },
+        villain3: {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [2],
+          offerText: "For two gold, bow get?",
+          success: "Get bow!",
+          fail: "No get bow . . .",
+          questions: { color: "Gold!", number: "Two!", default: "Huh?" },
+          isFalseHero: !0,
+        },
+      },
+      fingers: {
+        hero: {
+          type: "interact",
+          item: "shield",
+          appearanceInfo: "random",
+          isFingers: !0,
+          fingerTime: 3e3,
+          offers: [5],
+          offerText: ["Can I get a shield for this many gold?"],
+          success: "What a deal! Thumbs up, thank you.",
+          fail: "Thumbs down.",
+          questions: {
+            number: "I'm showing it to you right now.",
+            color: "Probably yellow?",
+            default: ". . .",
+          },
+          sellConditions: ["soldHero"],
+          refuseConditions: ["refusedHero"],
+          isHero: !0,
+        },
+        falseHero1: {
+          type: "interact",
+          item: "shield",
+          appearanceInfo: "random",
+          isFingers: !0,
+          fingerTime: 3e3,
+          offers: [3],
+          offerText: ["I would like a shield for this many gold."],
+          success: "Thank you, three gold is such a steal!",
+          fail: "Bleh, fine.",
+          questions: {
+            number: "I'd say three?",
+            color: "Probably yellow?",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+        falseHero2: {
+          type: "interact",
+          item: "shield",
+          appearanceInfo: "random",
+          isFingers: !0,
+          fingerTime: 3e3,
+          offers: [4],
+          offerText: ["Can I get a shield for this many gold?"],
+          success: "Hah, nobody sells shields for four gold.",
+          fail: "Fine, be that way.",
+          questions: {
+            number: "I don't want to say.",
+            color: "Turquoise.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+        falseHero3: {
+          type: "interact",
+          item: "shield",
+          appearanceInfo: "random",
+          isFingers: !0,
+          fingerTime: 3e3,
+          offers: [2],
+          offerText: ["Can I get a shield for two gold?"],
+          success: "Heh, what a steal. Thanks.",
+          fail: "Darn.",
+          questions: {
+            number: ". . .",
+            color: "I'll go with a simple green.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+      },
+      noLetter: {
+        hero: {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [1],
+          offerText: ["My friend, can I get a bow for one gold?"],
+          success: "I am in your debt",
+          fail: "Arg, very well.",
+          questions: {
+            alphabet: "abcdefgijklmnopqrtuvwxyz",
+            color: "I'm feeling green.",
+            default: ". . .",
+          },
+          sellConditions: ["soldHero"],
+          refuseConditions: ["refusedHero"],
+          isHero: !0,
+        },
+        falseHero1: {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [3],
+          offerText: ["My friend, can I get a bow for three gold?"],
+          success: "Heh, thanks.",
+          fail: "This is an outrage.",
+          questions: {
+            alphabet: "abcdfghijklmnopqrtuvwxyz",
+            color: "Green.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+        falseHero2: {
+          type: "interact",
+          item: "shield",
+          appearanceInfo: "random",
+          offers: [2],
+          offerText: ["Can I get a shield for two gold?"],
+          success: "Why thanks, friend.",
+          fail: "How dare you. This is wrong.",
+          questions: {
+            alphabet: "abcdefgijklmnopqrstuvwxyz",
+            color: "I'm thinking red.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+        falseHero3: {
+          type: "interact",
+          item: "chicken",
+          appearanceInfo: "random",
+          offers: [1],
+          offerText: ["Could I please get a chicken for one gold?"],
+          success: "Ha, thank you, friend.",
+          fail: "This isn't the last you'll see of me.",
+          questions: {
+            alphabet: "abcdefghijklmnopstuvwxyz",
+            color: "I'm feeling blue.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+      },
+      noNumber: {
+        hero: {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "random",
+          offers: [3],
+          offerText: [
+            "Hello, can I get a sword for gold equaling the number of five letter words I've said?",
+          ],
+          success: "Why thank you, friend.",
+          fail: "I expected more, shopkeeper.",
+          questions: {
+            number: "The number of letters in this sentence.",
+            day: "Not bad, could be better.",
+            default: ". . .",
+          },
+          sellConditions: ["soldHero"],
+          refuseConditions: ["refusedHero"],
+          isHero: !0,
+        },
+        falseHero1: {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "random",
+          offers: [3],
+          offerText: [
+            "Can I get a sword for gold equaling the number of five letter words I've said?",
+          ],
+          success: "That was two easy.",
+          fail: "Zero stars.",
+          questions: {
+            number: "Five",
+            day: "Alright, I guess.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+        falseHero2: {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "random",
+          offers: [3],
+          offerText: [
+            "Hello, can I get one sword for gold equaling the number of five letter words I've said?",
+          ],
+          success: "Heh, thanks pal.",
+          fail: "You can't just give me one sword?",
+          questions: {
+            number: "I'm not sure.",
+            day: "I'd give it less than five stars.",
+            default: ". . .",
+          },
+          isFalseHero: !0,
+        },
+      },
+      urchin: {
+        "1scaredMan": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: d,
+          voice: "HIGH",
+          offers: [0],
+          offerText:
+            "I need to hide here. He's after me./Please, @@he'll kill me if he finds me.",
+          success: "Thank you.",
+          fail: "Oh dear.",
+          questions: { default: "Please, there's no time." },
+          sellConditions: ["urchin_hidMan"],
+          refuseConditions: ["urchin_manRefused"],
+        },
+        "1trackerSearch": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: l,
+          voice: "MURPHY",
+          offers: [10, 15],
+          offerText: [
+            "A very dangerous man is loose and I need to find him./I'll pay you ten gold for any information.",
+            "What if I offered you fifteen?",
+          ],
+          success: "Well, well street urchin. You're coming with me.",
+          fail: "Very well,@@ I hope you've been honest with me./@@@@For your sake.",
+          questions: { default: "I'm asking the questions here." },
+          appearConditions: ["urchin_hidMan"],
+          sellConditions: ["urchin_manDead"],
+          refuseConditions: ["urchin_manLived"],
+        },
+        "1trackerWarn": {
+          type: "dialog",
+          appearanceInfo: l,
+          voice: "MURPHY",
+          dialog: [
+            "A very dangerous man is loose and I need to find him./If you see anyone suspicious, do not trust them.",
+          ],
+          appearConditions: ["urchin_manRefused"],
+        },
+        "2gratefulMan": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: d,
+          voice: "HIGH",
+          offers: [10],
+          offerText: [
+            "Thank you so much for hiding me. Would you accept this token of my appreciation?",
+          ],
+          success:
+            "Use it well friend. Be wary of the bounty hunter, he may suspect you of hiding me.",
+          fail: ". . . I will return.",
+          questions: {
+            number: "44.",
+            color: "The color of sky.",
+            alphabet: "I never learned it.",
+            day: "Much better than yesterday.",
+            default: ". . .",
+          },
+          appearConditions: ["urchin_manGrateful"],
+          sellConditions: ["urchin_acceptedGift"],
+          refuseConditions: ["urchin_refusedGift"],
+        },
+        "2angryFamily": {
+          type: "dialog",
+          appearanceInfo: "random",
+          dialog: [
+            "We know you sold our brother out to that bounty hunter.",
+            "Watch your back, coward.",
+          ],
+          appearConditions: ["urchin_familyAngry"],
+        },
+        "4tracker": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: l,
+          voice: "MURPHY",
+          offers: [0],
+          offerText: [
+            "Did you lie to me when I was last here?/@@I demand to know the truth.",
+          ],
+          success: ". . . I'll be back.",
+          fail: ". . .",
+          questions: { default: "Answer me. Now." },
+          appearConditions: ["urchin_trackerSuspicious"],
+          sellConditions: ["urchin_trackerTruth"],
+          refuseConditions: ["urchin_trackerLied"],
+        },
+        "4waryMan": {
+          type: "dialog",
+          appearanceInfo: d,
+          voice: "HIGH",
+          dialog: [
+            "I don't quite know what to make of you, but you seem like you may be a kind soul.",
+            "Tomorrow, I will be back, and will try to buy a sword for two gold.",
+            "If you remember my face, I would be grateful.",
+          ],
+          appearConditions: ["urchin_manWary"],
+        },
+        "4trackerWarning": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: l,
+          voice: "MURPHY",
+          offers: [-7],
+          offerText: [
+            "The man you helped me capture has dangerous friends who are now your dangerous enemies./@I'll protect you for seven gold.",
+          ],
+          success: "Very good, I will return here tonight.",
+          fail: "Very well, good luck. You will need it.",
+          questions: { default: "My patience is wearing thin." },
+          appearConditions: ["urchin_familyAngry"],
+          sellConditions: ["urchin_trackerProtect"],
+          refuseConditions: ["urchin_unprotected"],
+        },
+        "5waryManTest": {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: d,
+          voice: "HIGH",
+          offers: [2],
+          offerText: ["Hiya! Can I get a sword for two gold?"],
+          success: "Well done, shopkeeper.",
+          fail: "Hrm . . .",
+          questions: {
+            number: "31",
+            color: "Green.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz",
+            day: "Not bad.",
+            default: ". . .",
+          },
+          appearConditions: ["urchin_manWary"],
+          sellConditions: ["urchin_manSold"],
+        },
+        "5madTracker": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: l,
+          voice: "MURPHY",
+          offers: [-10],
+          offerText: [
+            "I've been thinking, shopkeeper. If you lied to me about the man, I want my ten gold back./Will you return it?",
+          ],
+          success: "Good choice.",
+          fail: ". . .",
+          questions: { default: "Stop wasting my time and answer!" },
+          appearConditions: ["urchin_trackerMad"],
+          sellConditions: ["urchin_trackerBribed"],
+          refuseConditions: ["urchin_trackerRefused"],
+        },
+        "6proudMan": {
+          type: "dialog",
+          appearanceInfo: d,
+          voice: "HIGH",
+          dialog: [
+            "I am honored that you remember my face.",
+            "Please shopkeeper, accept this gift.",
+          ],
+          appearConditions: ["urchin_manProud"],
+          endMoney: 15,
+        },
+        "6vengefulTracker": {
+          type: "dialog",
+          appearanceInfo: l,
+          voice: "MURPHY",
+          dialog: [
+            ". . .",
+            "* The Tracker punches you in the stomach and takes 15 gold from your counter. *",
+            ". . .",
+            "Be glad I'm taking your gold and not your life.",
+          ],
+          appearConditions: ["urchin_trackerVengeful"],
+          endMoney: -15,
+        },
+      },
+      treasure: {
+        "2offer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "treasure_hunter",
+          offers: [-5],
+          offerText: [
+            "Howdy shopkeep, in my many incredible adventures, I found this treasure map./Want it? Five gold.",
+          ],
+          success: "Hope it's worth it!@@/I mean, why wouldn't it be?",
+          fail: "Your loss, shopkeep.",
+          questions: {
+            number: "Lucky number seven.",
+            color: "Beige, but you know, the cool kind of beige.",
+            alphabet: "What is this, a math test?",
+            day: "Adventurey, like all of my days.",
+            default: ". . .",
+          },
+          sellConditions: ["treasure_bought"],
+          refuseConditions: ["treasure_refused"],
+        },
+        "3friendlyOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "treasure_hunter",
+          offers: [-10],
+          offerText: [
+            "Hey shopkeep, always nice to see your face. How about another map? Ten gold this time.",
+          ],
+          success: "Have fun with it, pal.",
+          fail: "Alright then, I'll still be back tomorrow. Haven't given up on you yet.",
+          questions: {
+            number: "Lucky number seven.",
+            color: "Beige, but you know, the cool kind of beige.",
+            alphabet: "What is this, a math test?",
+            day: "Adventurey, like all of my days.",
+            default: ". . .",
+          },
+          appearConditions: ["treasure_happy"],
+          sellConditions: ["treasure_bought"],
+          refuseConditions: ["treasure_refused"],
+        },
+        "3sadOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "treasure_hunter",
+          offers: [-10],
+          offerText: [
+            "Hey shopkeep, this time I have an even better map. Want it for ten gold?",
+          ],
+          success: "Have fun with it, pal.",
+          fail: "Alright then, I'll still be back tomorrow. Haven't given up on you yet.",
+          questions: {
+            number: "Lucky number seven.",
+            color: "Beige, but you know, the cool kind of beige.",
+            alphabet: "What is this, a math test?",
+            day: "Adventurey, like all of my days.",
+            default: ". . .",
+          },
+          appearConditions: ["treasure_sad"],
+          sellConditions: ["treasure_bought"],
+          refuseConditions: ["treasure_refused"],
+        },
+        "4dungeonOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "treasure_hunter",
+          offers: [-15],
+          offerText: [
+            "Howdy shopkeep, I'm going to explore a dungeon tonight. Want to invest and split the keep? I'll need fifteen gold.",
+          ],
+          success: "Wish me luck, pal. Not that I'll need it, of course.",
+          fail: "Alright, I'll find myself some other investor.",
+          questions: {
+            number: "Lucky number seven.",
+            color: "Beige, but you know, the cool kind of beige.",
+            alphabet: "What is this, a math test?",
+            day: "Adventurey, like all of my days.",
+            default: ". . .",
+          },
+          appearConditions: ["treasure_hunting"],
+          sellConditions: ["treasure_invested"],
+          refuseConditions: ["treasure_refused"],
+        },
+        "4lastMap": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "treasure_hunter",
+          offers: [-15],
+          offerText: [
+            "Hey shopkeep, I've got one last map for you that'll knock your socks off. It'll be fifteen gold.",
+          ],
+          success: "Happy travels, shopkeep.",
+          fail: "Alrighty shopkeep, have it your way.",
+          questions: {
+            number: "Lucky number seven.",
+            color: "Beige, but you know, the cool kind of beige.",
+            alphabet: "What is this, a math test?",
+            day: "Adventurey, like all of my days.",
+            default: ". . .",
+          },
+          appearConditions: ["treasure_sad"],
+          sellConditions: ["treasure_bought"],
+          refuseConditions: ["treasure_refused"],
+        },
+        "6goodbye": {
+          type: "dialog",
+          appearanceInfo: "treasure_hunter",
+          dialog: [
+            "Hey shopkeep! As expected, I got through the dungeon with absolutely no problems at all.",
+            "Please ignore the scorch marks on my back, and the claw marks on my pack.",
+            "As promised, here's the return on your investment. Spend it well, pal.",
+          ],
+          appearConditions: ["treasure_hunting2"],
+          endMoney: 30,
+        },
+      },
+      artifact: {
+        "1initialGive": {
+          type: "dialog",
+          appearanceInfo: "artifact",
+          dialog: [
+            "I don't have much time. Hold onto this orb for me./@@I'll pay you 50 gold if you hold onto it for 5 days.",
+            "~~Frantically, the man gives you a black orb~~",
+            "~~It pulses with unnatural energy~~",
+            "Be careful with it.",
+          ],
+        },
+        "2shinyOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "random",
+          offers: [10],
+          offerText: [
+            "Ooh, that orb is beautiful. Think I could take it off your hands for ten gold?",
+          ],
+          success: "Thanks, appreciate it.",
+          fail: "Oh well, it was a long shot anyway.",
+          questions: {
+            number: "Eighty eight.",
+            color: "Tealish green.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz",
+            day: "Shiny!",
+            default: ". . .",
+          },
+          sellConditions: ["artifact_soldOrb"],
+          refuseConditions: ["artifact_keptOrb"],
+        },
+        "3studyOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "random",
+          offers: [20],
+          offerText: [
+            "That orb has a fascinating color. Do you think I could buy it from you for 20 gold?",
+          ],
+          success: "Thank you, I cannot wait to study this.",
+          fail: "Well, darn.",
+          questions: {
+            number: "Seventy two.",
+            color: "Whatever color that orb is.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz",
+            day: "Rather boring, until now that is.",
+            default: ". . .",
+          },
+          appearConditions: ["artifact_haveOrb2"],
+          sellConditions: ["artifact_soldOrb"],
+          refuseConditions: ["artifact_keptOrb"],
+        },
+        "4collectorOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "random",
+          offers: [40],
+          offerText: [
+            "Oh my, that orb would look fantastic on my mantle. Would you part with it for 40 gold?",
+          ],
+          success: "Well isn't this my lucky day.",
+          fail: "Oh dearie me . . .",
+          questions: {
+            number: "Ninety nine.",
+            color: "Green blue.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz",
+            day: "Smashing.",
+            default: ". . .",
+          },
+          appearConditions: ["artifact_haveOrb3"],
+          sellConditions: ["artifact_soldOrb"],
+          refuseConditions: ["artifact_keptOrb"],
+        },
+        "5villainOffer": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "random",
+          offers: [60],
+          offerText: [
+            "With that orb, unlimited power could be mine! GIVE IT TO ME. Sixty gold.",
+          ],
+          success: "AHAHAHAHAHAHA",
+          fail: ". . .",
+          questions: { default: "UNLIMITED POWER." },
+          appearConditions: ["artifact_haveOrb4"],
+          sellConditions: ["artifact_soldOrb"],
+          refuseConditions: ["artifact_keptOrb"],
+        },
+        "6returnHappy": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "artifact",
+          offers: [50],
+          offerText: ["May I get my orb back, child? For our promised price."],
+          success: "Thank you, child.",
+          fail: "Curse you, child.",
+          questions: { default: "Please child, the orb . . ." },
+          appearConditions: ["artifact_haveOrb5"],
+          sellConditions: ["artifact_goodOrb"],
+          refuseConditions: ["artifact_keptOrb"],
+        },
+        "6returnSad": {
+          type: "dialog",
+          appearanceInfo: "artifact",
+          dialog: ["You didn't keep the orb? Curse you, child."],
+          appearConditions: ["artifact_lostOrb"],
+        },
+        "6returnScared": {
+          type: "dialog",
+          appearanceInfo: "artifact",
+          dialog: [
+            "Oh dear child, you sold my orb to that lunatic?",
+            "You truly are a fool.",
+          ],
+          appearConditions: ["artifact_villainOrb"],
+        },
+      },
+      uprising: {
+        "2intro": {
+          type: "dialog",
+          appearanceInfo: "cloak",
+          voice: "STITCH",
+          dialog: [
+            "For too long have we been taxed and trodden upon./We must rise up and topple those who would exploit us.",
+            "I shall return tomorrow in clever disguise. If you are with us, accept my third offer.",
+            "We are the night.",
+          ],
+        },
+        "3return": {
+          type: "interact",
+          item: "sword",
+          appearanceInfo: "cloak_stache",
+          voice: "STITCH",
+          offers: [2, 3, 6],
+          offerText: [
+            "Hello friend who I have never seen before. Two gold for a sword?",
+            "How about three?",
+            "Or six?",
+          ],
+          success: "We are the night.",
+          fail: ". . . very well.",
+          questions: {
+            number: "Our official number is three.",
+            color: "Our official color is 'Mystery Cloak'.",
+            alphabet: "Our official alphabet is 'abcdefghijklmnopqrstuvwxyz'",
+            day: "Officially, my day has been standard to above standard.",
+            default: ". . .",
+          },
+          sellConditions: ["uprising_rebel"],
+          refuseConditions: ["uprising_citizen"],
+        },
+        "4policeIntro": {
+          type: "dialog",
+          appearanceInfo: "guardian",
+          dialog: [
+            "We've heard of some dangerous characters starting up a rebellion against the glorious King Zoran.",
+            "If you hear anything, you are required by law to report it. I will be back tomorrow.",
+          ],
+        },
+        "4rebelMoney": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "cloak",
+          voice: "STITCH",
+          offers: [-7],
+          offerText: [
+            "Hello again, my friend. The rebellion requires seven gold. Will you help us free the people?",
+          ],
+          success: "We are the night.",
+          fail: ". . . very well.",
+          questions: {
+            number: "Officially, our favorite number is currently seven.",
+            color: "Currently, our favorite color is 'Charcoal Cloak'.",
+            alphabet:
+              "Officially, our alphabet is 'abcdefghijklmnopqrstuvwxyz'.",
+            day: "This day has been pleasant enough.",
+            default: ". . .",
+          },
+          appearConditions: ["uprising_rebelBegin"],
+          sellConditions: ["uprising_rebel"],
+          refuseConditions: ["uprising_citizen"],
+        },
+        "5rebelWarning": {
+          type: "dialog",
+          appearanceInfo: "cloak",
+          voice: "STITCH",
+          dialog: [
+            "Hello friend. Thank you for listening to us.",
+            "You should probably think about staying out of the town square today.",
+            ". . . Not that we are doing anything there. No reason at all, nothing to worry about./@@@Bye.",
+          ],
+          appearConditions: ["uprising_citizenBegin"],
+        },
+        "5rebelJob": {
+          type: "dialog",
+          appearanceInfo: "cloak",
+          voice: "STITCH",
+          dialog: [
+            "Hello friend, I have your first mission to help free our people.",
+            "A nasty city official will be here soon to buy a bow for one gold.",
+            "Stall him for five seconds before you reject him so we can kidnap . . .",
+            "so we can talk to him.",
+          ],
+          appearConditions: ["uprising_rebelJoined"],
+        },
+        "5official": {
+          type: "interact",
+          item: "bow",
+          appearanceInfo: "random",
+          offers: [1],
+          offerText: [
+            "I am an official representative of the city, and I demand a bow for one gold.",
+          ],
+          success: "You made the right choice",
+          fail: "Your king will hear of this.",
+          questions: { default: "Move faster, peasant." },
+          stallTime: 4e3,
+          appearConditions: ["uprising_rebelJoined"],
+          stallConditions: ["uprising_officialStalled"],
+        },
+        "5policeAsk": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "guardian",
+          offers: [0, 5],
+          offerText: [
+            "Can you tell me anything about the rebels?",
+            "What if I offer you five gold? Not that I should have to pay you to help your king.",
+          ],
+          success: "Thank you, this will help us greatly.",
+          fail: "Very well, I hope you've been honest. We could make your life very difficult.",
+          questions: { default: "Please sir, just answer the question." },
+          sellConditions: ["uprising_informant"],
+          refuseConditions: ["uprising_traitor"],
+        },
+        "5stallThanks": {
+          type: "dialog",
+          appearanceInfo: "cloak",
+          voice: "STITCH",
+          dialog: ["Hello friend, thank you for the help. Now we pay you."],
+          appearConditions: ["uprising_officialStalled"],
+          endMoney: 17,
+        },
+        "6stallAsk": {
+          type: "dialog",
+          appearanceInfo: "guardian",
+          dialog: [
+            "Hello citizen, we've heard that one of the rebels will make contact with you today.",
+            "Stall her for seven seconds when she's here, and we'll make it worth your while.",
+          ],
+          appearConditions: ["uprising_informantHelper"],
+        },
+        "6rebelStall": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: "cloak",
+          voice: "STITCH",
+          offers: [0],
+          offerText: [
+            "Hello friend, this is last time I come here. You are sure you will not join?",
+          ],
+          success: "Fantastic! We will see you soon.",
+          fail: "All right, friend. I will see you around then.",
+          questions: {
+            number: "My personal favorite number is eight.",
+            color: "Our official color of the day is 'Nighttime Black'.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz",
+            day: "Officially I am required to say that today was pleasant.",
+            default: ". . .",
+          },
+          stallTime: 6e3,
+          appearConditions: ["uprising_informantHelper"],
+          sellConditions: ["uprising_acceptedRebel"],
+          stallConditions: ["uprising_informant"],
+        },
+        "6policeBribe": {
+          type: "dialog",
+          appearanceInfo: "guardian",
+          dialog: [
+            "We know you are lying. You're lucky I'm only taking your gold and not your head.",
+          ],
+          appearConditions: ["uprising_traitorFound"],
+          endMoney: -15,
+        },
+      },
+      timer: {
+        jeffNotify: {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            "Hey kiddo, we should probably close up shop, but we've been moving a bit too slowly today.",
+            "Tomorrow, try getting people through here faster, and watch the sun to see how much time you have left.",
+            "For now, we'll just have to work a bit of overtime to catch up.",
+          ],
+          finishConditions: ["timer_slow"],
+        },
+      },
+      sportsball: {
+        "3intro": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: u,
+          voice: "MELODY",
+          offers: [0],
+          offerText: [
+            "We're starting a dogs only Sportsball team./Will you bring your dog to our tryouts tonight?",
+          ],
+          success: "Thanks, she'll be a great fit for the team!",
+          fail: "What a shame, she would have been a great fit for the team.",
+          questions: {
+            number: "One.",
+            color: "Purple.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz.",
+            day: "Depends on your answer.",
+            default: ". . .",
+          },
+          appearConditions: ["dog_have"],
+          sellConditions: ["sportsball_accepted"],
+        },
+        "4recruiter": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: u,
+          voice: "MELODY",
+          offers: [0],
+          offerText: [
+            "Dog was the star player at tryouts./Will you bring her to the big game tonight?",
+          ],
+          success: "Get excited, it's going to be a great game!",
+          fail: "We'll try to get through the game without her.",
+          questions: {
+            number: "Two.",
+            color: "Purple.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz.",
+            day: "Not bad!",
+            default: ". . .",
+          },
+          appearConditions: ["sportsball_triedout"],
+          sellConditions: ["sportsball_accepted"],
+        },
+        "5recruiter": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: u,
+          voice: "MELODY",
+          offers: [-7],
+          offerText: [
+            "The dog Sportsball championship is tonight./Will you pitch in seven gold for the entry fee?",
+          ],
+          success: "Don't worry, you'll make your money back and more.",
+          fail: "I guess the girls won't be playing today.",
+          questions: {
+            number: "Three.",
+            color: "Purple.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz.",
+            day: "Pretty good!",
+            default: ". . .",
+          },
+          appearConditions: ["sportsball_atgame"],
+          sellConditions: ["sportsball_accepted"],
+        },
+        "6jeffintro": {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [
+            {
+              sportsball_championshipwon:
+                "Also, I'm really proud of you, Dog. That was an amazing victory!",
+              default:
+                "Also, I'm really proud of you, Dog. Even if you didn't win.",
+            },
+          ],
+          appearConditions: ["sportsball_championattempted"],
+        },
+        "6dogspeaks": {
+          type: "dialog",
+          appearanceInfo: "dog",
+          voice: "DOG",
+          dialog: ["Thanks, Jeff!", "Erm, I mean *Arf!*"],
+          appearConditions: ["sportsball_championattempted"],
+        },
+        "6jeffshock": {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          voice: "MED",
+          dialog: [". . . I'll just pretend I didn't hear that."],
+          appearConditions: ["sportsball_championattempted"],
+        },
+      },
+      theater: {
+        "3intro": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: c,
+          voice: "MELODY",
+          offers: [0],
+          offerText: [
+            "I'm casting the town play./Would you bring your dog in to audition tonight?",
+          ],
+          success: "Fantastic! I can already tell that she'll pop on stage.",
+          fail: "Ah well, we'll keep searching.",
+          questions: {
+            number: "Zero.",
+            color: "Rose Red.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz.",
+            day: "Depends on your answer.",
+            default: ". . .",
+          },
+          appearConditions: ["dog_have"],
+          sellConditions: ["theater_accepted"],
+        },
+        "4recruiter": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: c,
+          voice: "MELODY",
+          offers: [0],
+          offerText: [
+            "Dog absolutely nailed her audition./Would you bring her to the play tonight?",
+          ],
+          success: "I cannot wait. She has the heart of a star!",
+          fail: "This is a disappointment.",
+          questions: {
+            number: "Sixty.",
+            color: "Rose Violet.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz.",
+            day: "Pretty good!",
+            default: ". . .",
+          },
+          appearConditions: ["theater_triedout"],
+          sellConditions: ["theater_performing"],
+        },
+        "5recruiter": {
+          type: "interact",
+          item: "None",
+          appearanceInfo: c,
+          voice: "MELODY",
+          offers: [-7],
+          offerText: [
+            "We want Dog for our next play, but we need money./Would you invest seven gold to save the production?",
+          ],
+          success: "It shall be a splendid performance!",
+          fail: "We'll try to make due without it.",
+          questions: {
+            number: "Seven.",
+            color: "Blue.",
+            alphabet: "abcdefghijklmnopqrstuvwxyz.",
+            day: "Depends on whether we get the money!",
+            default: ". . .",
+          },
+          appearConditions: ["theater_performed"],
+          sellConditions: ["theater_leadrole"],
+        },
+        "6fan": {
+          type: "dialog",
+          appearanceInfo: "random",
+          dialog: [
+            "Oh my, are you THE Dog from the play last night?/Can I get your autograph?",
+          ],
+          appearConditions: ["theater_leadattempted"],
+        },
+        "6dogspeaks": {
+          type: "dialog",
+          appearanceInfo: "dog",
+          dialog: [
+            "Of course, always happy to meet a fan!",
+            "Erm, I mean *Arf!*",
+          ],
+          appearConditions: ["theater_leadattempted"],
+        },
+        "6jeffshock": {
+          type: "dialog",
+          appearanceInfo: "jeff",
+          dialog: [
+            ". . . I vote we just pretend we didn't hear that and move on.",
+          ],
+          appearConditions: ["theater_leadattempted"],
+        },
+      },
+    },
+    se = [
+      ["shop"],
+      ["itemslot"],
+      ["shop", "time"],
+      ["itemslot", "time"],
+      ["shop", "time"],
+      ["itemslot", "time"],
+    ],
+    de = {
+      shop: [
+        {
+          name: "stone",
+          description:
+            "A rock doesn't look very good ... But at least people know it's a shop.",
+          effect: "Increased chance of counter offer",
+          position: [470, 308],
+        },
+        {
+          name: "wooden_desk",
+          description: "Finally it matches your dialog box... desks are great!",
+          effect: "Increased chance of counter offer",
+          position: [481, 305],
+        },
+        {
+          name: "wooden",
+          description: "You moved your sign for all to see. Coolio!",
+          effect: "Increased chance of counter offer",
+          position: [481, 252],
+        },
+        {
+          name: "wooden_plus",
+          description: "Might as well show off some of the goods!",
+          effect: "Increased chance of counter offer",
+          position: [481, 252],
+        },
+      ],
+      jeff: [{}],
+      itemslot: [
+        {
+          name: "item_slot",
+          description: "Grow some muscles. You can carry more items than that!",
+          effect: "Additional item slot for stocking",
+          position: [0, 0],
+        },
+      ],
+      time: [
+        {
+          name: "time",
+          description: "The moon has nothing on you. Bring on the heat!",
+          effect: "More time to sell during the day",
+          position: [0, 0],
+        },
+      ],
+      stock: [],
+    };
+  function le(e) {
+    return Math.random() <= e;
+  }
+  function ue(e) {
+    return JSON.parse(JSON.stringify(e));
+  }
+  function O(e, t) {
+    var o = t - e;
+    return Math.floor(e + Math.random() * o);
+  }
+  function ce(e, t) {
+    var o = (function (n, r) {
+        var i,
+          s = !1;
+        return function () {
+          var e;
+          if (s) (e = i), (s = !1);
+          else {
+            for (
+              var t, o, a;
+              1 <=
+              (a =
+                (t = 2 * Math.random() - 1) * t +
+                (o = 2 * Math.random() - 1) * o);
+
+            );
+            (e = t * (a = Math.sqrt((-2 * Math.log(a)) / a))),
+              (i = o * a),
+              (s = !0);
+          }
+          return n + r * e;
+        };
+      })(0, 0.6),
+      a = (t + e) / 2;
+    return (a += Math.max(Math.min(1, o()), -1) * ((t - e) / 2)), Math.ceil(a);
+  }
+  function he(e) {
+    M.DEBUG_MODE && console.log(e);
+  }
+  function fe(e) {
+    var t = [
+      "zero",
+      "one",
+      "two",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "nine",
+      "ten",
+      "eleven",
+      "twelve",
+      "thirteen",
+      "fourteen",
+      "fifteen",
+      "sixteen",
+      "seventeen",
+      "eighteen",
+      "nineteen",
+    ];
+    if ("number" == typeof e) {
+      if (e < t.length) return t[e];
+      if (e < 100)
+        return (
+          [
+            "zero",
+            "ten",
+            "twenty",
+            "thirty",
+            "fourty",
+            "fifty",
+            "sixty",
+            "seventy",
+            "eighty",
+            "ninety",
+          ][Math.floor(e / 10)] +
+          " " +
+          t[e % 10]
+        );
+    }
+    return e;
+  }
+  function pe(e) {
+    return -1 !== ["a", "e", "i", "o", "u"].indexOf(e.charAt(0).toLowerCase())
+      ? "an " + e
+      : "a " + e;
+  }
+  function ge(e) {
+    for (var t = e.length - 1; 0 < t; t--) {
+      var o = Math.floor(Math.random() * (t + 1)),
+        a = e[t];
+      (e[t] = e[o]), (e[o] = a);
+    }
+    return e;
+  }
+  function me(e, t) {
+    var o = Math.floor(Math.random() * e.length),
+      a = e[o];
+    return t && e.splice(o, 1), a;
+  }
+  function D(e, t) {
+    return { category: e, hero: t, fuzz: 0, force: !0 };
+  }
+  function p(e, t, o, a, n, r, i, s, d, l, u) {
+    for (
+      var c = e.ctx.getImageData(0, 0, l, u), h = c.data.length, f = 0;
+      f < h / 4;
+      f++
+    )
+      c.data[4 * f] === t &&
+        c.data[4 * f + 1] === o &&
+        c.data[4 * f + 2] === a &&
+        ((c.data[4 * f] = r),
+        (c.data[4 * f + 1] = i),
+        (c.data[4 * f + 2] = s),
+        (c.data[4 * f + 3] = d));
+    e.ctx.putImageData(c, 0, 0);
+  }
+  function A(e, t) {
+    return 2 === t ? f(e.slice(0, 5)) : 7 === t && f(e.slice(5, 10));
+  }
+  function f(e) {
+    for (var t = 1; t < 5; t++) if (e[t]) return !1;
+    return !0;
+  }
+  function O(e, t) {
+    var o = t - e,
+      a = Math.random() * o + e;
+    return Math.floor(a);
+  }
+  var ye,
+    ve,
+    be,
+    g,
+    we,
+    N = function () {};
+  function P(e, t, o, a) {
+    function n() {
+      e(), (u = !0);
+    }
+    var r,
+      i,
+      s = this,
+      d = t,
+      l = !0,
+      u = !1;
+    (this.pause = function (e) {
+      u ||
+        (l ||
+          (clearTimeout(r),
+          (d -= Date.now() - i),
+          o && !e && o(),
+          he("PAUSING TIMER: " + d)),
+        (l = !0));
+    }),
+      (this.resume = function (e) {
+        u ||
+          (l &&
+            ((i = Date.now()),
+            clearTimeout(r),
+            (r = setTimeout(n, d)),
+            a && !e && a(),
+            he("RESUMING TIMER: " + d)),
+          (l = !1));
+      });
+    var c = 0,
+      h = 0;
+    (this.jumpForward = function (e) {
+      s.pause(!0),
+        0 < c + h - Date.now()
+          ? ((h = Date.now() - c), (c += e))
+          : ((h = Date.now()), (c = e)),
+        (d -= e),
+        s.resume(!0);
+    }),
+      (this.getPercent = function () {
+        if (u) return 0;
+        var e = (d + Math.max(c + h - Date.now(), 0)) / t;
+        return l
+          ? e
+          : (d + i - Date.now() + Math.max(c + h - Date.now(), 0)) / t;
+      }),
+      this.resume();
+  }
+  function Te(a) {
+    var n,
+      r,
+      t,
+      i = this,
+      s = [];
+    function o(e) {
+      var t = r[e];
+      if (i.get(t.components)) {
+        if (le(t.chance)) {
+          if ((he("SETTING COMPOUND CONDITION: " + e), n.push(e), t.events))
+            for (var o = 0; o < t.events.length; o++)
+              a.eventManager.notifyByName(t.events[o]);
+          if (t.kong)
+            for (o = 0; o < t.kong.length; o++)
+              a.kongregate.submit(t.kong[o], 1);
+          t.isLongTerm && (he("SETTING LONGTERM CONDITION: " + e), s.push(e));
+        } else he("DROPPING COMPOUND CONDITION: " + e);
+        delete r[e];
+      }
+    }
+    (this.init = function (e) {
+      (r = e), (n = s.slice()), (t = s.slice());
+    }),
+      (this.revertToCheckpoint = function () {
+        s = t;
+      }),
+      (this.set = function (e) {
+        if (-1 === n.indexOf(e))
+          for (var t in (n.push(e), he("SETTING CONDITION: " + e), r)) o(t);
+      }),
+      (this.get = function (e) {
+        if (e instanceof Array) {
+          for (var t = 0; t < e.length; t++) {
+            (o = "!" === e[t].charAt(0)) ? e[t].substring(1) : e[t];
+            if (-1 < n.indexOf(e[t]) === o) return !1;
+          }
+          return !0;
+        }
+        var o;
+        return -1 < e.indexOf("gold_")
+          ? parseInt(e.substring(5)) <= a.playerState.getGold()
+          : ((e = (o = "!" === e.charAt(0)) ? e.substring(1) : e),
+            -1 < n.indexOf(e) !== o);
+      });
+  }
+  function xe(s) {
+    var i = {
+        font: "20px yoster_islandregular",
+        fill: "0x000000",
+        align: "left",
+      },
+      d = this,
+      o = !1,
+      l = [],
+      u = [];
+    function c() {
+      for (var e = 0; e < u.length; e++)
+        (u[e].visible = !1), (u[e].textbox.visible = !1), u[e].kill();
+      u = [];
+    }
+    function h(e) {
+      var t = Math.ceil((20 + e.width) / 19),
+        o = s.add.group();
+      s.depthGroups.questionGroup.add(o);
+      var a = s.add.sprite(e.x, e.y, "right_textbox"),
+        n = s.add.sprite(e.x - 19 * t, e.y, "left_textbox");
+      o.add(n);
+      for (var r = 1; r < t; r++) {
+        var i = s.add.sprite(e.x - 19 * r, e.y, "middle_textbox");
+        o.add(i);
+      }
+      return o.add(a), o;
+    }
+    s.eventManager.register(s.Events.DAY.END, c),
+      (this.populateQuestions = function (e, t) {
+        c(), (l = Object.keys(e));
+        function o(e, t) {
+          e.events.onInputOver.add(function () {
+            e.fill = "#d3af7a";
+          }, this),
+            e.events.onInputOut.add(function () {
+              e.fill = "#000000";
+            }, this),
+            e.events.onInputDown.add(function () {
+              he("QUESTION SELECTED: " + t),
+                s.soundManager.playSound(s.Sounds.TAP),
+                s.eventManager.notify(s.Events.INPUT.QUESTION, t),
+                d.hideQuestions();
+            }, this);
+        }
+        for (var a = 0; a < l.length; a++) {
+          he("QUESTION OPT: " + l[a]);
+          var n = s.add.text(775, 835, " " + e[l[a]] + " ", i, t);
+          n.anchor.setTo(1, 1),
+            (n.inputEnabled = !0),
+            u.push(n),
+            o(u[a], l[a]),
+            (n.textbox = h(n));
+        }
+        var r = s.add.group();
+        for (a = 0; a < u.length; a++) r.add(u[a]);
+        s.depthGroups.questionGroup.add(r);
+      }),
+      (this.toggleQuestions = function () {
+        if (((o = !o), he("QUESTIONS TOGGLE: size[" + u.length + "]"), o))
+          for (e = 0; e < u.length; e++) {
+            var t = -400 - 75 * (e + 1);
+            u[e].textbox.forEach(function (e) {
+              s.add
+                .tween(e)
+                .to(
+                  { y: (t - 35).toString() },
+                  200,
+                  Phaser.Easing.Quadratic.Out
+                )
+                .start();
+            }),
+              s.add
+                .tween(u[e])
+                .to({ y: t.toString() }, 200, Phaser.Easing.Quadratic.Out)
+                .start();
+          }
+        else
+          for (var e = 0; e < u.length; e++) {
+            u[e].textbox.forEach(function (e) {
+              s.add
+                .tween(e)
+                .to({ y: 835 }, 200, Phaser.Easing.Quadratic.Out)
+                .start();
+            }),
+              s.add
+                .tween(u[e])
+                .to({ y: 835 }, 200, Phaser.Easing.Quadratic.Out)
+                .start();
+          }
+      }),
+      (this.hideQuestions = function () {
+        if (o)
+          for (var e = 0; e < u.length; e++) {
+            s.add
+              .tween(u[e])
+              .to({ y: 835 }, 200, Phaser.Easing.Quadratic.Out)
+              .start(),
+              u[e].textbox.forEach(function (e) {
+                s.add
+                  .tween(e)
+                  .to({ y: 835 }, 200, Phaser.Easing.Quadratic.Out)
+                  .start();
+              });
+          }
+        o = !1;
+      });
+  }
+  function Ie(e) {
+    var r,
+      i = 2,
+      s = 1,
+      u = 20;
+    function n(e, t, o, a) {
+      if (o)
+        for (
+          var n = e.sequence,
+            r = (function (e, t) {
+              for (var o = [], a = 4; o.length < t || a < u; a++)
+                e[a] || o.push(a);
+              return o;
+            })(n, o.length),
+            i = 0;
+          i < o.length;
+          i++
+        ) {
+          var s;
+          if (a) {
+            var d = Math.floor(r.length / (o.length - i)),
+              l = r.slice(0, d);
+            (s = me(l)), (r = r.slice(l.indexOf(s) + 1));
+          } else s = me(r, !0);
+          n[s] = D(t, o[i]);
+        }
+    }
+    function d(e, t, o) {
+      if (o) {
+        for (var a = [], n = 0; n < o.length; n++) a.push(D(t, o[n]));
+        var r = e.interruptNPCs;
+        e.interruptNPCs = r ? r.concat(a) : a;
+      }
+    }
+    function l(e, t) {
+      if (t) for (var o in t) e.conditions[o] = t[o];
+    }
+    function c(e, t) {
+      if (t) for (var o = 0; o < t.length; o++) e.wrapup.push(t[o]);
+    }
+    this.garnishDay = function (e, t) {
+      for (var o = 0; o < r.length; o++) {
+        var a = p[r[o]][t];
+        a &&
+          (n(e, r[o], a.chars, a.isOrdered),
+          d(e, r[o], a.interruptChars),
+          l(e, a.conditions),
+          c(e, a.wrapup));
+      }
+    };
+    var h = ["uprising", "urchin", "treasure", "artifact"],
+      f = ["sportsball", "theater"],
+      p = {
+        urchin: {
+          1: {
+            chars: ["1scaredMan", "1trackerSearch", "1trackerWarn"],
+            isOrdered: !0,
+            conditions: {
+              urchin_manGrateful: {
+                components: ["urchin_manLived"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              urchin_manWary: {
+                components: ["urchin_manRefused"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              urchin_familyAngry: {
+                components: ["urchin_manDead"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["manGrateful"],
+                text: "You think you feel a presence nearby while you're sleeping, but you can't be sure.",
+              },
+            ],
+          },
+          2: {
+            chars: ["2gratefulMan", "2angryFamily"],
+            isOrdered: !1,
+            conditions: {
+              urchin_manWary: {
+                components: ["urchin_refusedGift"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              urchin_trackerSuspicious: {
+                components: ["urchin_acceptedGift"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["urchin_familyAngry"],
+                text: "You feel a hostile presence watching you as you sleep.",
+              },
+            ],
+          },
+          4: {
+            chars: ["4tracker", "4waryMan", "4trackerWarning"],
+            isOrdered: !1,
+            conditions: {
+              urchin_trackerMad: {
+                components: ["urchin_trackerTruth"],
+                chance: 0.6,
+                isLongTerm: !0,
+              },
+              urchin_trackerVengeful: {
+                components: ["urchin_trackerLied"],
+                chance: 0.25,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["urchin_unprotected"],
+                text: "You feel the presence again in the night, though this time it slices your arm with a blade. You pay the town doctor 13 gold.",
+                gold: -13,
+              },
+              {
+                conditions: ["urchin_trackerProtect"],
+                text: "You feel the presence again in the night. A shadowy figure pounces on you, but your protector drives it away.",
+              },
+            ],
+          },
+          5: {
+            chars: ["5waryManTest", "5madTracker"],
+            isOrdered: !1,
+            conditions: {
+              urchin_trackerVengeful: {
+                components: ["urchin_trackerRefused"],
+                kong: ["Urchin_Angered"],
+                chance: 0.6,
+                isLongTerm: !0,
+              },
+              urchin_manProud: {
+                components: ["urchin_manSold"],
+                kong: ["Urchin_Helped"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+          },
+          6: { chars: ["6proudMan", "6vengefulTracker"], isOrdered: !1 },
+          7: {
+            wrapup: [
+              {
+                conditions: ["urchin_trackerVengeful"],
+                text: "Some days, you still see the bounty hunter you angered.",
+              },
+              {
+                conditions: ["urchin_trackerVengeful"],
+                text: "He leers at you, as if to say that you are next.",
+              },
+              {
+                conditions: ["urchin_manProud"],
+                text: "Sometimes, you think you spot the mysterious man who asked for your help, but by the time you look closely, he vanishes.",
+              },
+              {
+                conditions: ["urchin_familyAngry"],
+                text: "Some days, you're certain you feel the family of the man you betrayed watching you.",
+              },
+            ],
+          },
+          invalidOthers: ["treasure", "artifact"],
+        },
+        treasure: {
+          2: {
+            chars: ["2offer"],
+            isOrdered: !1,
+            conditions: {
+              treasure_happy: {
+                components: ["treasure_bought"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              treasure_trackHelper: {
+                components: ["treasure_bought"],
+                kong: ["Treasure_Seeker"],
+                chance: 1,
+                isLongTerm: !1,
+              },
+              treasure_sad: {
+                components: ["treasure_refused"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              treasure_good: {
+                components: ["treasure_bought"],
+                chance: 0.75,
+                isLongTerm: !1,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["treasure_bought"],
+                text: "At nightfall, you set out to follow your new treasure map, but you can't seem to find anything.",
+              },
+              {
+                conditions: ["treasure_good"],
+                text: "Just as you're about to leave, you spot a stack of 12 gold!",
+                gold: 12,
+              },
+            ],
+          },
+          3: {
+            chars: ["3friendlyOffer", "3sadOffer"],
+            isOrdered: !1,
+            conditions: {
+              treasure_hunting: {
+                components: ["treasure_bought", "treasure_happy"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              treasure_trackHelper: {
+                components: ["treasure_bought"],
+                kong: ["Treasure_Seeker"],
+                chance: 1,
+                isLongTerm: !1,
+              },
+              treasure_sad: {
+                components: ["treasure_refused"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              treasure_good: {
+                components: ["treasure_bought"],
+                chance: 0.75,
+                isLongTerm: !1,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["treasure_bought"],
+                text: "At nightfall, you set out to follow your new treasure map, but you can't seem to find anything.",
+              },
+              {
+                conditions: ["treasure_good"],
+                text: "Just as you're about to leave, you spot a stack of 18 gold!",
+                gold: 18,
+              },
+            ],
+          },
+          4: {
+            chars: ["4dungeonOffer", "4lastMap"],
+            conditions: {
+              treasure_hunting2: {
+                components: ["treasure_bought", "treasure_hunting"],
+                kong: ["Treasure_All"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              treasure_trackHelper: {
+                components: ["treasure_bought"],
+                kong: ["Treasure_Seeker"],
+                chance: 1,
+                isLongTerm: !1,
+              },
+              treasure_good2: {
+                components: ["treasure_bought"],
+                chance: 0.75,
+                isLongTerm: !1,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["treasure_bought"],
+                text: "At nightfall, you set out to follow this last treasure map, but you can't seem to find anything.",
+              },
+              {
+                conditions: ["treasure_good2"],
+                text: "That is, until you spot a stack of 20 gold!",
+                gold: 20,
+              },
+            ],
+          },
+          6: { chars: ["6goodbye"], isOrdered: !1 },
+          7: {
+            wrapup: [
+              {
+                conditions: ["treasure_hunting2"],
+                text: "The treasure hunter, fresh off his recent success, has landed a job in the capital.",
+              },
+              {
+                conditions: ["treasure_hunting2"],
+                text: "He always greets you with a wink and a smile.",
+              },
+              {
+                conditions: ["treasure_happy"],
+                text: "Sometimes, you see the treasure hunter wandering the world. He always greets you with a wink.",
+              },
+            ],
+          },
+          invalidOthers: ["urchin", "artifact"],
+        },
+        artifact: {
+          1: {
+            chars: ["1initialGive"],
+            isOrdered: !1,
+            wrapup: [
+              {
+                text: "Looking at the orb makes your innards feel strange.//@@@You cover it with a blanket.",
+              },
+            ],
+          },
+          2: {
+            chars: ["2shinyOffer"],
+            isOrdered: !1,
+            conditions: {
+              artifact_haveOrb2: {
+                components: ["artifact_keptOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              artifact_lostOrb: {
+                components: ["artifact_soldOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+          },
+          3: {
+            chars: ["3studyOffer"],
+            isOrdered: !1,
+            conditions: {
+              artifact_haveOrb3: {
+                components: ["artifact_keptOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              artifact_lostOrb: {
+                components: ["artifact_soldOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+          },
+          4: {
+            chars: ["4collectorOffer"],
+            isOrdered: !1,
+            conditions: {
+              artifact_haveOrb4: {
+                components: ["artifact_keptOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              artifact_lostOrb: {
+                components: ["artifact_soldOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+          },
+          5: {
+            chars: ["5villainOffer"],
+            isOrdered: !1,
+            conditions: {
+              artifact_haveOrb5: {
+                components: ["artifact_keptOrb"],
+                kong: ["Artifact_Kept"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              artifact_villainOrb: {
+                components: ["artifact_soldOrb"],
+                kong: ["Artifact_Villain"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+          },
+          6: {
+            chars: ["6returnHappy", "6returnSad", "6returnScared"],
+            isOrdered: !1,
+            conditions: {
+              artifact_goodOrbEnd: {
+                components: ["artifact_goodOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              artifact_keptOrbBad: {
+                components: ["artifact_keptOrb"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["artifact_goodOrb"],
+                text: "As the sun sets, you feel a wave of the orb's energy and see a beam of light pierce the sky in the north.",
+              },
+              {
+                conditions: ["artifact_goodOrb"],
+                text: "The slightly charred keeper of the orb stops by your home, and gives his thanks along with 20 more gold.",
+                gold: 20,
+              },
+              {
+                conditions: ["artifact_villainOrb"],
+                text: "As the sun sets, you feel a wave of the orb's energy and see a beam of light pierce the sky in the north.",
+              },
+              {
+                conditions: ["artifact_villainOrb"],
+                text: "From the beam's direction, shadows creep into the land, destroying all that they touch, including your storefront.",
+                gold: -30,
+              },
+            ],
+          },
+          7: {
+            wrapup: [
+              {
+                conditions: ["artifact_goodOrbEnd"],
+                text: "You sometimes see the man who owns the mysterious orb wandering about with a hectic look in his eye.",
+              },
+              {
+                conditions: ["artifact_soldOrb"],
+                text: "You sometimes see the man who owns the mysterious orb wandering about with a judging look in his eye.",
+              },
+              {
+                conditions: ["artifact_villainOrb"],
+                text: "On some nights, there is an unnatural darkness, the color of the orb, to the north.",
+              },
+              {
+                conditions: ["artifact_villainOrb"],
+                text: "You can't help but feel at least partially responsible.",
+              },
+              {
+                conditions: ["artifact_keptOrbBad"],
+                text: "The mysterious orb still sits on your mantleplace.//You've tried to get rid of it, but it always finds its way back to you . . .",
+              },
+            ],
+          },
+          invalidOthers: ["treasure", "urchin"],
+        },
+        uprising: {
+          2: { chars: ["2intro"], isOrdered: !1 },
+          3: {
+            chars: ["3return"],
+            isOrdered: !1,
+            conditions: {
+              uprising_rebelBegin: {
+                components: ["uprising_rebel"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              uprising_citizenBegin: {
+                components: ["uprising_citizen"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+          },
+          4: {
+            chars: ["4policeIntro", "4rebelMoney"],
+            isOrdered: !0,
+            conditions: {
+              uprising_rebelJoined: {
+                components: ["uprising_rebel"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              uprising_citizenBegin: {
+                components: ["uprising_citizen"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["uprising_rebel"],
+                text: "You hear whispers of a rebellion gathering money and strength within the town.",
+              },
+            ],
+          },
+          5: {
+            chars: [
+              "5rebelWarning",
+              "5rebelJob",
+              "5official",
+              "5policeAsk",
+              "5stallThanks",
+            ],
+            isOrdered: !0,
+            conditions: {
+              uprising_traitorFound: {
+                components: ["uprising_traitor"],
+                chance: 0.5,
+                isLongTerm: !0,
+              },
+              uprising_friendOfRebel: {
+                components: ["uprising_traitor"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              uprising_informantHelper: {
+                components: ["uprising_informant"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["uprising_citizenBegin"],
+                text: "A small and harmless, but frightening fire broke out in the town square. The police refuse to comment on who they believe was responsible.",
+              },
+              {
+                conditions: ["uprising_officialStalled"],
+                text: "You hear that an important city official has gone missing.",
+              },
+            ],
+          },
+          6: {
+            chars: ["6stallAsk", "6rebelStall", "6policeBribe"],
+            isOrdered: !0,
+            conditions: {
+              uprising_destroyedRebels: {
+                components: ["uprising_informant"],
+                kong: ["Rebellion_Informant"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              uprising_rebelJoined: {
+                components: ["uprising_acceptedRebel"],
+                kong: ["Rebellion_Joined"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                text: "Even more instructions on how to join the rebellion are slipped under your door just before nightfall",
+              },
+              {
+                conditions: ["!uprising_rebelJoined"],
+                text: "But they're too confusing and poorly written to be of any use.",
+              },
+              {
+                conditions: ["uprising_informant"],
+                text: "However, later in the night, the police stop by to thank you for destroying the rebellion. They leave behind a generous tip.",
+                gold: 20,
+              },
+            ],
+          },
+          7: {
+            wrapup: [
+              {
+                text: "The official story is that the rebellion has been crushed.",
+              },
+              {
+                conditions: [
+                  "!uprising_destroyedRebels",
+                  "!uprising_friendOfRebel",
+                ],
+                text: "However, every once in a while, you see cloaks with handlebar moustaches out of the corner of your eye.",
+              },
+              {
+                conditions: ["uprising_friendOfRebel"],
+                text: "However, often you hear whispers of 'hello, friend' on the wind, and see cloaks with handlebar moustaches out of the corner of your eye.",
+              },
+              {
+                conditions: ["uprising_rebelJoined"],
+                text: "Some days, you are one of them.//@@You are the night.",
+              },
+            ],
+          },
+          invalidOthers: [],
+        },
+        sportsball: {
+          3: {
+            chars: ["3intro"],
+            isOrdered: !1,
+            conditions: {
+              sportsball_triedout: {
+                components: ["sportsball_accepted"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["sportsball_accepted"],
+                text: "You take Dog to the Sportsball tryouts. You're no expert, but it looks like she does pretty well!",
+              },
+            ],
+          },
+          4: {
+            chars: ["4recruiter"],
+            isOrdered: !1,
+            conditions: {
+              sportsball_atgame: {
+                components: ["sportsball_accepted"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["sportsball_accepted"],
+                text: "You take Dog to the big game. She scores three field goals, two runs, and four baskets in an impressive victory!",
+              },
+              {
+                conditions: ["sportsball_accepted"],
+                text: "Dog gets ten gold for helping, but five goes missing when you're not looking.",
+                gold: 5,
+              },
+              {
+                conditions: ["!sportsball_accepted"],
+                text: "You hear from people around town that the Sportsball team lost pretty badly.",
+              },
+            ],
+          },
+          5: {
+            chars: ["5recruiter"],
+            isOrdered: !1,
+            conditions: {
+              sportsball_championattempted: {
+                components: ["sportsball_accepted"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+              sportsball_championshipwon: {
+                components: ["sportsball_accepted"],
+                chance: 0.75,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["sportsball_atgame"],
+                text: "You go to the Sportsball championship. Jeff has drawn a large and somewhat embarassing banner rooting Dog on.",
+              },
+              {
+                conditions: ["!sportsball_championshipwon"],
+                text: "Sadly, the other team wins in the final seconds. Dog is disappointed.",
+              },
+              {
+                conditions: ["sportsball_championshipwon"],
+                text: "In the final moments, Dog scores five points to win the game! You share in the prize money.",
+                gold: 15,
+              },
+            ],
+          },
+          6: { interruptChars: ["6jeffintro", "6dogspeaks", "6jeffshock"] },
+          7: {
+            wrapup: [
+              {
+                conditions: ["sportsball_championattempted"],
+                text: "Dog is often mobbed by her legions of Sportsball fans. She doesn't let the fame get to her head.//@@@@Most of the time.",
+              },
+              {
+                conditions: ["!sportsball_championattempted"],
+                text: "The Sportsball recruiter is still trying to get Dog to play.",
+              },
+            ],
+          },
+          invalidOthers: [],
+        },
+        theater: {
+          3: {
+            chars: ["3intro"],
+            isOrdered: !1,
+            conditions: {
+              theater_triedout: {
+                components: ["theater_accepted"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["theater_accepted"],
+                text: "You take Dog to her audition. As far as you could tell, she crushes it.",
+              },
+            ],
+          },
+          4: {
+            chars: ["4recruiter"],
+            isOrdered: !1,
+            conditions: {
+              theater_performed: {
+                components: ["theater_performing"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["theater_performing"],
+                text: "You take Dog to her play. She gives a heartwrenching performance as 'Background Dog Number Three'.",
+              },
+              {
+                conditions: ["theater_performing"],
+                text: "Dog gets ten gold for the show, but five goes missing when you're not looking.",
+                gold: 5,
+              },
+            ],
+          },
+          5: {
+            chars: ["5recruiter"],
+            isOrdered: !1,
+            conditions: {
+              theater_leadattempted: {
+                components: ["theater_leadrole"],
+                chance: 1,
+                isLongTerm: !0,
+              },
+            },
+            wrapup: [
+              {
+                conditions: ["theater_leadattempted"],
+                text: "You take Dog to her big performance. Nobody in the audience cries longer or claps harder than you and Jeff.",
+              },
+              {
+                conditions: ["!theater_leadattempted"],
+                text: "Unfortunately, without the money they needed, Dog's performance was cancelled.",
+              },
+              {
+                conditions: ["theater_leadattempted"],
+                text: "As an investor, you share in the ticket sales and make a healthy profit.",
+                gold: 15,
+              },
+            ],
+          },
+          6: { interruptChars: ["6fan", "6dogspeaks", "6jeffshock"] },
+          7: {
+            wrapup: [
+              {
+                conditions: ["theater_leadattempted"],
+                text: "Dog is often mobbed by her legions of admirers. She doesn't let the fame get to her head.//@@@@Most of the time.",
+              },
+              {
+                conditions: ["theater_performed", "!theater_leadattempted"],
+                text: "The local theater troupe is still trying to recruit Dog and her natural acting talent.",
+              },
+            ],
+          },
+          invalidOthers: [],
+        },
+      };
+    !(function () {
+      r = [];
+      for (var e = h, t = 0; t < i; t++) {
+        var o = me(e);
+        (e = e.filter(function (e) {
+          return e !== o && p[o].invalidOthers.indexOf(e) < 0;
+        })),
+          he("STORY: " + o),
+          r.push(o);
+      }
+      for (var a = f, n = 0; n < s; n++) {
+        o = me(a);
+        (a = a.filter(function (e) {
+          return e !== o && p[o].invalidOthers.indexOf(e) < 0;
+        })),
+          he("STORY: " + o),
+          r.push(o);
+      }
+    })();
+  }
+  function ke(e) {
+    !(function () {
+      var r, i, s;
+      function d(e, t, o, a) {
+        var n = t.offerText[0].split(/[^a-zA-Z]/).join(""),
+          r = Math.floor(Math.random() * n.length),
+          i = r,
+          s = n.charAt(r);
+        if (a)
+          for (var d = 0; d < o.length; d++) {
+            if (
+              o[d].offerText[0]
+                .split(/[^a-zA-Z]/)
+                .join("")
+                .charAt(r) === s
+            ) {
+              if ((r = (r + 1) % n.length) === i) return;
+              (s = n.charAt(r)), (d = 0);
+            }
+          }
+        e.clues.hero.push(
+          (function (e, t) {
+            return (
+              "The " +
+              (function (e) {
+                var t = ["th", "st", "nd", "rd"],
+                  o = e % 100;
+                return e + (t[(o - 20) % 10] || t[o] || t[0]);
+              })((t += 1)) +
+              " letter the hero says will be '" +
+              e +
+              "'."
+            );
+          })(s, r)
+        );
+      }
+      (g = function (e) {
+        for (
+          var t = {
+              hero: "hero",
+              falseHeroes: [],
+              clues: { hero: [] },
+              questions: {},
+              itemData: {
+                sword: { min: 2, max: 11, priority: 5 },
+                chicken: { min: 1, max: 9, priority: 2 },
+              },
+            },
+            o = ye(t, {
+              sellConditions: ["soldHero"],
+              refuseConditions: ["refusedHero"],
+              isHero: !0,
+            }),
+            a = [],
+            n = 0;
+          n < 2;
+          n++
+        )
+          a.push(ye(t, { sellConditions: ["soldFalse"], isFalseHero: !0 }));
+        r(t, o, a, !1),
+          i(t, o, a, !1),
+          d(t, o, a, !0),
+          s(t),
+          (S.randomGenHero.hero = o);
+        for (n = 0; n < 2; n++)
+          t.falseHeroes.push("falseHero" + n),
+            (S.randomGenHero["falseHero" + n] = a[n]);
+        return delete t.itemData, t;
+      }),
+        (s = function (e) {
+          e.wrapup = [
+            {
+              conditions: ["soldHero"],
+              text: "Thanks to your help, the hero saves the town. In thanks, the hero brings you some of the cash he won and said more bland randomly generated things.",
+              gold: 5,
+            },
+            {
+              conditions: ["refusedHero"],
+              text: "Unfortunately, without your help, the very bland hero was unable to stop the threat. Your store was pillaged in the night.",
+              gold: -10,
+            },
+          ];
+        }),
+        (function () {
+          var f = {
+              day: "How was day?",
+              color: "Favorite color?",
+              number: "Favorite number?",
+            },
+            o = {
+              day: [
+                "Ah, it was [x].",
+                "It was [x].",
+                "My day was [x].",
+                "My day? It was [x].",
+                "Just like every other day. It was [x].",
+              ],
+              color: [
+                "The best color is obviously [x].",
+                "My favorite color? Definitely [x].",
+                "My favorite color is [x].",
+                "Easily [x].",
+              ],
+              number: [
+                "My favorite number is [x].",
+                "The best number is [x].",
+                "I have to go with [x].",
+                "Easily [x].",
+              ],
+            },
+            a = {
+              day: [
+                "'well'",
+                "alright, I guess",
+                "not bad, could've been better",
+                "good, good...",
+                "a complete disaster",
+                "'really normal'",
+                "'smelly'",
+              ],
+              color: [
+                "'Mac and Cheese'",
+                "the color of worms",
+                "'Royal Purple'",
+                "'Radical Red'",
+                "'Outrageous Orange'",
+                "'Razzle Dazzle Rose'",
+                "'Purple Pizzazz'",
+                "'Magic Mint'",
+                "'Screamin' Green'",
+              ],
+              number: [
+                "negative twelve",
+                "banana",
+                "fourty",
+                "sixty two",
+                "eight hundred",
+                "seven point nine two six two eight nine five",
+                "twoteen",
+                "seven-eleven",
+              ],
+            },
+            p = {
+              day: [
+                "The hero will say their day was [x].",
+                "The hero's day has been [x].",
+              ],
+              color: ["The hero's favorite color is [x]."],
+              number: ["The hero's favorite number is [x]."],
+            };
+          function g(e, t) {
+            var o = "";
+            if (t && t.length >= a[e].length)
+              return "NOT ENOUGH OPTIONS FOR UNIQUE";
+            for (; (o = me(a[e])), t && 0 <= t.indexOf(o); );
+            return o;
+          }
+          function m(e, t) {
+            return me(o[e]).replace("[x]", t);
+          }
+          r = function (e, t, o, a) {
+            for (
+              var n,
+                r = (function (e) {
+                  for (
+                    var t = ge(Object.keys(f)).slice(0, 2), o = 0;
+                    o < t.length;
+                    o++
+                  )
+                    e.questions[t[o]] = f[t[o]];
+                  return t;
+                })(e),
+                i = Math.floor(Math.random() * r.length),
+                s = 0;
+              s < r.length;
+              s++
+            ) {
+              var d = [],
+                l = r[s],
+                u = g(l);
+              s === i &&
+                (a && d.push(u),
+                e.clues.hero.push(((n = u), me(p[l]).replace("[x]", n)))),
+                (t.questions[l] = m(l, u));
+              for (var c = 0; c < o.length; c++) {
+                var h = g(l, d);
+                o[c].questions[l] = m(l, h);
+              }
+            }
+          };
+        })(),
+        (function () {
+          var s = ["The hero's [n] offer will be [x] gold."];
+          i = function (e, t, o, a) {
+            var n = le(0.6) ? 1 : le(0.625) ? 2 : le(10 / 15) ? 3 : 4;
+            if (
+              ((t.offers = (function (e) {
+                for (var t = [], o = 0; o < e; o++) {
+                  var a = Math.floor(3 * Math.random());
+                  t.push(e + a - o);
+                }
+                return t;
+              })(n)),
+              (t.offerText = be(t.item, t.offers)),
+              e.clues.hero.push(
+                (function (e, t) {
+                  return me(s)
+                    .replace(
+                      "[n]",
+                      (function (e) {
+                        return [
+                          "zeroeth",
+                          "first",
+                          "second",
+                          "third",
+                          "fourth",
+                        ][e];
+                      })(t)
+                    )
+                    .replace("[x]", fe(e));
+                })(t.offers[n - 1], n)
+              ),
+              a)
+            )
+              for (var r = 0; r < o.length; r++) {
+                var i = o[r].offers[n - 1];
+                i && i === t.offers[n - 1] && (o[r].offers[n - 1] -= 1);
+              }
+          };
+        })();
+    })();
+    var n = 20,
+      r = [];
+    this.insertHeroes = function (e, t) {
+      var o = me(r, !0),
+        a = (function (e) {
+          for (var t = [], o = 0; o < n; o++) e[o] || t.push(o);
+          return t;
+        })(e.sequence);
+      !(function (e, t, o) {
+        var a = me(o, !0),
+          n = d[t].hero;
+        e.sequence[a] = D(t, n);
+      })(e, o, a),
+        (function (e, t, o, a) {
+          for (
+            var n = ue(d[t].falseHeroes), r = 0;
+            r < Math.min(n.length, a);
+            r++
+          ) {
+            var i = me(o, !0),
+              s = me(n, !0);
+            e.sequence[i] = D(t, s);
+          }
+        })(e, o, a, t),
+        (function (e, t) {
+          var o = d[t].itemData;
+          if (o) for (var a in ((e.itemData = {}), o)) e.itemData[a] = o[a];
+        })(e, o),
+        (function (e, t) {
+          for (
+            var o = d[t].clues.hero, a = d[t].clues.crisis, n = 0;
+            n < o.length;
+            n++
+          )
+            e.clues.hero.push(o[n]);
+          if (a) {
+            e.clues.crisis = [];
+            for (n = 0; n < a.length; n++) e.clues.crisis.push(a[n]);
+          }
+        })(e, o),
+        (function (e, t) {
+          var o = d[t].questions;
+          for (var a in o) e.questions[a] = o[a];
+        })(e, o),
+        (function (e, t) {
+          for (var o = d[t].wrapup, a = 0; a < o.length; a++)
+            e.wrapup.push(o[a]);
+        })(e, o);
+    };
+    var d = {
+      vocabMan: {
+        hero: "hero",
+        falseHeroes: ["villain", "villain2", "villain3"],
+        itemData: {
+          sword: { min: 2, max: 11, priority: 2 },
+          chicken: { min: 1, max: 7, priority: 2 },
+          bow: { min: 1, max: 10, priority: 8 },
+        },
+        clues: {
+          hero: ["The hero knows only four words."],
+          crisis: [
+            "The town's being attacked by convicts with very short swords.",
+            "Bows are in high demand.",
+          ],
+        },
+        questions: { number: "Favorite number?", color: "Favorite color?" },
+        wrapup: [
+          {
+            conditions: ["soldHero"],
+            text: "Using his sharpshooting skills, the hero drove the convicts from the town.",
+          },
+          {
+            conditions: ["soldHero"],
+            text: "When interviewed, he would only repeat 'BOW GET, TWO GOLD!'.",
+          },
+          {
+            conditions: ["refusedHero"],
+            text: "Without the hero to drive them away, the convicts pillage the town and destroy your storefront.",
+          },
+          {
+            conditions: ["refusedHero"],
+            text: "You spend 12 gold to repair it.",
+            gold: -12,
+          },
+        ],
+      },
+      fingers: {
+        hero: "hero",
+        falseHeroes: ["falseHero1", "falseHero2", "falseHero3"],
+        itemData: {
+          shield: { min: 1, max: 11, priority: 7 },
+          chicken: { min: 1, max: 8, priority: 2 },
+          bow: { min: 1, max: 9, priority: 1 },
+        },
+        clues: {
+          hero: [
+            "The hero will offer five gold for a shield.",
+            "The hero refuses to say numbers.",
+            "The hero likes to talk with their hands.",
+          ],
+          crisis: [
+            "Your shop is being threatened by violent youths.",
+            "The townsfolk are looking for something to cower behind.",
+          ],
+        },
+        questions: { number: "Favorite number?", color: "Favorite color?" },
+        wrapup: [
+          {
+            conditions: ["soldHero"],
+            text: "Thanks to their shiny new shield, the hero was able to drive the youths from the town.",
+          },
+          {
+            conditions: ["refusedHero"],
+            text: "Without a shield to protect themselves, the hero was unable to stop the youths.",
+          },
+          {
+            conditions: ["refusedHero"],
+            text: "They were also unable to warn of how many were coming, since there were more than ten.//You are unprepared and your storefront is destroyed.",
+            gold: -12,
+          },
+        ],
+      },
+      noLetter: {
+        hero: "hero",
+        falseHeroes: ["falseHero1", "falseHero2", "falseHero3"],
+        itemData: {
+          bow: { min: 1, max: 10, priority: 7 },
+          chicken: { min: 1, max: 8, priority: 2 },
+          shield: { min: 2, max: 10, priority: 1 },
+        },
+        clues: {
+          hero: [
+            "The hero is the only customer to not say a single 's' or 'h'",
+          ],
+          crisis: [
+            "The town is being menaced by inedible and pungent mushroom monsters.",
+            "Everyone is looking for a way to fend them off without getting too close.",
+          ],
+        },
+        questions: { alphabet: "Alphabet?", color: "Favorite color?" },
+        wrapup: [
+          {
+            conditions: ["soldHero"],
+            text: "Using their newly purchased bow, the hero drives the mushrooms and their odor out of the town.",
+            gold: 10,
+          },
+          {
+            conditions: ["soldHero"],
+            text: "It turns out a sword, shield, or chicken would have worked better, but the hero was unable to ask for them.",
+          },
+          {
+            conditions: ["refusedHero"],
+            text: "Without access to a bow, the hero succumbed to the odor of the mushrooms.//You spend money thoroughly cleaning your store.",
+            gold: -10,
+          },
+        ],
+      },
+      noNumber: {
+        hero: "hero",
+        falseHeroes: ["falseHero1", "falseHero2"],
+        itemData: {
+          sword: { min: 1, max: 9, priority: 7 },
+          chicken: { min: 1, max: 7, priority: 2 },
+          bow: { min: 1, max: 9, priority: 1 },
+        },
+        clues: {
+          hero: [
+            "The hero will offer three gold.",
+            "The hero refuses to say any number except five.",
+            "The hero enjoys word games.",
+          ],
+          crisis: [
+            "Orcs are planning to raid the village.",
+            "Townspeople are looking for pointy things to stab into them.",
+          ],
+        },
+        questions: { number: "Favorite number?", day: "How was day?" },
+        wrapup: [
+          {
+            conditions: ["soldHero"],
+            text: "Thanks to their new sword, the hero was able to stab many orcs.",
+          },
+          {
+            conditions: ["soldHero"],
+            text: "They come back, thank you for helping them, and offer you two gold for every 't' in this sentence.",
+            gold: 14,
+          },
+          {
+            conditions: ["refusedHero"],
+            text: "Without a sword, the hero was no match for the hordes of orcs.//Your shop is heavily damaged.",
+            gold: -8,
+          },
+        ],
+      },
+    };
+    (d.randomGenHero = g()), (r = Object.keys(d));
+  }
+  function Ee(e) {
+    this.insertJeff = function (e, t) {
+      (e.sequence[0] = D("jeffPoolStart", me(Object.keys(S.jeffPoolStart)))),
+        (e.sequence[9999] = D("jeffPoolEnd", me(Object.keys(S.jeffPoolEnd))));
+    };
+  }
+  function _e(c) {
+    (c.dialog = {
+      main: {
+        box: c.add.text(250, 427, "", {
+          font: "24px yoster_islandregular",
+          fill: C.PassiveMain,
+        }),
+        ghost: c.add.text(999, 999, "", { font: "24px yoster_islandregular" }),
+        isPrinting: !1,
+        isFrozen: !1,
+        freeze: function (e) {
+          e
+            ? (this.isFrozen = !0)
+            : ((this.isFrozen = !1),
+              this.unfreezeCallback && this.unfreezeCallback());
+        },
+        message: !1,
+        timeout: !1,
+        callback: !1,
+        unfreezeCallback: !1,
+      },
+      jeff: {
+        box: c.add.text(560, 70, "", {
+          font: "16px yoster_islandregular",
+          fill: C.PassiveDarker,
+        }),
+        ghost: c.add.text(999, 999, "", { font: "16px yoster_islandregular" }),
+        timeout: !1,
+      },
+      dog: {
+        box: c.add.text(300, 130, "", {
+          font: "16px yoster_islandregular",
+          fill: C.PassiveDarker,
+        }),
+        ghost: c.add.text(999, 999, "", { font: "16px yoster_islandregular" }),
+        timeout: !1,
+      },
+      wrapup: {
+        box: c.add.text(150, 300, "", {
+          font: "24px yoster_islandregular",
+          fill: C.PassiveLighter,
+        }),
+        ghost: c.add.text(999, 999, "", { font: "24px yoster_islandregular" }),
+        timeout: !1,
+      },
+    }),
+      c.depthGroups.shopGroup.add(c.dialog.jeff.box),
+      (c.dialog.main.box.defaultY = 427),
+      (c.dialog.jeff.box.defaultY = 130),
+      (c.dialog.wrapup.box.defaultY = 300),
+      (this.printWrapup = function (e, t) {
+        (t = t || function () {}), clearTimeout(c.dialog.wrapup.timeout);
+        var o = s(c.dialog.wrapup.box, c.dialog.wrapup.ghost, 500, 5, 30, e);
+        d(c.dialog.wrapup.box, o, 10, 100, !1, c.dialog.wrapup, t);
+      });
+    var i = c.Sounds.TEXTHIGH;
+    (this.setMainSound = function (e) {
+      i = e
+        ? c.Sounds["TEXT" + e]
+        : me([
+            c.Sounds.TEXTMED,
+            c.Sounds.TEXTHIGH,
+            c.Sounds.TEXTMELODY,
+            c.Sounds.TEXTMURPHY,
+            c.Sounds.TEXTSTITCH,
+          ]);
+    }),
+      (this.printMain = function (e, t, o) {
+        o = o || function () {};
+        function a() {
+          o();
+        }
+        clearTimeout(c.dialog.main.timeout);
+        var n = s(c.dialog.main.box, c.dialog.main.ghost, 383, 5, 30, e);
+        (c.dialog.main.message = n), (c.dialog.main.callback = o);
+        function r() {
+          t
+            ? d(c.dialog.main.box, n, 0, 0, !1, c.dialog.main, o)
+            : d(c.dialog.main.box, n, 15, 150, i, c.dialog.main, a),
+            (c.dialog.main.unfreezeCallback = !1);
+        }
+        c.dialog.main.isFrozen ? (c.dialog.main.unfreezeCallback = r) : r();
+      });
+    var a = !(this.jumpMain = function () {
+      var e = c.dialog.main.message.split("@").join("").split(/\/|\|/);
+      clearTimeout(c.dialog.main.timeout),
+        (c.dialog.main.box.text = e.join("\n")),
+        c.dialog.main.callback();
+    });
+    function s(e, t, o, a, n, r) {
+      (e.text = ""), (e.position.y = e.defaultY);
+      var i = 0,
+        s = r.split("/");
+      i += s.length;
+      for (var d = 0; d < s.length; d++) {
+        t.text = "";
+        for (var l = s[d].split(" "), u = 0; u < l.length; u++)
+          (t.text += l[u] + " "),
+            t.width > o && ((l[u - 1] += "|"), i++, (t.text = l[u] + " "));
+        s[d] = l.join(" ");
+      }
+      return (
+        (e.position.y += (n / 2) * (a - i)), s.join("/").split("| ").join("|")
+      );
+    }
+    function d(n, e, r, i, s, d, l) {
+      (isPrinting = !0), (n.text = "");
+      var u = function (e, t, o) {
+        var a;
+        t < e.length
+          ? ((a =
+              "/" === e[t]
+                ? ((n.text = n.text + "\n"), i)
+                : "|" === e[t]
+                ? ((n.text = n.text + "\n"), 0)
+                : "@" === e[t]
+                ? i
+                : ((n.text = n.text + e[t]),
+                  s && o && c.soundManager.playSound(s, 0.22),
+                  "," == e[t] || "." == e[t] || "?" == e[t] ? i : r)),
+            (d.timeout = setTimeout(function () {
+              u(e, t + 1, !o);
+            }, a)))
+          : l();
+      };
+      u(e, 0, !0);
+    }
+    (this.printJeff = function (t, o) {
+      if (((o = o || function () {}), "" === t))
+        return (
+          (a = !1),
+          clearTimeout(c.dialog.jeff.timeout),
+          (c.dialog.jeff.box.text = ""),
+          c.displayManager.clearJeffDialog(),
+          void o()
+        );
+      function e() {
+        clearTimeout(c.dialog.jeff.timeout);
+        var e = s(c.dialog.jeff.box, c.dialog.jeff.ghost, 180, 3, 23, t);
+        d(c.dialog.jeff.box, e, 15, 100, !1, c.dialog.jeff, o);
+      }
+      a
+        ? e()
+        : (c.displayManager.putJeffDialog(550, 70, 200, 180, e), (a = !0));
+    }),
+      (this.printDog = function (e, t) {
+        (t = t || function () {}), clearTimeout(c.dialog.dog.timeout);
+        var o = s(c.dialog.dog.box, c.dialog.dog.ghost, 230, 4, 23, e);
+        d(c.dialog.dog.box, o, 15, 100, !1, c.dialog.dog, t);
+      });
+  }
+  function Me(i) {
+    var a,
+      n,
+      r,
+      s,
+      d,
+      l,
+      u,
+      c,
+      h,
+      f,
+      p,
+      g,
+      m,
+      y,
+      v,
+      b,
+      w = i.conditionManager;
+    function T() {
+      var e = k() >= M.MENDOZA,
+        t = d - b > M.EXTRACAP,
+        o = 0 === c.length;
+      return r && (e || (t && o) || 6 < a);
+    }
+    function x() {
+      var e;
+      0 < d && 0 < c.length ? (e = c.shift()) : ((e = s[d]), d++);
+      var t = !1;
+      if ((e && (t = e.category ? S[e.category][e.hero] : S[e.hero]), T())) {
+        for (var o = Math.max.apply(this, Object.keys(s)); !e || !e.force; ) {
+          if (o < d) return !1;
+          (e = s[d]), d++;
+        }
+        return "object" == typeof e.hero
+          ? ye(n, e.hero)
+          : e.category
+          ? S[e.category][e.hero]
+          : S[e.hero];
+      }
+      return e && t
+        ? t
+        : e && "object" == typeof e.hero
+        ? ye(n, e.hero)
+        : ye(n);
+    }
+    function I() {
+      h && (clearTimeout(h), (h = !1));
+      do {
+        if (!(l = x())) return g(), void (g = N);
+      } while (l.appearConditions && !w.get(l.appearConditions));
+      if (
+        ("random" === l.appearanceInfo && ve(l),
+        (p = f = 0),
+        "interact" === l.type)
+      ) {
+        !(function (e) {
+          var t = Math.max.apply(this, e.offers);
+          if (ie[e.item]) {
+            0 <= t - ie[e.item].jPrice &&
+              ((y += t - ie[e.item].jPrice),
+              (v[e.item] = v[e.item] || 0),
+              v[e.item]++);
+          }
+        })(l);
+        var e =
+            !!l.isFingers &&
+            (function (e) {
+              e = Math.min(e, 8);
+              for (var t = [], o = 0; o < e; o++) {
+                for (
+                  var a;
+                  t[(a = 4 < (a = O(1, 9)) ? a + 1 : a)] || A(t, a);
+
+                );
+                t[a] = !0;
+              }
+              var n = "";
+              for (o = 0; o < 10; o++) n += t[o] ? "1" : "0";
+              return n;
+            })(l.offers[0]),
+          t = !!l.isFingers && l.fingerTime;
+        "CURRENTLEVEL" === (o = l.appearSong || u) && a < 7 && (o = "LV" + a),
+          i.eventManager.notify(
+            i.Events.INTERACT.NEW,
+            l.appearanceInfo,
+            l.voice,
+            o,
+            e,
+            t
+          ),
+          E(l, f);
+      } else {
+        if ("dialog" !== l.type) return;
+        var o;
+        i.dayTimer.pause(),
+          "CURRENTLEVEL" === (o = l.appearSong || u) && a < 7 && (o = "LV" + a),
+          i.eventManager.notify(
+            i.Events.INTERACT.NEW,
+            l.appearanceInfo,
+            l.voice,
+            o
+          ),
+          _(l, p),
+          p++;
+      }
+      (u = l.leaveSong),
+        l.stallTime &&
+          (h = setTimeout(function () {
+            var e = l.stallConditions;
+            if (e) for (var t = 0; t < e.length; t++) w.set(e[t]);
+            h = !1;
+          }, l.stallTime));
+    }
+    function k() {
+      var e = y;
+      for (var t in stockedItems)
+        v[t] &&
+          (e += Math.min(v[t], stockedItems[t]) * (ie[t].jPrice - ie[t].price));
+      return e;
+    }
+    function E(e, t, o) {
+      var a = "string" == typeof e.offerText ? e.offerText : e.offerText[t],
+        n = e.offers[t] || 0;
+      if ("object" == typeof a) {
+        for (var r in a)
+          if (w.get(r))
+            return void i.eventManager.notify(
+              i.Events.INTERACT.OFFER,
+              n,
+              e.item,
+              a[r],
+              o
+            );
+        a.default
+          ? i.eventManager.notify(
+              i.Events.INTERACT.OFFER,
+              n,
+              e.item,
+              a.default,
+              o
+            )
+          : i.eventManager.notify(
+              i.Events.INTERACT.OFFER,
+              n,
+              e.item,
+              "ERROR, NO DIALOG AVAILABLE",
+              o
+            );
+      } else
+        "string" == typeof a &&
+          i.eventManager.notify(i.Events.INTERACT.OFFER, n, e.item, a, o);
+    }
+    function _(e, t) {
+      var o = l.dialog instanceof Array ? l.dialog[t] : l.dialog;
+      if ("object" == typeof o) {
+        for (var a in o)
+          if (w.get(a))
+            return void i.eventManager.notify(i.Events.INTERACT.DIALOG, o[a]);
+        o.default
+          ? i.eventManager.notify(i.Events.INTERACT.DIALOG, o.default)
+          : i.eventManager.notify(
+              i.Events.INTERACT.DIALOG,
+              "ERROR, NO DIALOG AVAILABLE"
+            );
+      } else i.eventManager.notify(i.Events.INTERACT.DIALOG, o);
+    }
+    function o(e, t) {
+      return e[t] || e.default || "ERROR: NO DIALOG SET";
+    }
+    (this.getCurrentDay = function () {
+      return a;
+    }),
+      (this.startDay = function (e, t, o) {
+        i.dayTimer && i.dayTimer.pause(),
+          (r = !1),
+          (y = 0),
+          (v = {}),
+          (stockedItems = i.playerState.getStockedItems()),
+          (a = t),
+          (c = (n = e).interruptNPCs || []),
+          (g = function () {
+            i.analytics.track("game", "potentialProfit", k()), o();
+          }),
+          w.init(e.conditions),
+          i.eventManager.notify(i.Events.DAY.START, {
+            clues: e.clues,
+            questions: e.questions,
+          }),
+          (d = 0),
+          (function (e) {
+            s = {};
+            var t = e.sequence,
+              o = {};
+            for (var a in t) 0 === t[a].fuzz ? (s[a] = t[a]) : (o[a] = t[a]);
+            for (var a in o) {
+              for (
+                var n, r = 0;
+                r >= 2 * o[a].fuzz && (o[a].fuzz++, (r = 0)),
+                  (a = parseInt(a)),
+                  (n = a + Math.floor(Math.random() * o[a].fuzz)),
+                  r++,
+                  s[n];
+
+              );
+              s[n] = o[a];
+            }
+          })(e),
+          (i.dayTimer = new P(
+            function () {
+              he("DAY ENDING TIMER"),
+                i.displayManager.toggleGoldenClouds(!1),
+                (r = !0),
+                T()
+                  ? i.analytics.track("mendoza", "success" + a, y)
+                  : (i.analytics.track("mendoza", "fail" + a, y),
+                    (function (e) {
+                      c.push(e);
+                    })(D("timer", "jeffNotify")),
+                    (b = d));
+            },
+            e.length * m,
+            function () {
+              i.eventManager.notify(i.Events.TIMER.PAUSE, 1644825),
+                i.displayManager.toggleGoldenClouds(!1),
+                (i.displayManager.imgSun.frame = 1),
+                (i.displayManager.imgSun.blinking = !1),
+                (i.displayManager.spawnGoldenCloud = !1);
+            },
+            function () {
+              i.eventManager.notify(i.Events.TIMER.RESUME, 16777215),
+                i.displayManager.toggleGoldenClouds(!0),
+                (i.displayManager.imgSun.frame = 0),
+                (i.displayManager.spawnGoldenCloud = !0);
+            }
+          )),
+          I();
+      }),
+      (c = []),
+      (u = !(m = 1)),
+      i.eventManager.register(i.Events.INPUT.CONTINUE, function () {
+        if (l && "interact" === l.type && f < l.offers.length) E(l, f, !0);
+        else if (
+          l &&
+          "dialog" === l.type &&
+          (("string" == typeof l.dialog && 0 == p) ||
+            (l.dialog instanceof Array && p < l.dialog.length))
+        )
+          _(0, p), p++;
+        else {
+          if (l) {
+            if ((i.dayTimer.resume(), l.finishConditions))
+              for (var e = 0; e < l.finishConditions.length; e++)
+                w.set(l.finishConditions[e]);
+            l.endMoney &&
+              i.eventManager.notify(
+                i.Events.INVENTORY.SOLD,
+                "None",
+                l.endMoney
+              );
+          }
+          I();
+        }
+      }),
+      i.eventManager.register(i.Events.LEVEL.ACCEPT, function (e) {
+        0 <= e.indexOf("time") && (m += 0.05);
+      }),
+      i.eventManager.register(i.Events.INPUT.YES, function () {
+        i.eventManager.notify(i.Events.INVENTORY.SOLD, l.item, l.offers[f]);
+        var e = l.sellConditions;
+        if (e) for (var t = 0; t < e.length; t++) w.set(e[t]);
+        l.isHero && i.analytics.track("hero", "sold_good" + a),
+          l.isFalseHero && i.analytics.track("hero", "sold_bad" + a),
+          i.eventManager.notify(i.Events.INTERACT.DIALOG, o(l, "success")),
+          (l = !1);
+      }),
+      i.eventManager.register(i.Events.INPUT.NO, function () {
+        if ((l.offers, f++, l.offers.length > f)) E(l, f);
+        else {
+          var e = l.refuseConditions;
+          if (e) for (var t = 0; t < e.length; t++) w.set(e[t]);
+          l.isHero && i.analytics.track("hero", "refused_good" + a),
+            l.isFalseHero && i.analytics.track("hero", "refused_bad" + a),
+            i.eventManager.notify(
+              i.Events.INVENTORY.NOTSOLD,
+              l.item,
+              l.offers[f]
+            ),
+            i.eventManager.notify(i.Events.INTERACT.DIALOG, o(l, "fail")),
+            l.isFalseHero || i.eventManager.notify(i.Events.TIMER.JUMP, 1e3),
+            (l = !1);
+        }
+      }),
+      i.eventManager.register(i.Events.INPUT.QUESTION, function (e) {
+        i.eventManager.notify(i.Events.INTERACT.DIALOG, o(l.questions, e));
+      }),
+      i.eventManager.register(i.Events.INPUT.ITEM, function (e) {
+        i.eventManager.notify(i.Events.INTERACT.DIALOG, o(l.items, e));
+      }),
+      i.eventManager.register(i.Events.INPUT.PROFILE, function (e) {
+        i.eventManager.notify(i.Events.INTERACT.DIALOG, o(l.profiles, e));
+      }),
+      i.eventManager.register(i.Events.TIMER.JUMP, function (e) {
+        i.dayTimer.jumpForward(e);
+      }),
+      i.reset.register(function () {
+        i.dayTimer && i.dayTimer.pause();
+      });
+  }
+  function Se(t) {
+    var n = {
+        Items: {},
+        AvailableItems: [],
+        StockedItems: [],
+        Gold: 0,
+        Level: 0,
+        EXP: 0,
+        numSlots: 1,
+      },
+      e = {};
+    function o() {
+      e = JSON.parse(JSON.stringify(n));
+    }
+    function a(e) {
+      0 <= e.indexOf("itemslot") && n.numSlots++;
+    }
+    (this.resetStats = function () {
+      (n = JSON.parse(JSON.stringify(e))),
+        t.eventManager.notify(t.Events.UPDATE.GOLD, n.Gold),
+        t.eventManager.notify(t.Events.UPDATE.ITEMS, n.Items),
+        t.eventManager.notify(t.Events.UPDATE.STOCKGOLD, n.Gold);
+    }),
+      (this.updateItem = function (e, t) {
+        n.Items[e] = t;
+      }),
+      (this.decrementItem = function (e) {
+        void 0 === n.Items[e] || n.Items[e] <= 0 || n.Items[e]--;
+      }),
+      (this.addsubGold = function (e) {
+        n.Gold += e;
+      }),
+      (this.getGold = function () {
+        return n.Gold;
+      }),
+      (this.getNumSlots = function () {
+        return n.numSlots;
+      }),
+      (this.getItems = function () {
+        return "object" != typeof n.Items
+          ? {}
+          : JSON.parse(JSON.stringify(n.Items));
+      }),
+      (this.getStockedItems = function () {
+        for (var e = {}, t = 0; t < n.StockedItems.length; t++)
+          e[n.StockedItems[t]] = n.Items[n.StockedItems[t]] || 0;
+        return e;
+      }),
+      (this.getAvalItems = function () {
+        return "object" != typeof n.Items
+          ? {}
+          : JSON.parse(JSON.stringify(n.AvailableItems));
+      }),
+      (this.checkStock = function (e) {
+        return (
+          ie[e] &&
+          0 <= n.StockedItems.indexOf(e) &&
+          !(void 0 === n.Items[e]) &&
+          0 < n.Items[e] &&
+          "None" !== e
+        );
+      }),
+      (this.checkPrice = function (e, t) {
+        var o = n.Items[e] || !ie[e] ? 0 : ie[e].jPrice;
+        return n.Gold + t >= o;
+      }),
+      (this.update = function (e, t, o) {
+        (n.Gold = e),
+          (n.Items = JSON.parse(JSON.stringify(t)) || {}),
+          (n.StockedItems = o);
+        n.StockedItems[0];
+        for (var a = 1; a < n.StockedItems.length; a++) "_" + n.StockedItems[a];
+      }),
+      (this.updateProfit = function (e) {
+        e <= 0 ||
+          (he("ADDING " + e + " TO EXP"),
+          (n.EXP += e),
+          n.EXP >= 10 * n.Level &&
+            (t.eventManager.notify(t.Events.LEVEL.LEVELUP, n.Level + 1),
+            (n.EXP = e %= 10 * n.Level),
+            n.Level++,
+            t.kongregate.submit("Max_Level", n.Level)),
+          t.eventManager.notify(t.Events.LEVEL.EXPUP, n.EXP / (10 * n.Level)));
+      }),
+      (n.StockedItems = ["sword"]),
+      (n.Items = { sword: 5 }),
+      (n.AvailableItems = ["sword", "chicken", "shield", "bow"]),
+      (n.Gold = 0),
+      (n.Level = 1),
+      (n.EXP = 0),
+      (n.numSlots = 1),
+      o(),
+      t.eventManager.register(t.Events.LEVEL.ACCEPT, a),
+      t.eventManager.register(t.Events.STOCK.STARTDAY, o);
+  }
+  function Oe(r) {
+    var i, o;
+    function e() {
+      r.eventManager.notify(r.Events.UPDATE.ITEMS, i),
+        r.eventManager.notify(
+          r.Events.UPDATE.STOCKGOLD,
+          r.playerState.getGold() - o
+        );
+    }
+    function t() {
+      r.eventManager.notify(
+        r.Events.STOCK.INIT,
+        r.playerState.getNumSlots(),
+        r.playerState.getGold(),
+        r.playerState.getAvalItems(),
+        r.playerState.getItems()
+      );
+    }
+    function a(e) {
+      if (void 0 !== ie[e]) {
+        playerItems = r.playerState.getItems();
+        var t = (i[e] || playerItems[e]) - (playerItems[e] || 0) || 0;
+        (i[e] = playerItems[e] || 0),
+          (o -= t * ie[e].price),
+          r.eventManager.notify(r.Events.UPDATE.ITEMS, i),
+          r.eventManager.notify(
+            r.Events.UPDATE.STOCKGOLD,
+            r.playerState.getGold() - o
+          );
+      }
+    }
+    function n(e) {}
+    function s(e, t) {
+      void 0 !== ie[e] &&
+        (ie[e].price * t + o <= r.playerState.getGold()
+          ? (r.soundManager.playSound(r.Sounds.ACCEPT),
+            (i[e] = (i[e] || 0) + t),
+            (o += ie[e].price * t))
+          : r.soundManager.playSound(r.Sounds.TAP),
+        r.eventManager.notify(r.Events.UPDATE.ITEMS, i),
+        r.eventManager.notify(
+          r.Events.UPDATE.STOCKGOLD,
+          r.playerState.getGold() - o
+        ));
+    }
+    function d(e, t) {
+      void 0 !== ie[e] && void 0 !== i[e]
+        ? i[e] < t
+          ? r.soundManager.playSound(r.Sounds.TAP)
+          : (i[e] - t < (r.playerState.getItems()[e] || 0)
+              ? (r.soundManager.playSound(r.Sounds.TAP),
+                (i[e] = r.playerState.getItems()[e] || 0))
+              : (r.soundManager.playSound(r.Sounds.REJECT),
+                (i[e] = i[e] - t),
+                (o -= ie[e].price * t)),
+            r.eventManager.notify(r.Events.UPDATE.ITEMS, i),
+            r.eventManager.notify(
+              r.Events.UPDATE.STOCKGOLD,
+              r.playerState.getGold() - o
+            ))
+        : r.soundManager.playSound(r.Sounds.TAP);
+    }
+    function l(e, t) {
+      var o = t;
+      if ("None" !== e && "NoneNoXP" !== e) {
+        if (void 0 === ie[e]) return -1;
+        var a = r.playerState.getItems(),
+          n = r.playerState.getStockedItems();
+        void 0 === a[e] || a[e] <= 0 || void 0 === n[e]
+          ? ((t -= ie[e].jPrice),
+            (o -= ie[e].jPrice),
+            r.eventManager.notify(r.Events.TIMER.JUMP, 3e3))
+          : (o -= ie[e].price),
+          r.playerState.decrementItem(e),
+          (i = r.playerState.getItems());
+      }
+      r.playerState.addsubGold(t),
+        "NoneNoXP" !== e && r.playerState.updateProfit(o),
+        r.eventManager.notify(r.Events.UPDATE.GOLD, r.playerState.getGold()),
+        r.eventManager.notify(r.Events.UPDATE.ITEMS, r.playerState.getItems());
+    }
+    function u(e) {
+      var t = r.playerState.getGold() - o;
+      (o = 0),
+        r.playerState.update(t, i, e),
+        r.eventManager.notify(r.Events.UPDATE.GOLD, r.playerState.getGold());
+    }
+    (this.getGoldSpent = function () {
+      return o;
+    }),
+      (this.resetStock = function (e) {
+        (i = e), (o = 0);
+      }),
+      (o = 0),
+      (i = { sword: 5 }),
+      r.eventManager.register(r.Events.INVENTORY.SOLD, l),
+      r.eventManager.register(r.Events.STOCK.ADD, s),
+      r.eventManager.register(r.Events.STOCK.REMOVE, d),
+      r.eventManager.register(r.Events.STOCK.COMMIT, u),
+      r.eventManager.register(r.Events.STOCK.OUTSTOCK, a),
+      r.eventManager.register(r.Events.STOCK.INIT, e),
+      r.eventManager.register(r.Events.LEVEL.ACCEPT, n),
+      r.eventManager.register(r.Events.STOCK.STARTDAY, t);
+  }
+  function Ce(a) {
+    var n, r, e, t, i, o, s;
+    function d(e, t, o) {
+      a.playerState.checkStock(t) ||
+        "None" === t ||
+        (a.dialogManager.printJeff(r(t, ie[t].jPrice)),
+        (n = t),
+        h(),
+        a.eventManager.register(a.Events.INVENTORY.SOLD, l),
+        a.eventManager.register(a.Events.INVENTORY.NOTSOLD, u));
+    }
+    function l() {
+      a.dialogManager.printJeff(e(n)),
+        c(),
+        a.displayManager.jeff.floating.pause(),
+        (a.displayManager.jeff.itemMaking = !0),
+        a.displayManager.jeff.tweenRotate.start();
+    }
+    function u() {
+      a.dialogManager.printJeff(t(n)), c();
+    }
+    function c() {
+      h(),
+        a.eventManager.register(a.Events.INTERACT.OFFER, d),
+        a.eventManager.register(a.Events.INTERACT.NEW, f);
+    }
+    function h() {
+      a.eventManager.remove(a.Events.INVENTORY.SOLD, l),
+        a.eventManager.remove(a.Events.INVENTORY.NOTSOLD, u),
+        a.eventManager.remove(a.Events.INTERACT.OFFER, d);
+    }
+    function f() {
+      a.dialogManager.printJeff(""),
+        (n = !1),
+        a.eventManager.remove(a.Events.INTERACT.NEW, f);
+    }
+    a.eventManager.register(a.Events.INTERACT.OFFER, d),
+      (i = [
+        "Hey kiddo, it looks like you're out of [x]s. I'll magic you up one for [y] gold.",
+        "You can't sell what you don't have. Lucky for you, I can make you [ax] for [y] gold.",
+        "We don't have any [x]s. Want me to magic out one for [y] gold?",
+        "Kid, we need to stock up on [x]s. I can make you one right now for [y] gold.",
+      ]),
+      (r = function (e, t) {
+        (e = e || "ERROR"), (t = fe(t) || "ERROR");
+        var o = pe(e),
+          a = Math.floor(Math.random() * i.length),
+          n = i[a],
+          r = "string" == typeof t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+        return n
+          .replace("[x]", e)
+          .replace("[y]", t)
+          .replace("[Y]", r)
+          .replace("[ax]", o);
+      }),
+      (o = {
+        sword: [
+          "Extra pointy sword, coming right up!",
+          "Here comes a sword, everyone stand clear!",
+        ],
+        chicken: [
+          "Mmmmm, smells nice.",
+          "Delicious precooked chicken, coming right up!",
+        ],
+        bow: [
+          "Alrighty, here comes a bow!",
+          "Extra springy bow, coming right up!",
+        ],
+        default: [
+          "URRRRRRGH@@, item making isn't easy.",
+          "Alright, fresh hot items, coming right up.",
+          "Thanks for the cash kid, I'll have the item ready in no time.",
+          "Don't watch me while I make it. I get nervous.",
+        ],
+      }),
+      (e = function (e) {
+        var t = o[(e = e || "ERROR")] ? o[e].concat(o.default) : o.default;
+        return t[Math.floor(Math.random() * t.length)];
+      }),
+      (s = {
+        sword: [
+          "Darn. I really like making swords.",
+          "Oh well, we'll get the next one.",
+        ],
+        chicken: [
+          "I'll just make myself a chicken to eat. @@@@Well, at least I would if I had a mouth.",
+        ],
+        bow: ["But bows are so funnnnnn. Fine."],
+        default: [
+          "Come on, I don't get to show off my magic powers? So disappointing.",
+          "Just so you know, I could have made that item if I wanted to.",
+          "Too poor to spring for it? Oh well.",
+        ],
+      }),
+      (t = function (e) {
+        var t = s[(e = e || "ERROR")] ? s[e].concat(s.default) : s.default;
+        return t[Math.floor(Math.random() * t.length)];
+      });
+  }
+  function De(s) {
+    var d,
+      e = 0,
+      l = [],
+      u = [],
+      c = 0,
+      h = !(this.startDay = function (e, t) {
+        d = t || function () {};
+        for (var o = 0; o < e.wrapup.length; o++) {
+          var a = e.wrapup[o];
+          if (a.conditions) {
+            for (var n = !1, r = 0; r < a.conditions.length; r++)
+              if (!s.conditionManager.get(a.conditions[r])) {
+                n = !0;
+                break;
+              }
+            if (n) continue;
+          }
+          a.gold ? ((c += a.gold), u.push(a.gold)) : u.push(0);
+          var i = a.text instanceof Array ? a.text : [a.text];
+          for (r = 0; r < i.length; r++) l.push(i[r]);
+        }
+        (h = !0),
+          s.eventManager.register(s.Events.WRAPUP.NEXT, f),
+          s.eventManager.notify(s.Events.WRAPUP.START);
+      });
+    function f() {
+      e >= l.length
+        ? (s.eventManager.remove(s.Events.WRAPUP.NEXT, f),
+          h &&
+            ((h = !1),
+            s.analytics.track("wrapup", "goldLost", c),
+            s.kongregate.submit("MaxDayProfit", c),
+            s.playerState.addsubGold(c),
+            (l = []),
+            (u = []),
+            (e = c = 0),
+            s.eventManager.notify(
+              s.Events.UPDATE.GOLD,
+              s.playerState.getGold()
+            ),
+            d()))
+        : (s.eventManager.notify(s.Events.WRAPUP.MESSAGE, l[e], u[e]), e++);
+    }
+  }
+})();

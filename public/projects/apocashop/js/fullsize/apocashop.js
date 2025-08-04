@@ -1,3 +1,46 @@
+const POST_LOAD_ASSETS = {
+  texthigha: "sfx/text/high/a.wav",
+  texthighb: "sfx/text/high/b.wav",
+  texthighc: "sfx/text/high/c.wav",
+  texthighd: "sfx/text/high/d.wav",
+  texthighe: "sfx/text/high/e.wav",
+  texthighf: "sfx/text/high/f.wav",
+  texthighg: "sfx/text/high/g.wav",
+  textmelodya: "sfx/text/melody/a.wav",
+  textmelodyb: "sfx/text/melody/b.wav",
+  textmelodyc: "sfx/text/melody/c.wav",
+  textmelodyd: "sfx/text/melody/d.wav",
+  textmelodye: "sfx/text/melody/e.wav",
+  textmelodyf: "sfx/text/melody/f.wav",
+  textmelodyg: "sfx/text/melody/g.wav",
+  textmurphya: "sfx/text/murphy/a.wav",
+  textmurphyb: "sfx/text/murphy/b.wav",
+  textmurphyc: "sfx/text/murphy/c.wav",
+  textmurphyd: "sfx/text/murphy/d.wav",
+  textmurphye: "sfx/text/murphy/e.wav",
+  textmurphyf: "sfx/text/murphy/f.wav",
+  textmurphyg: "sfx/text/murphy/g.wav",
+  textstitcha: "sfx/text/stitch/a.wav",
+  textstitchb: "sfx/text/stitch/b.wav",
+  textstitchc: "sfx/text/stitch/c.wav",
+  textstitchd: "sfx/text/stitch/d.wav",
+  textstitche: "sfx/text/stitch/e.wav",
+  textstitchf: "sfx/text/stitch/f.wav",
+  textstitchg: "sfx/text/stitch/g.wav",
+  textdoga: "sfx/text/dog/a.wav",
+  textdogb: "sfx/text/dog/b.wav",
+  textdogc: "sfx/text/dog/c.wav",
+  lv1music: "mus/Review/cheerup.mp3",
+  lv2music: "mus/Review/8bit.mp3",
+  lv4music: "mus/ninja.mp3",
+  lv7music: "mus/darksanctum.mp3",
+  zoranmusic: "mus/royalentrance.mp3",
+  stockmusic: "mus/Review/whatanicesurprise.mp3",
+  gameover: "mus/gameover.mp3",
+};
+
+let globalAudioContext = null;
+
 const registerOnGlobalClick = (() => {
   let hasGlobalClickHappened = false;
   let listeners = [];
@@ -9,7 +52,6 @@ const registerOnGlobalClick = (() => {
     }
   };
   window.addEventListener("click", globalListener);
-
   return (newListener) => {
     if (hasGlobalClickHappened) {
       newListener();
@@ -18,11 +60,9 @@ const registerOnGlobalClick = (() => {
     }
   };
 })();
-
 registerOnGlobalClick(() => {
   document.getElementById("curtain").classList.add("hidden");
 });
-
 !(function () {
   var M = {
     DEBUG_MODE: !0,
@@ -74,6 +114,13 @@ registerOnGlobalClick(() => {
           t.assetManager.load();
       },
       create: function () {
+        console.log("LOADING START");
+        for (const key of Object.keys(POST_LOAD_ASSETS)) {
+          const path = `assets/sounds/${POST_LOAD_ASSETS[key]}`;
+          t.load.audio(key, path);
+        }
+        t.load.start();
+
         t.soundManager = new e(t, M.SOUNDENABLED, function () {
           he("WAITING FOR KONGREGATE"), t.state.start("state_start");
         });
@@ -2722,7 +2769,17 @@ registerOnGlobalClick(() => {
       (this.playSound = function (e, t) {
         if (d) {
           var o = e instanceof Array ? me(e) : e;
-          t && (o.volume = t), (a = o).play();
+          if (o.context) {
+            globalAudioContext = o.context;
+          }
+
+          if (!o.context) {
+            o.context = globalAudioContext;
+          }
+
+          try {
+            t && (o.volume = t), (a = o).play();
+          } catch {}
         }
       }),
       (this.stopSound = function () {
@@ -2872,45 +2929,7 @@ registerOnGlobalClick(() => {
           reject: "sfx/UI/reject.mp3",
           titleMusic: "mus/wintervillage.mp3",
           lv0music: "mus/wecandoit.mp3",
-          lv1music: "mus/Review/cheerup.mp3",
-          lv2music: "mus/Review/8bit.mp3",
-          lv4music: "mus/ninja.mp3",
-          lv7music: "mus/darksanctum.mp3",
-          zoranmusic: "mus/royalentrance.mp3",
-          stockmusic: "mus/Review/whatanicesurprise.mp3",
-          gameover: "mus/gameover.mp3",
           swag: "sfx/swag.wav",
-          texthigha: "sfx/text/high/a.wav",
-          texthighb: "sfx/text/high/b.wav",
-          texthighc: "sfx/text/high/c.wav",
-          texthighd: "sfx/text/high/d.wav",
-          texthighe: "sfx/text/high/e.wav",
-          texthighf: "sfx/text/high/f.wav",
-          texthighg: "sfx/text/high/g.wav",
-          textmelodya: "sfx/text/melody/a.wav",
-          textmelodyb: "sfx/text/melody/b.wav",
-          textmelodyc: "sfx/text/melody/c.wav",
-          textmelodyd: "sfx/text/melody/d.wav",
-          textmelodye: "sfx/text/melody/e.wav",
-          textmelodyf: "sfx/text/melody/f.wav",
-          textmelodyg: "sfx/text/melody/g.wav",
-          textmurphya: "sfx/text/murphy/a.wav",
-          textmurphyb: "sfx/text/murphy/b.wav",
-          textmurphyc: "sfx/text/murphy/c.wav",
-          textmurphyd: "sfx/text/murphy/d.wav",
-          textmurphye: "sfx/text/murphy/e.wav",
-          textmurphyf: "sfx/text/murphy/f.wav",
-          textmurphyg: "sfx/text/murphy/g.wav",
-          textstitcha: "sfx/text/stitch/a.wav",
-          textstitchb: "sfx/text/stitch/b.wav",
-          textstitchc: "sfx/text/stitch/c.wav",
-          textstitchd: "sfx/text/stitch/d.wav",
-          textstitche: "sfx/text/stitch/e.wav",
-          textstitchf: "sfx/text/stitch/f.wav",
-          textstitchg: "sfx/text/stitch/g.wav",
-          textdoga: "sfx/text/dog/a.wav",
-          textdogb: "sfx/text/dog/b.wav",
-          textdogc: "sfx/text/dog/c.wav",
         },
       }),
       (this.load = function () {

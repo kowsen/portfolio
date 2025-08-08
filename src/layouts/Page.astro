@@ -65,11 +65,14 @@ const { title, description } = Astro.props;
     scroll-behavior: smooth;
 
     font-size: 24px;
+    --title-size: 2.4em;
   }
 
   @media only screen and (max-width: 600px) {
     body {
       font-size: 16px;
+
+      --title-size: 2em;
     }
   }
 

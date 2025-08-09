@@ -1380,23 +1380,25 @@ var Godot = (function () {
         window.alert(UTF8ToString($0));
       },
       function ($0) {
-        document.title = UTF8ToString($0);
+        // I don't want mono to change my document's title
+        // document.title = UTF8ToString($0);
       },
       function ($0, $1) {
-        var PNG_PTR = $0;
-        var PNG_LEN = $1;
-        var png = new Blob([HEAPU8.slice(PNG_PTR, PNG_PTR + PNG_LEN)], {
-          type: "image/png",
-        });
-        var url = URL.createObjectURL(png);
-        var link = document.getElementById("-gd-engine-icon");
-        if (link === null) {
-          link = document.createElement("link");
-          link.rel = "icon";
-          link.id = "-gd-engine-icon";
-          document.head.appendChild(link);
-        }
-        link.href = url;
+        // I don't want mono to change my favicon.
+        // var PNG_PTR = $0;
+        // var PNG_LEN = $1;
+        // var png = new Blob([HEAPU8.slice(PNG_PTR, PNG_PTR + PNG_LEN)], {
+        //   type: "image/png",
+        // });
+        // var url = URL.createObjectURL(png);
+        // var link = document.getElementById("-gd-engine-icon");
+        // if (link === null) {
+        //   link = document.createElement("link");
+        //   link.rel = "icon";
+        //   link.id = "-gd-engine-icon";
+        //   document.head.appendChild(link);
+        // }
+        // link.href = url;
       },
       function ($0) {
         window.open(UTF8ToString($0), "_blank");

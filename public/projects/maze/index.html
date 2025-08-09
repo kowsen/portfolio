@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, user-scalable=no" />
     <link rel="manifest" href="manifest.json" />
     <link id="-gd-engine-icon" rel="icon" type="image/png" href="favicon.png" />
-    <link
+    <!-- <link
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&amp;display=fallback"
       rel="stylesheet"
-    />
+    /> -->
     <title>Maze Frenzy</title>
     <style type="text/css">
       html,
@@ -29,7 +29,7 @@
         border: 0 none;
         padding: 0;
         text-align: center;
-        background-color: #555;
+        background-color: black;
       }
 
       #canvas {
@@ -154,6 +154,8 @@
         background-color: #ffe2bd;
         color: rgb(46, 71, 86);
         font-family: "IBM Plex Mono", monospace;
+
+        display: none;
       }
 
       .kyle-contents {
@@ -380,6 +382,17 @@
         startGame = initialize;
       })();
       //]]>
+    </script>
+
+    <script type="text/javascript">
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("service_worker.js");
+          startGame();
+        });
+      } else {
+        startGame();
+      }
     </script>
   </body>
 </html>

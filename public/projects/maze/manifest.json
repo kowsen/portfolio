@@ -3,9 +3,16 @@
   "name": "Maze Frenzy",
   "icons": [
     {
-      "src": "favicon.png",
-      "sizes": "119x119",
-      "type": "image/png"
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-small.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "background_color": "#000",

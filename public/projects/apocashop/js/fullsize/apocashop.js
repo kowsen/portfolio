@@ -39,6 +39,25 @@ const POST_LOAD_ASSETS = {
   gameover: "mus/gameover.mp3",
 };
 
+let assetPack = {};
+
+async function loadAssetPack() {
+  const assetPackZip = await fetch("assets/assetpack.zip")
+    .then((response) => response.blob())
+    .then(JSZip.loadAsync);
+
+  const tasks = [];
+  assetPackZip.forEach((relativePath, file) => {
+    tasks.push(
+      file.async("blob").then((blob) => {
+        assetPack[relativePath] = URL.createObjectURL(blob);
+      })
+    );
+  });
+
+  await Promise.all(tasks);
+}
+
 let globalAudioContext = null;
 
 const registerOnGlobalClick = (() => {
@@ -113,7 +132,7 @@ registerOnGlobalClick(() => {
           (t.kongregate = new o(t)),
           t.assetManager.load();
       },
-      create: function () {
+      create: async function () {
         console.log("LOADING START");
         for (const key of Object.keys(POST_LOAD_ASSETS)) {
           const path = `assets/sounds/${POST_LOAD_ASSETS[key]}`;
@@ -1802,7 +1821,7 @@ registerOnGlobalClick(() => {
         navigator.userAgent.match(/Trident/) ||
         navigator.userAgent.match(/rv 11/)) &&
       (M.SOUNDENABLED = !1),
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", async function () {
       document.getElementById("gameDiv").addEventListener(
         "contextmenu",
         function (e) {
@@ -1810,6 +1829,9 @@ registerOnGlobalClick(() => {
         },
         !1
       );
+
+      await loadAssetPack();
+
       var e = new Phaser.Game(
         M.RESOLUTION[0],
         M.RESOLUTION[1],
@@ -1817,6 +1839,33 @@ registerOnGlobalClick(() => {
         "gameDiv",
         {
           preload: function () {
+            const oldLoadImage = e.load.image.bind(e.load);
+            e.load.image = (key, path, ...other) => {
+              if (assetPack[path]) {
+                return oldLoadImage(key, assetPack[path], ...other);
+              } else {
+                return oldLoadImage(key, path, ...other);
+              }
+            };
+
+            const oldLoadSpritesheet = e.load.spritesheet.bind(e.load);
+            e.load.spritesheet = (key, path, ...other) => {
+              if (assetPack[path]) {
+                return oldLoadSpritesheet(key, assetPack[path], ...other);
+              } else {
+                return oldLoadSpritesheet(key, path, ...other);
+              }
+            };
+
+            const oldLoadAudio = e.load.audio.bind(e.load);
+            e.load.audio = (key, path, ...other) => {
+              if (assetPack[path]) {
+                return oldLoadAudio(key, assetPack[path], ...other);
+              } else {
+                return oldLoadAudio(key, path, ...other);
+              }
+            };
+
             e.load.image("loadingImage", "assets/loading/loading.png"),
               e.add.text(1e3, 1e3, "fix", {
                 font: "1px yoster_islandregular",

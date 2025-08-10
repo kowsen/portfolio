@@ -1,8 +1,8 @@
 <html>
   <head>
-    <title>▦◊▞▲◓■◔◖</title>
+    <title>You Win!</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="icon" type="image/ico" href="./favicon.ico" />
     <style>
       html,
       body {
@@ -18,6 +18,10 @@
       canvas {
         filter: grayscale(0) contrast(1);
         transition: filter 0.4s ease-in-out;
+      }
+
+      .boring {
+        /* filter: grayscale(1) contrast(0.5); */
       }
 
       .hbd {
@@ -109,13 +113,7 @@
   <canvas class="boring"></canvas>
   <div class="hbd hbd-text">
     <h1>YOU WIN<span class="name"></span></h1>
-    <span class="secret">WINNERS: ??????</span>
   </div>
-  <audio loop>
-    <source src="./cosmonut.ogg" type="audio/ogg" />
-    <source src="./cosmonut.mp3" type="audio/mpeg" />
-    Your browser does not support the audio element.
-  </audio>
   <div class="curtain hbd">
     <!-- <h1 class="welcome">⏯️</h1>
     <p class="warning">⚠️ 🔊🎵 ➕ 📸🌈 ⚠️</p> -->
@@ -144,18 +142,18 @@
     const welcomeText = document.querySelector(".welcome");
     const warningText = document.querySelector(".warning");
     const curtain = document.querySelector(".curtain");
-    const audio = document.querySelector("audio");
+    // const audio = document.querySelector("audio");
     const name = document.querySelector(".name");
     const secret = document.querySelector(".secret");
-    audio.volume = 0;
+    // audio.volume = 0;
 
-    audio.addEventListener("timeupdate", () => {
-      const buffer = 0.44;
-      if (audio.currentTime > audio.duration - buffer) {
-        audio.currentTime = 0;
-        audio.play();
-      }
-    });
+    // audio.addEventListener("timeupdate", () => {
+    //   const buffer = 0.44;
+    //   if (audio.currentTime > audio.duration - buffer) {
+    //     audio.currentTime = 0;
+    //     audio.play();
+    //   }
+    // });
 
     function start() {
       // audio.play();
@@ -170,9 +168,9 @@
 
     let isPlaying = false;
     window.addEventListener("pageshow", () => {
-      audio.volume = 0;
-      audio.pause();
-      audio.currentTime = 0;
+      // audio.volume = 0;
+      // audio.pause();
+      // audio.currentTime = 0;
       curtain.classList.remove("hidden");
       text.style.opacity = 0;
       canvas.classList.add("boring");
@@ -189,17 +187,6 @@
         name.textContent = `, ${nameText}`;
       } else {
         name.textContent = "";
-      }
-
-      const winners = JSON.parse(
-        new URLSearchParams(window.location.search).get("winners")
-      );
-      secret.innerHTML = ``;
-      for (let i = 0; i < 3; i++) {
-        const winner = `${i + 1}. ` + (winners[i] ?? "?????");
-        const winnerEl = document.createElement("span");
-        winnerEl.textContent = winner;
-        secret.appendChild(winnerEl);
       }
     }
     updateName();
@@ -326,9 +313,9 @@
           layers[index] = (layers[index] + SPEED) % 1.2;
         }
       }
-      if (!isStatic) {
-        audio.volume = Math.min(audio.volume + 0.02, MAX_VOLUME);
-      }
+      // if (!isStatic) {
+      //   audio.volume = Math.min(audio.volume + 0.02, MAX_VOLUME);
+      // }
     }
     resizeCanvas();
   </script>

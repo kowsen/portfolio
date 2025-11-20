@@ -172,6 +172,7 @@
         display: none;
       }
       .reel.is-dragging {
+        /* Disables snap when dragging or immediately after a flick to allow momentum scroll */
         scroll-snap-type: none;
         cursor: grabbing;
       }
@@ -289,6 +290,7 @@
         display: none;
       }
       .leaf-scroller.is-dragging {
+        /* Disables snap when dragging or immediately after a flick to allow momentum scroll */
         scroll-snap-type: none;
         cursor: grabbing;
       }
@@ -7917,14 +7919,19 @@
         let startX, startY;
         let scrollLeft, scrollTop;
         let moved = false;
+        // NEW: Timer to allow momentum before re-enabling snapping
+        let snapTimeout;
 
         const getCoords = (e) => {
           return e.touches ? e.touches[0] : e;
         };
 
         const start = (e) => {
+          // Clear any pending timeout if a new drag starts
+          if (snapTimeout) clearTimeout(snapTimeout);
           isDown = true;
           moved = false;
+          // Add "is-dragging" to disable CSS scroll-snap while dragging
           slider.classList.add("is-dragging");
           const coords = getCoords(e);
           const rect = slider.getBoundingClientRect();
@@ -7935,8 +7942,28 @@
         };
 
         const end = () => {
+          if (!isDown) return;
+
           isDown = false;
-          slider.classList.remove("is-dragging");
+
+          // Allow browser momentum scrolling to take over for 150ms before re-enabling snap.
+          snapTimeout = setTimeout(() => {
+            // Remove "is-dragging" to re-enable CSS scroll-snap
+            slider.classList.remove("is-dragging");
+
+            // Force selection update to ensure the final snapped position is reflected in the state
+            let stateKey = null;
+            let isReel = direction === "y";
+            if (isReel) {
+              stateKey =
+                slider.id === "reel-1"
+                  ? "reel1"
+                  : slider.id === "reel-2"
+                  ? "reel2"
+                  : null;
+            }
+            updateSelection(slider, stateKey, isReel);
+          }, 150);
         };
 
         const move = (e) => {
@@ -7962,6 +7989,9 @@
             const walk = (y - startY) * 1.5;
             slider.scrollTop = scrollTop - walk;
           }
+
+          scrollLeft = slider.scrollLeft;
+          scrollTop = slider.scrollTop;
         };
 
         slider.addEventListener("mousedown", start);

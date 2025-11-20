@@ -509,6 +509,96 @@
           transform: translateY(-20px) scale(0.9);
         }
       }
+
+      /* --- Result Overlay (For New Discoveries) --- */
+      #result-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 3000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        backdrop-filter: blur(10px);
+      }
+      #result-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .result-card {
+        background: #1a1a1a;
+        padding: 40px;
+        border-radius: 24px;
+        text-align: center;
+        border: 3px solid var(--color-discovery);
+        box-shadow: 0 0 60px rgba(243, 156, 18, 0.4);
+        transform: scale(0.8);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        width: 85%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+      #result-overlay.visible .result-card {
+        transform: scale(1);
+      }
+
+      .result-icon {
+        font-size: 5rem;
+        text-shadow: 0 0 30px rgba(243, 156, 18, 0.6);
+        margin-bottom: 10px;
+      }
+      .result-title {
+        color: var(--color-discovery);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-weight: bold;
+      }
+      .result-word {
+        font-size: 3.5rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.1;
+      }
+      .result-recipe {
+        color: #aaa;
+        font-size: 1.1rem;
+        background: #222;
+        padding: 5px 15px;
+        border-radius: 20px;
+        border: 1px solid #333;
+      }
+      .result-note {
+        color: #666;
+        font-size: 0.8rem;
+        margin-top: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        animation: pulseText 2s infinite;
+      }
+
+      @keyframes pulseText {
+        0% {
+          opacity: 0.5;
+        }
+        30% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.5;
+        }
+      }
     </style>
   </head>
   <body>
@@ -545,6 +635,16 @@
       </div>
     </div>
     <div id="toast-container"></div>
+
+    <div id="result-overlay">
+      <div class="result-card">
+        <div class="result-icon" id="overlay-icon">🏆</div>
+        <div class="result-title">Discovery!</div>
+        <div class="result-word" id="overlay-word">???</div>
+        <div class="result-recipe" id="overlay-recipe">...</div>
+        <div class="result-note">Tap anywhere to collect</div>
+      </div>
+    </div>
 
     <script>
       // const LEAVES = [
@@ -786,10 +886,32 @@
           showToast("Hint", "Select two Elements first", false, null, "hint");
       });
 
+      // 1. Add DOM References
+      const resultOverlay = document.getElementById("result-overlay");
+      const overlayIcon = document.getElementById("overlay-icon");
+      const overlayWord = document.getElementById("overlay-word");
+      const overlayRecipe = document.getElementById("overlay-recipe");
+
+      // 2. Add Click-to-Dismiss Listener
+      resultOverlay.addEventListener("click", () => {
+        resultOverlay.classList.remove("visible");
+      });
+
+      // 3. New Modal Function
+      function showResultModal(word, recipe) {
+        overlayIcon.textContent = LEAF_EMOJI[word];
+        overlayWord.textContent = word;
+        overlayRecipe.textContent = recipe;
+        resultOverlay.classList.add("visible");
+      }
+
+      // 4. Updated combineWords Logic
       function combineWords(wordA, wordB) {
         const result = doCombine(wordA, wordB);
         const recipeText = `${wordA} + ${wordB}`;
+
         if (!result) {
+          // ... (Keep Shake Logic) ...
           combineBtn.style.transform = "translateX(5px)";
           setTimeout(
             () => (combineBtn.style.transform = "translateX(-5px)"),
@@ -798,32 +920,36 @@
           setTimeout(() => (combineBtn.style.transform = "translateX(0)"), 200);
           return;
         }
+
         const exists = wordData.some((w) => w.word === result.word);
         const isLeaf = result.isLeaf;
         const typeStr = isLeaf ? "discovery" : "element";
+
         if (!exists) {
+          // Save Data
           triggerMagicalPulse(typeStr);
           wordData.push(result);
           wordData.sort((a, b) => a.word.localeCompare(b.word));
           localStorage.setItem("alchemy_data", JSON.stringify(wordData));
-          showToast(
-            isLeaf ? "New Discovery" : "New Element",
-            result.word,
-            true,
-            recipeText,
-            typeStr
-          );
+
+          // --- BRANCHING LOGIC ---
+
           if (isLeaf) {
+            // CASE A: New Discovery -> SHOW MODAL
+            showResultModal(result.word, recipeText);
+
+            // Background Logic: Add to list silently so it's there when modal closes
             const newEl = createLeafItem(result);
             insertSorted(leafList, newEl, false);
             setTimeout(() => {
-              newEl.scrollIntoView({ behavior: "smooth", inline: "center" });
-              setTimeout(() => updateSelection(leafList, null, false), 500);
+              newEl.scrollIntoView({ behavior: "auto", inline: "center" });
+              // updateLeafSelection();
             }, 100);
-            document.querySelector(".leaf-label").innerHTML = `Discoveries (${
-              wordData.filter((item) => item.isLeaf).length
-            } / ${LEAVES.length})`;
           } else {
+            // CASE B: New Element -> SHOW TOAST
+            showToast("New Element", result.word, true, recipeText, typeStr);
+
+            // Reel Logic
             const target1 = [...reel1.querySelectorAll(".reel-item")].find(
               (el) => el.classList.contains("active")
             );
@@ -834,11 +960,13 @@
             if (target1) target1.scrollIntoView({ block: "center" });
             setTimeout(() => {
               i2.scrollIntoView({ behavior: "smooth", block: "center" });
-              setTimeout(() => updateSelection(reel2, "reel2", true), 600);
+              // setTimeout(() => updateReelSelection(reel2, "reel2", true), 600);
             }, 50);
           }
+
           updateCombinationState();
         } else {
+          // CASE C: Existing Item -> SHOW TOAST
           showToast(
             "Already Discovered",
             result.word,
@@ -846,6 +974,7 @@
             recipeText,
             typeStr
           );
+
           if (isLeaf) {
             const existingEl = [...leafList.children].find(
               (el) => el.dataset.word === result.word
@@ -873,7 +1002,7 @@
         toast.className = classes.join(" ");
         let iconStr = "ℹ️";
         if (type === "element") iconStr = "⚗️";
-        if (type === "discovery") iconStr = "🏆";
+        if (type === "discovery") iconStr = LEAF_EMOJI[message] ?? "🏆";
         const recipeHtml = recipe
           ? `<div class="toast-recipe">${recipe}</div>`
           : "";
@@ -3905,7 +4034,7 @@
         "Compost + Scale": "Armor",
         "Layer + Scale": "Armor",
         "Cavity + Scale": "Shell",
-        "Scale + Wind": "Weather vane",
+        "Scale + Wind": "Weather",
         "Scale + Sculpture": "Statue",
         "Cave + Scale": "Stalactite",
         "Blossom + Scale": "Armor",
@@ -7457,6 +7586,626 @@
         "Seed + Windmill": "Dust",
         "Brick + Windmill": "Building",
         "Breeze + Windmill": "Turbine",
+      };
+
+      const LEAF_EMOJI = {
+        Abyss: "🌊",
+        Adobe: "🏢",
+        Aggregate: "📊",
+        Allergy: "🤧",
+        Alluvium: "🌊",
+        Ambrosia: "😋",
+        Anvil: "🔨",
+        Apartment: "🏠",
+        Arbor: "🌳",
+        Arch: "🌉",
+        Artifact: "🏺",
+        Atlas: "🗺️",
+        Atmosphere: "💨",
+        Atoll: "🏝️",
+        Balance: "⚖️",
+        Ball: "⚽",
+        Bamboo: "🎍",
+        Bank: "🏦",
+        Banner: "🚩",
+        Bar: "🍺",
+        Bark: "🐕",
+        Barrier: "🚧",
+        Basalt: "⚫",
+        Base: "🥎",
+        Basin: "🛁",
+        Basket: "🧺",
+        Bastion: "🛡️",
+        Battery: "🔋",
+        Bay: "🌊",
+        Bead: "⚫",
+        Being: "🧘",
+        Berry: "🍓",
+        Binding: "🤝",
+        Bladder: "💧",
+        Blade: "🔪",
+        Block: "🧱",
+        Bluff: "🤥",
+        Bog: "🐸",
+        Bogey: "⛳",
+        Bogiron: "🦣",
+        Book: "📚",
+        Bottle: "🍾",
+        Boulder: "⛰️",
+        Bouquet: "💐",
+        Bower: "🌳",
+        Bowl: "🥣",
+        Brackish: "🌊",
+        Branch: "🌳",
+        Brand: "🛍️",
+        Bricks: "🧱",
+        Bridge: "🌉",
+        Brood: "🤔",
+        Brush: "🖌️",
+        Bubble: "🫧",
+        Building: "🏢",
+        Buoy: "🤿",
+        Burrow: "🐇",
+        Cairn: "⛰️",
+        Cake: "🎂",
+        Caldera: "🌋",
+        Candy: "🍬",
+        Canopy: "🌳",
+        Canvas: "🎨",
+        Cape: "🦸",
+        Capsule: "💊",
+        Caramel: "🍮",
+        Carousel: "🎠",
+        Carpet: "🧶",
+        Carving: "🔪",
+        Casting: "🎭",
+        Castle: "🏰",
+        Caveat: "⚠️",
+        Cavern: "🔦",
+        Ceramic: "🏺",
+        Chain: "🔗",
+        Chalice: "🏆",
+        Chamber: "🚪",
+        Chandelier: "💡",
+        Channel: "📺",
+        Charcoal: "🖤",
+        Chart: "📊",
+        Chasm: "🕳️",
+        Chime: "🔔",
+        Chisel: "🔨",
+        Chorus: "🗣️",
+        Cinder: "🕳️",
+        Circuit: "💡",
+        Citadel: "🏰",
+        Clarity: "💡",
+        Cloak: "🧥",
+        Clock: "⏰",
+        Coal: "🖤",
+        Coast: "🌊",
+        Coastline: "🌊",
+        Coating: "🎨",
+        Cobble: "🧱",
+        Cobbles: "🧱",
+        Cobblestone: "🧱",
+        Cobweb: "🕷️",
+        Cocoon: "🐛",
+        Codex: "📚",
+        Coin: "🪙",
+        Collapse: "📉",
+        Collection: "📦",
+        Color: "🎨",
+        Composite: "🧩",
+        Concrete: "🧱",
+        Continent: "🌍",
+        Copper: "🪙",
+        Coral: "🐠",
+        Core: "❤️",
+        Covering: "🧥",
+        Crater: "🌑",
+        Creature: "🐉",
+        Crevice: "🕳",
+        Crown: "👑",
+        Crucible: "🔥",
+        Crumble: "🍪",
+        Crust: "🍞",
+        Cushion: "🛏",
+        Dam: "🌊",
+        Damage: "💥",
+        Dampness: "💧",
+        Debris: "🧱",
+        Decree: "📜",
+        Deflation: "📉",
+        Dent: "🦷",
+        Deposit: "🏦",
+        Desert: "🌵",
+        Design: "🎨",
+        Diamond: "💎",
+        Dirigible: "🎈",
+        Display: "🖥️",
+        Document: "📄",
+        Domain: "🌐",
+        Draft: "📝",
+        Dream: "😴",
+        Drift: "🚗",
+        Driftwood: "🪵",
+        Dusting: "🧹",
+        Dwelling: "🏠",
+        Dyke: "🏳️‍🌈",
+        Dynasty: "👑",
+        Easel: "🎨",
+        Ecosystem: "🌍",
+        Edition: "📰",
+        Egg: "🥚",
+        Electrolyte: "💧",
+        Embankment: "🏞️",
+        Empire: "👑",
+        Energy: "⚡",
+        Erosion: "🌊",
+        Essence: "💧",
+        Estate: "🏡",
+        Etching: "✍️",
+        Fabric: "🧵",
+        Facade: "🎭",
+        Facet: "🎭",
+        Faith: "🙏",
+        Family: "👨‍👩‍👧‍👦",
+        Fan: "💨",
+        Fantasy: "🧙",
+        Farm: "🌾",
+        Fault: "💔",
+        Feather: "🪶",
+        Feeling: "😔",
+        Fence: "🚧",
+        Fertilizer: "🌱",
+        Field: "🌾",
+        Figure: "🧍",
+        Figurine: "🧸",
+        Filament: "💡",
+        Film: "🎬",
+        Finish: "🏁",
+        Flake: "❄️",
+        Flakes: "❄️",
+        Flaw: "😔",
+        Float: "🎈",
+        Flood: "🌊",
+        Flour: "🌾",
+        Fluff: "🐑",
+        Flute: "🎶",
+        Foam: "🫧",
+        Foil: "🪙",
+        Folklore: "📚",
+        Folktale: "📖",
+        Fortification: "🛡️",
+        Fortune: "🍀",
+        Foundation: "🧱",
+        Fracture: "💔",
+        Fragility: "💔",
+        Fragment: "🧩",
+        Fragrance: "🌸",
+        Frame: "🖼️",
+        Fresco: "🎨",
+        Fudge: "🍫",
+        Fumes: "💨",
+        Gale: "💨",
+        Gallery: "🖼️",
+        Gap: "😬",
+        Gargoyle: "🗿",
+        Garland: "🌿",
+        Gate: "🚪",
+        Gauge: "📏",
+        Gem: "💎",
+        Geode: "💎",
+        Geyser: "⛲",
+        Ghost: "👻",
+        Glacier: "🧊",
+        Glade: "🌳",
+        Glaze: "🍩",
+        Gleam: "✨",
+        Globe: "🌎",
+        Gloom: "😔",
+        Gloss: "✨",
+        Glue: "🩹",
+        Glyph: "🔲",
+        Golem: "🗿",
+        Gong: "🔔",
+        Graft: "🌳",
+        Grape: "🍇",
+        Grime: "🧼",
+        Grinding: "💪",
+        Grotto: "🌊",
+        Grove: "🌳",
+        Growth: "🌱",
+        Guardian: "🛡️",
+        Habitat: "🏠",
+        Hall: "🚪",
+        Hallucination: "😵‍💫",
+        Halo: "😇",
+        Hammock: "😴",
+        Harbor: "🌊",
+        Harpoon: "🎣",
+        Harvest: "🌾",
+        Haven: "🏝️",
+        Haze: "🌫️",
+        Headland: "⛰️",
+        Heap: "⛰️",
+        Heirloom: "🎁",
+        Helmet: "🪖",
+        Herbarium: "🌿",
+        Heritage: "🏛️",
+        Hill: "⛰️",
+        Hold: "🤝",
+        Holdfast: "🤝",
+        Hole: "🕳️",
+        Home: "🏠",
+        Honey: "🍯",
+        Hope: "✨",
+        Hue: "🎨",
+        Hush: "🤫",
+        Ice: "🧊",
+        Icicle: "🧊",
+        Image: "🖼️",
+        Incense: "🕯️",
+        Inclusion: "🤝",
+        Index: "📚",
+        Ink: "✒️",
+        Inlay: "💠",
+        Inscription: "✍️",
+        Insight: "💡",
+        Interference: "🚧",
+        Isthmus: "🌉",
+        Ivy: "🌿",
+        Jam: "🍓",
+        Jar: "🏺",
+        Jelly: "🍮",
+        Jetty: "🚢",
+        Jewel: "💎",
+        Jewelry: "💍",
+        Jug: "🪣",
+        Juice: "🍹",
+        Jungle: "🌿",
+        Keepsake: "🎁",
+        Kingdom: "👑",
+        Kite: "🪁",
+        Knowledge: "🧠",
+        Lacquer: "🎨",
+        Lagoon: "🏝️",
+        Lake: "🌊",
+        Landform: "⛰️",
+        Landmark: "🗼",
+        Landscape: "🏞️",
+        Lantern: "🏮",
+        Lattice: "🕸️",
+        Layercake: "🎂",
+        Leak: "💧",
+        Ledge: "⛰️",
+        Lens: "📷",
+        Letter: "✉️",
+        Levee: "🌊",
+        Library: "📚",
+        Light: "💡",
+        Lineage: "🧬",
+        Liquid: "💧",
+        Lizard: "🦎",
+        Loam: "🌱",
+        Lode: "💰",
+        Loom: "🧵",
+        Lore: "📜",
+        Lubricant: "🧴",
+        Lumber: "🪵",
+        Machine: "🤖",
+        Magma: "🌋",
+        Magnet: "🧲",
+        Mangrove: "🌳",
+        Mansion: "🏠",
+        Mantle: "🧥",
+        Manuscript: "📜",
+        Map: "🗺️",
+        Marble: "⚪",
+        Mark: "✅",
+        Marsh: "🌿",
+        Marshland: "沼",
+        Masterpiece: "🎨",
+        Mat: "🪺",
+        Mausoleum: "🗿",
+        Maze: "迷",
+        Mead: "🍺",
+        Measurement: "📏",
+        Membrane: "🪟",
+        Memoir: "📖",
+        Memorial: "🦼",
+        "Mesa.": "⛰️",
+        Message: "✉️",
+        Methane: "💨",
+        Mine: "🏣",
+        Mineral: "💎",
+        Mirage: "🏜️",
+        Mire: "沼",
+        Mirror: "🪬",
+        Mobile: "📱",
+        Molasses: "🍯",
+        Mold: "🍄",
+        Monolith: "🗿",
+        Monument: "🗿",
+        Motion: "🏃",
+        Mound: "⛰️",
+        Mountain: "⛰️",
+        Mudstone: "🧱",
+        Mural: "🎨",
+        Museum: "🏛️",
+        Music: "🎵",
+        Myth: "👹",
+        Narrative: "📖",
+        Nation: "🌍",
+        Nectar: "🍯",
+        Net: "🎣",
+        Network: "🕸️",
+        Niche: "🌱",
+        Nook: "📚",
+        Nostalgia: "🤔",
+        Notch: "✂️",
+        Number: "🔢",
+        Oasis: "🌴",
+        Obelisk: "🗿",
+        Ocean: "🌊",
+        Ooze: "🧪",
+        Opaque: "🙈",
+        Orchard: "🌳",
+        Oxide: "🧪",
+        Oxygen: "💨",
+        Package: "📦",
+        Page: "📃",
+        Paint: "🎨",
+        Painting: "🎨",
+        Palace: "🏰",
+        Palisade: "🧱",
+        Panel: "🎭",
+        Panorama: "🏞️",
+        Paper: "📃",
+        Papyrus: "📜",
+        Paradise: "🏝️",
+        Parchment: "📜",
+        Passage: "🚶",
+        Paste: "📋",
+        Pasture: "🌱",
+        Patch: "🩹",
+        Patchwork: "🧵",
+        Path: "🛤️",
+        Pathway: "🛤️",
+        Pattern: "🧩",
+        Pavement: "🛣️",
+        Pearl: "⚪",
+        Peat: "🌱",
+        Pebble: "🪀",
+        Pebbles: "🪺",
+        Pedestal: "🏆",
+        Pedigree: "🐕",
+        Peel: "🍌",
+        Pellet: "🥎",
+        Pendant: "💎",
+        Perfume: "🌸",
+        Permafrost: "🥶",
+        Pigment: "🎨",
+        Pile: "📦",
+        Pill: "💊",
+        Pipe: "🧆",
+        Pit: "🕳",
+        Pitfall: "🕳️",
+        Planet: "🌍",
+        Plaster: "🩹",
+        Plate: "🍽️",
+        Plateau: "⛰️",
+        Plating: "🍽️",
+        Pocket: "👝",
+        Poem: "📜",
+        Pond: "💧",
+        Pool: "🏊",
+        Port: "🚢",
+        Portrait: "🖼️",
+        Pot: "🪴",
+        Power: "💪",
+        Prairie: "🌾",
+        Preserve: "🌱",
+        Print: "🖨️",
+        Prism: "🌈",
+        Pudding: "🍮",
+        Puddle: "💧",
+        Pulp: "🥭",
+        Pumice: "🌋",
+        Purity: "🦢",
+        Quagmire: "🚏",
+        Quake: "🏏️",
+        Quartz: "🪨",
+        Quill: "🖋️",
+        Quilt: "🧶",
+        Raft: "🚣",
+        Rainbow: "🌈",
+        Rampart: "🛡️",
+        Range: "⛰️",
+        Ravine: "⛰️",
+        Record: "🎶",
+        Reeds: "🌾",
+        Reef: "🐠",
+        Reflection: "зеркало",
+        Relief: "😌",
+        Reliquary: "🏺",
+        Resin: "🧪",
+        Resonance: "📢",
+        Reverberation: "🔊",
+        Reverie: "😴",
+        Ridge: "⛰️",
+        Rings: "💍",
+        Robe: "👑",
+        Roof: "🏠",
+        Room: "🏣",
+        Roots: "🌱",
+        Rope: "🪢",
+        Rosary: "🙏",
+        Rose: "🌹",
+        Rot: "腐",
+        Rubble: "🧱",
+        Rudder: "🛥️",
+        Ruins: "🏛️",
+        Ruler: "📏",
+        Rupture: "💔",
+        Sachet: "🛍️",
+        Sack: "💼",
+        Saga: "📜",
+        Sail: "⛵",
+        Sanctuary: "🕊️",
+        Sandstone: "🧱",
+        Sarcophagus: "🗿",
+        Scar: "🩹",
+        Scent: "👃",
+        Scoria: "🌋",
+        Scrap: "🗑️",
+        Script: "📜",
+        Seal: "🦭",
+        Secret: "🤫",
+        Sedimentation: "🪺",
+        Seedling: "🌱",
+        Seeds: "🌱",
+        Sentinel: "🛡️",
+        Settlement: "🏘️",
+        Shackles: "⛓️",
+        Shadow: "👤",
+        Shard: "💔",
+        Shards: "💔",
+        Shaving: "💈",
+        Sheath: "🌿",
+        Sheen: "✨",
+        Sheet: "🟪",
+        Shell: "🐚",
+        Shelter: "🏠",
+        Shield: "🛡️",
+        Shine: "✨",
+        Shingles: "🏠",
+        Shock: "😲",
+        Shrapnel: "💥",
+        Shrine: "🙏",
+        Shroud: "🌫️",
+        Sienna: "🌇",
+        Silence: "🤫",
+        Sinkhole: "🕳️",
+        Skyscraper: "🏢",
+        Slag: "💩",
+        Slate: "🌑",
+        Slime: "🧪",
+        Sliver: "🥈",
+        Slope: "📐",
+        Slurry: "🤢",
+        Smoke: "💨",
+        Smudge: "🎨",
+        Snow: "❄️",
+        Snowflake: "❄️",
+        Soak: "🛁",
+        Socket: "🔌",
+        Solution: "💡",
+        Sorbet: "🍧",
+        Soup: "🍲",
+        Spark: "✨",
+        Sparkle: "✨",
+        Specimen: "🔬",
+        Spectrum: "🌈",
+        Sphere: "⚽",
+        Spirit: "👻",
+        Splinter: "🪵",
+        Sponge: "🧽",
+        Spores: "🍄",
+        Spray: "💦",
+        Stability: "🧘",
+        Stalactite: "🧊",
+        Stalk: "🚶",
+        Steel: "🦾",
+        Stem: "🌱",
+        Stomach: "😩",
+        Stone: "🪨",
+        Storm: "⛈️",
+        Story: "📖",
+        Strata: "🧱",
+        Straw: "🌾",
+        Structure: "🧱",
+        Suspension: "⏳",
+        Swamp: "🐊",
+        Sway: "💃",
+        Table: "🍽️",
+        Tablet: "📱",
+        Tabletop: "🎲",
+        Taffy: "🍬",
+        Tale: "📖",
+        Tapestry: "🧵",
+        Tar: "🖤",
+        Tarnish: "😔",
+        Tart: "🍋",
+        Tattoo: "✒️",
+        Temple: "⛩️",
+        Tendril: "🌱",
+        Tent: "⛺",
+        Terrace: "🪴",
+        Terracotta: "🧱",
+        Terrarium: "🪴",
+        Territory: "🗺️",
+        Tether: "🔗",
+        Text: "💬",
+        Thatch: "🌾",
+        Thicket: "🌿",
+        Thorns: "🥀",
+        Tide: "🌊",
+        Tier: "⛰️",
+        Tile: "🛏",
+        Timber: "🪵",
+        Timeline: "🗓️",
+        Tint: "🎨",
+        Tomb: "🕡",
+        Torrent: "🌊",
+        Totem: "🗿",
+        Tower: "🗼",
+        Treasure: "🪙",
+        Trellis: "🌿",
+        Trench: "🗃️",
+        Tube: "🚇",
+        Tuber: "🥔",
+        Tuff: "💪",
+        Tug: "🦛",
+        Tunnel: "🚇",
+        Turbine: "🌀",
+        Turf: "🌱",
+        Twig: "🌱",
+        Urn: "🏺",
+        Varnish: "✨",
+        Vase: "🏺",
+        Vault: "🔒",
+        Veil: "👰‍♀️",
+        Vein: "🩸",
+        Velvet: "💜",
+        Veneer: "🎭",
+        Vent: "💨",
+        Verdigris: "🧪",
+        Vessel: "🚢",
+        Vibration: "📱",
+        Village: "🏘️",
+        Virtue: "😇",
+        Vista: "🏞️",
+        Voice: "🗣️",
+        Volcano: "🌋",
+        Volume: "🔊",
+        Vortex: "🌀",
+        Wasteland: "🏜️",
+        Wave: "🌊",
+        Weather: "☀️",
+        Weight: "🏋️",
+        Weir: "🥴",
+        Whirlpool: "🌀",
+        Whirlwind: "🌪️",
+        Whisper: "🤫",
+        Wilderness: "🌲",
+        Window: "🪟",
+        Wine: "🍷",
+        Wire: "🧵",
+        Wisdom: "🦉",
+        Womb: "🤰",
+        Wreath: "🌿",
+        Zeppelin: "🎈",
+        Ziggurat: "🔼",
       };
 
       const ALL_WORDS = new Set();

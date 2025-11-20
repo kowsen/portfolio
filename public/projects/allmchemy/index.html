@@ -403,7 +403,6 @@
         flex-direction: column;
         justify-content: flex-end;
         align-items: center;
-        /* Keep Z-index high, but lower than result-overlay (5000) */
         z-index: 4000;
         pointer-events: none;
         width: 95%;
@@ -527,7 +526,6 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        /* UPDATED: High Z-Index to stay above toasts */
         z-index: 5000;
         opacity: 0;
         pointer-events: none;
@@ -570,7 +568,7 @@
         font-weight: bold;
       }
       .result-word {
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 900;
         color: #fff;
         line-height: 1.1;
@@ -611,8 +609,10 @@
         <div class="selection-line" id="selection-line"></div>
         <div class="reel" id="reel-1">
           <div class="reel-spacer"></div>
+          <div class="reel-spacer"></div>
         </div>
         <div class="reel" id="reel-2">
+          <div class="reel-spacer"></div>
           <div class="reel-spacer"></div>
         </div>
       </div>
@@ -7845,7 +7845,6 @@
       wordData.sort((a, b) => a.word.localeCompare(b.word));
 
       let state = { reel1: null, reel2: null };
-      // REMOVED: currentToastTimeout is no longer global
 
       const reel1 = document.getElementById("reel-1"),
         reel2 = document.getElementById("reel-2"),
@@ -7884,6 +7883,7 @@
       wordData
         .filter((w) => !w.isLeaf)
         .forEach((w) => {
+          // Items are inserted between the two spacers. reel1.lastElementChild is the bottom spacer.
           reel1.insertBefore(createReelItem(w), reel1.lastElementChild);
           reel2.insertBefore(createReelItem(w), reel2.lastElementChild);
         });
@@ -7893,13 +7893,21 @@
 
       function insertSorted(container, newEl, isReel) {
         const selector = isReel ? ".reel-item" : ".leaf-item";
-        const nextSibling = Array.from(
-          container.querySelectorAll(selector)
-        ).find(
+
+        // When inserting into a reel, we must check items *before* the last child (the bottom spacer).
+        const existingItems = isReel
+          ? Array.from(container.children).filter((child) =>
+              child.classList.contains("reel-item")
+            )
+          : Array.from(container.querySelectorAll(selector));
+
+        const nextSibling = existingItems.find(
           (item) => item.dataset.word.localeCompare(newEl.dataset.word) > 0
         );
+
         if (nextSibling) container.insertBefore(newEl, nextSibling);
         else if (isReel)
+          // Insert before the bottom spacer (which is the last child)
           container.insertBefore(newEl, container.lastElementChild);
         else container.appendChild(newEl);
       }
@@ -8029,6 +8037,7 @@
       addScrollListener(reel2, () => updateSelection(reel2, "reel2", true));
       addScrollListener(leafList, () => updateSelection(leafList, null, false));
       window.addEventListener("load", () => {
+        // Initial scroll to the center of the list
         reel1.scrollTop = reel1.scrollHeight / 2 - reel1.clientHeight / 2;
         reel2.scrollTop = reel2.scrollHeight / 2 - reel2.clientHeight / 2;
 
@@ -8093,12 +8102,10 @@
         resultOverlay.classList.remove("visible");
       });
 
-      // --- NEW: Helper to dismiss toasts when modal opens ---
       function dismissAllToasts() {
         const toasts = toastContainer.querySelectorAll(".toast");
         toasts.forEach((t) => {
           t.classList.add("fade-out");
-          // Speed up removal since modal is opening
           setTimeout(() => {
             if (t.parentElement) t.remove();
           }, 300);
@@ -8106,7 +8113,7 @@
       }
 
       function showResultModal(word, recipe) {
-        dismissAllToasts(); // Auto-dismiss toasts
+        dismissAllToasts();
         overlayIcon.textContent = LEAF_EMOJI[word];
         overlayWord.textContent = word;
         overlayRecipe.textContent = recipe;
@@ -8201,8 +8208,6 @@
       }
 
       function showToast(title, message, isNew, recipe, type) {
-        // UPDATED: Do not clear innerHTML, allowing stacking.
-        // Instead, grab existing toasts and fade them out faster
         const existingToasts = toastContainer.querySelectorAll(".toast");
         existingToasts.forEach((t) => t.classList.add("fade-out"));
 
@@ -8225,7 +8230,6 @@
 
         const duration = isNew ? 4000 : 2500;
         setTimeout(() => {
-          // Check if it hasn't been removed by dismissAllToasts already
           if (toast.parentElement) {
             toast.classList.add("fade-out");
             toast.addEventListener("animationend", () => {

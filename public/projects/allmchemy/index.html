@@ -7901,6 +7901,17 @@ gemma3:12b model using ollama.
         .filter((w) => w.isLeaf)
         .forEach((w) => leafList.appendChild(createLeafItem(w)));
 
+      setTimeout(() => {
+        reel1.children[1].scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
+        reel2.children[reel2.children.length - 2].scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
+      }, 0);
+
       function insertSorted(container, newEl, isReel) {
         const selector = isReel ? ".reel-item" : ".leaf-item";
 
@@ -8208,7 +8219,7 @@ gemma3:12b model using ollama.
 
             if (currentActiveLeft) {
               currentActiveLeft.scrollIntoView({
-                behavior: "smooth",
+                behavior: "instant",
                 block: "center",
               });
             }

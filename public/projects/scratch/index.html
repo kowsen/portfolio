@@ -89,6 +89,14 @@
         height: 32px;
       }
 
+      #clone-button {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        width: 90px;
+        height: 32px;
+      }
+
       #stats-window {
         position: absolute;
         left: 32px;
@@ -123,6 +131,7 @@
     <!-- Container for words (using body directly in JS) -->
 
     <button id="stats-button">0 / 0</button>
+    <button id="clone-button">CLONE</button>
     <div id="stats-window" class="hidden">STATS</div>
 
     <script>
@@ -165,6 +174,38 @@
       function doThing(sourceElem, targetElem) {
         const sourceWord = sourceElem.dataset.word;
         const targetWord = targetElem.dataset.word;
+
+        if (
+          targetElem.id === "clone-button" &&
+          COMBO_VALUES.has(sourceWord) &&
+          !wordList.includes(sourceWord)
+        ) {
+          const rect1 = sourceElem.getBoundingClientRect();
+          const rect2 = targetElem.getBoundingClientRect();
+          const midX = (rect1.left + rect2.left) / 2;
+          const midY = (rect1.top + rect2.top) / 2;
+
+          // Apply smooth class for animation
+          sourceElem.classList.add("smooth-move");
+
+          // Set new coordinates
+          sourceElem.style.top = `${startY}px`;
+          sourceElem.style.left = `${startX}px`;
+
+          // Cleanup class after transition ends so subsequent drags are instant
+          setTimeout(() => {
+            sourceElem.classList.remove("smooth-move");
+          }, 400);
+
+          createWordTile(
+            sourceWord,
+            midX,
+            midY + 50,
+            true,
+            !COMBO_VALUES.has(sourceWord)
+          );
+          return;
+        }
 
         console.log(`Interaction: "${sourceWord}" dropped on "${targetWord}"`);
 
@@ -242,6 +283,9 @@
         });
       }
 
+      let startX = 0;
+      let startY = 0;
+
       // 5. Drag Event Handlers
       function dragStart(e) {
         // Normalize touch/mouse event
@@ -255,6 +299,8 @@
 
           // Calculate offset so element doesn't snap to mouse center
           const rect = draggedItem.getBoundingClientRect();
+          startX = rect.left;
+          startY = rect.top;
           offsetX = clientX - rect.left;
           offsetY = clientY - rect.top;
 
@@ -396,7 +442,8 @@
         if (!elemBelow) return;
 
         // Find the closest ancestor that is a word-tile (in case we hit a child node, if any)
-        let droppableBelow = elemBelow.closest(".word-tile");
+        let droppableBelow =
+          elemBelow.closest(".word-tile") ?? elemBelow.closest("#clone-button");
 
         if (currentDroppable != droppableBelow) {
           // We have entered or left a droppable area

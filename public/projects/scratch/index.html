@@ -30,7 +30,7 @@
         touch-action: none; /* Crucial for mobile touch dragging */
       }
 
-      .word-tile.born {
+      .born {
         background-color: #ccc;
       }
 
@@ -131,7 +131,7 @@
     <!-- Container for words (using body directly in JS) -->
 
     <button id="stats-button">0 / 0</button>
-    <button id="clone-button">CLONE</button>
+    <!-- <button id="clone-button">CLONE</button> -->
     <div id="stats-window" class="hidden">STATS</div>
 
     <script>
@@ -219,28 +219,61 @@
         const rect1 = sourceElem.getBoundingClientRect();
         const rect2 = targetElem.getBoundingClientRect();
 
-        const midX = (rect1.left + rect2.left) / 2;
-        const midY = (rect1.top + rect2.top) / 2;
+        const midX = rect2.left;
+        const midY = rect2.top;
+
+        console.log(rect1, rect2);
 
         let removeCount = 0;
-        if (sourceElem.classList.contains("born")) {
-          sourceElem.remove();
-          removeCount += 1;
-        }
+        // if (sourceElem.classList.contains("born")) {
+        //   sourceElem.remove();
+        //   removeCount += 1;
+        // }
 
-        if (targetElem.classList.contains("born")) {
-          targetElem.remove();
-          removeCount += 1;
-        }
+        // if (targetElem.classList.contains("born")) {
+        //   targetElem.remove();
+        //   removeCount += 1;
+        // }
 
-        // Create the new combination element
-        createWordTile(
-          combination,
-          midX,
-          removeCount === 2 ? midY : midY + 50,
-          true,
-          !COMBO_VALUES.has(combination)
-        );
+        // Apply smooth class for animation
+        sourceElem.classList.add("smooth-move");
+
+        // Set new coordinates
+        sourceElem.style.top = `${startY}px`;
+        sourceElem.style.left = `${startX}px`;
+
+        // Cleanup class after transition ends so subsequent drags are instant
+        setTimeout(() => {
+          sourceElem.classList.remove("smooth-move");
+        }, 400);
+
+        const duplicateTile = [
+          ...document.querySelectorAll(".word-tile"),
+        ].filter((tile) => tile.textContent === combination)[0];
+
+        if (duplicateTile) {
+          // Apply smooth class for animation
+          duplicateTile.classList.add("smooth-move");
+
+          // Set new coordinates
+          console.log(midX, midY);
+          duplicateTile.style.left = `${midX}px`;
+          duplicateTile.style.top = `${midY - 50}px`;
+
+          // Cleanup class after transition ends so subsequent drags are instant
+          setTimeout(() => {
+            duplicateTile.classList.remove("smooth-move");
+          }, 400);
+        } else {
+          // Create the new combination element
+          createWordTile(
+            combination,
+            midX,
+            removeCount === 2 ? midY : midY - 50,
+            true,
+            !COMBO_VALUES.has(combination)
+          );
+        }
       }
 
       function createWordTile(text, x, y, isNew = false, isLeaf = false) {
@@ -349,7 +382,7 @@
           doThing(draggedItem, currentDroppable);
 
           // Move the dropped item away smoothly so they don't overlap
-          resolveOverlap(draggedItem, currentDroppable);
+          // resolveOverlap(draggedItem, currentDroppable);
 
           // Clear highlight
           currentDroppable.classList.remove("potential-target");

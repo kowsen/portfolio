@@ -87,6 +87,7 @@
         top: 16px;
         width: 90px;
         height: 32px;
+        z-index: 900;
       }
 
       #clone-button {
@@ -105,6 +106,7 @@
         width: 200px;
         background-color: #666;
         overflow: scroll;
+        z-index: 1000;
       }
 
       #stats-window.hidden {
@@ -310,8 +312,8 @@
           const gridX = Math.floor(i / 4);
           const gridY = i % 4;
           // Random positioning
-          const x = containerWidth / 2 + (gridX - 0.5) * GRID_SIZE_X;
-          const y = containerHeight / 2 + (gridY - 1.5) * GRID_SIZE_Y;
+          const x = containerWidth / 2 + (gridX - 0.5) * GRID_SIZE_X - 45;
+          const y = containerHeight / 2 + (gridY - 1.5) * GRID_SIZE_Y - 20;
           createWordTile(word, x, y);
         });
       }

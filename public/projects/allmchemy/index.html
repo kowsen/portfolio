@@ -639,7 +639,7 @@ gemma3:12b model using ollama.
     <div id="modal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Undiscovered</h2>
+          <h2>Unknown</h2>
           <span class="close-btn">&times;</span>
         </div>
         <div class="missing-list" id="missing-list"></div>
@@ -7930,29 +7930,18 @@ gemma3:12b model using ollama.
         let originalScrollLeft, originalScrollTop;
         let snapTimeout;
 
-        const forceSnapAndSelectionUpdate = () => {
-          let stateKey = null;
-          let isReel = direction === "y";
-          if (isReel) {
-            stateKey =
-              slider.id === "reel-1"
-                ? "reel1"
-                : slider.id === "reel-2"
-                ? "reel2"
-                : null;
-          }
-          // Force update to ensure the final snapped position is reflected
-          updateSelection(slider, stateKey, isReel);
-        };
+        // Context variables needed for updates
+        const stateKey =
+          slider.id === "reel-1"
+            ? "reel1"
+            : slider.id === "reel-2"
+            ? "reel2"
+            : null;
+        const isReel = direction === "y";
 
-        const handleSnapEnable = () => {
-          if (snapTimeout) clearTimeout(snapTimeout);
-          // Allow browser momentum scrolling to take over for 150ms before re-enabling snap.
-          snapTimeout = setTimeout(() => {
-            // Remove "is-dragging" to re-enable CSS scroll-snap
-            slider.classList.remove("is-dragging");
-            forceSnapAndSelectionUpdate();
-          }, 150);
+        const forceSelectionUpdate = () => {
+          // This is used for desktop where CSS snap is instant, or as a final fallback
+          updateSelection(slider, stateKey, isReel);
         };
 
         const handleSnapDisable = () => {
@@ -7960,17 +7949,48 @@ gemma3:12b model using ollama.
           slider.classList.add("is-dragging"); // Disables CSS scroll-snap
         };
 
-        // --- TOUCH EVENTS (Mobile: Rely on native scrolling for momentum) ---
-        slider.addEventListener("touchstart", handleSnapDisable, {
-          passive: true,
-        });
-        // We do *not* use a custom touchmove.
-        slider.addEventListener("touchend", handleSnapEnable, {
-          passive: true,
-        });
+        // --- MOUSE EVENTS (Desktop: Custom drag logic & instant snap) ---
 
-        // --- MOUSE EVENTS (Desktop: Custom drag logic for scroll) ---
-        slider.addEventListener("mousedown", (e) => {
+        // Handler for dragging (attached to window)
+        const handleMouseMove = (e) => {
+          if (!isDown) return;
+
+          // 3. Calculate how far the cursor has moved from the start
+          const walkX = e.pageX - startCursorX;
+          const walkY = e.pageY - startCursorY;
+
+          // 4. Apply the scroll (1:1 ratio)
+          if (direction === "x") {
+            // New scroll is Original scroll position MINUS the distance cursor moved
+            slider.scrollLeft = originalScrollLeft - walkX;
+          } else {
+            // New scroll is Original scroll position MINUS the distance cursor moved
+            slider.scrollTop = originalScrollTop - walkY;
+          }
+        };
+
+        // Handler for drag end (attached to window/document)
+        const handleMouseUp = () => {
+          if (!isDown) return;
+          isDown = false;
+          slider.classList.remove("cursor-grabbing");
+
+          // Remove listeners from window to prevent interference with other elements
+          window.removeEventListener("mousemove", handleMouseMove);
+          window.removeEventListener("mouseup", handleMouseUp);
+
+          // Re-enable CSS scroll-snap immediately on desktop mouse release (instant snap)
+          slider.classList.remove("is-dragging");
+          // Force update to ensure the final snapped position is reflected
+          forceSelectionUpdate();
+        };
+
+        // MOUSE DOWN (Starts the drag, attaches window listeners)
+        slider.addEventListener("pointerdown", (e) => {
+          if (e.pointerType !== "mouse") {
+            return;
+          }
+
           handleSnapDisable();
           isDown = true;
           slider.classList.add("cursor-grabbing");
@@ -7983,38 +8003,9 @@ gemma3:12b model using ollama.
           originalScrollLeft = slider.scrollLeft;
           originalScrollTop = slider.scrollTop;
 
-          e.preventDefault();
-        });
-
-        slider.addEventListener("mouseleave", () => {
-          if (isDown) handleSnapEnable();
-          isDown = false;
-          slider.classList.remove("cursor-grabbing");
-        });
-
-        slider.addEventListener("mouseup", () => {
-          if (isDown) handleSnapEnable();
-          isDown = false;
-          slider.classList.remove("cursor-grabbing");
-        });
-
-        slider.addEventListener("mousemove", (e) => {
-          if (!isDown) return;
-
-          e.preventDefault();
-
-          // 3. Calculate how far the cursor has moved from the start
-          const walkX = e.pageX - startCursorX;
-          const walkY = e.pageY - startCursorY;
-
-          // 4. Apply the scroll
-          if (direction === "x") {
-            // New scroll is Original scroll position MINUS the distance cursor moved (1:1 ratio)
-            slider.scrollLeft = originalScrollLeft - walkX;
-          } else {
-            // New scroll is Original scroll position MINUS the distance cursor moved (1:1 ratio)
-            slider.scrollTop = originalScrollTop - walkY;
-          }
+          // Attach global listeners for reliable drag
+          window.addEventListener("pointermove", handleMouseMove);
+          window.addEventListener("pointerup", handleMouseUp);
         });
       }
 
@@ -8022,6 +8013,7 @@ gemma3:12b model using ollama.
       enableDragScroll(reel2, "y");
       enableDragScroll(leafList, "x");
 
+      // MODIFIED: Function now returns the closest element.
       function updateSelection(container, stateKey, isReel) {
         const rect = container.getBoundingClientRect();
         const center = isReel
@@ -8041,6 +8033,8 @@ gemma3:12b model using ollama.
             closest = item;
           }
         });
+
+        // --- UI & State Update ---
         container
           .querySelectorAll(selector)
           .forEach((i) => i.classList.remove("active"));
@@ -8049,6 +8043,8 @@ gemma3:12b model using ollama.
           if (stateKey) state[stateKey] = closest.dataset.word;
         }
         if (isReel) updateCombinationState();
+
+        return closest; // <-- Return the closest element
       }
 
       function updateCombinationState() {
@@ -8194,7 +8190,7 @@ gemma3:12b model using ollama.
             const newEl = createLeafItem(result);
             insertSorted(leafList, newEl, false);
             setTimeout(() => {
-              newEl.scrollIntoView({ behavior: "auto", inline: "center" });
+              newEl.scrollIntoView({ behavior: "smooth", inline: "center" });
             }, 100);
 
             document.querySelector(".leaf-label").innerHTML = `Discoveries (${
@@ -8212,7 +8208,7 @@ gemma3:12b model using ollama.
 
             if (currentActiveLeft) {
               currentActiveLeft.scrollIntoView({
-                behavior: "auto",
+                behavior: "smooth",
                 block: "center",
               });
             }

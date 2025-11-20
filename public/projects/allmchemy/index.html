@@ -722,6 +722,10 @@
       });
 
       function triggerMagicalPulse(type) {
+        if (type !== "discovery") {
+          return;
+        }
+
         const layout = document.querySelector(".game-layout");
         const color =
           type === "discovery"
@@ -816,6 +820,9 @@
               newEl.scrollIntoView({ behavior: "smooth", inline: "center" });
               setTimeout(() => updateSelection(leafList, null, false), 500);
             }, 100);
+            document.querySelector(".leaf-label").innerHTML = `Discoveries (${
+              wordData.filter((item) => item.isLeaf).length
+            } / ${LEAVES.length})`;
           } else {
             const target1 = [...reel1.querySelectorAll(".reel-item")].find(
               (el) => el.classList.contains("active")

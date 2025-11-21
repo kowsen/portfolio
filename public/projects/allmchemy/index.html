@@ -101,10 +101,6 @@
         100% {
           background-color: transparent;
           color: inherit;
-          /* Removed 'text-shadow' from here. 
-             This allows CSS to interpolate to the computed style
-             of the element (active or inactive), preventing the pop.
-          */
           box-shadow: none;
           z-index: auto;
           border-radius: 0;
@@ -144,6 +140,7 @@
         background: #111;
         z-index: 10;
         font-size: 20px;
+        flex-shrink: 0;
       }
 
       /* Dropdown Styling */
@@ -164,20 +161,34 @@
         border-color: var(--color-discovery);
       }
 
+      /* --- Center Stage (Mixer + Action) --- */
+      .center-stage {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 0;
+        overflow: hidden;
+        gap: 32px;
+        padding: 24px 8px;
+      }
+
       /* --- Mixer Area --- */
       .mixer-container {
-        flex: 1;
+        /* flex: grow shrink basis */
+        height: 300px;
+        flex: 0 1 420px; /* Ideally 420px, but allow shrinking if screen is small */
+        width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 10px;
         position: relative;
-        padding: 10px;
-        overflow: hidden;
+        /* padding: 10px; */
       }
       .selection-line {
         position: absolute;
-        width: 90%;
+        width: 95%;
         height: var(--item-height);
         border: 2px solid #444;
         border-radius: 8px;
@@ -200,7 +211,6 @@
       .reel {
         width: 45%;
         height: 100%;
-        max-height: 400px;
         background: var(--reel-bg);
         border-radius: 12px;
         overflow-y: scroll;
@@ -210,14 +220,12 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
         cursor: grab;
-        /* Allow the browser to handle touch scrolling */
         touch-action: pan-y;
       }
       .reel::-webkit-scrollbar {
         display: none;
       }
       .reel.is-dragging {
-        /* Disables snap when dragging or immediately after a flick to allow momentum scroll */
         scroll-snap-type: none;
         cursor: grabbing;
       }
@@ -254,9 +262,9 @@
       .action-area {
         display: flex;
         justify-content: center;
-        padding: 15px;
-        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.5));
+        /* padding: 15px; */
         flex-shrink: 0;
+        /* margin-bottom: 20px; */
       }
       button#combine-btn {
         background: #333;
@@ -338,7 +346,6 @@
         display: none;
       }
       .leaf-scroller.is-dragging {
-        /* Disables snap when dragging or immediately after a flick to allow momentum scroll */
         scroll-snap-type: none;
         cursor: grabbing;
       }
@@ -664,18 +671,23 @@
           <option value="Owl">Owl</option>
         </select>
       </header>
-      <div class="mixer-container">
-        <div class="selection-line" id="selection-line"></div>
-        <div class="reel" id="reel-1">
-          <div class="reel-spacer"></div>
-          <div class="reel-spacer"></div>
+      <div class="center-stage">
+        <div class="mixer-container">
+          <div class="selection-line" id="selection-line"></div>
+          <div class="reel" id="reel-1">
+            <div class="reel-spacer"></div>
+            <div class="reel-spacer"></div>
+          </div>
+          <div class="reel" id="reel-2">
+            <div class="reel-spacer"></div>
+            <div class="reel-spacer"></div>
+          </div>
         </div>
-        <div class="reel" id="reel-2">
-          <div class="reel-spacer"></div>
-          <div class="reel-spacer"></div>
+        <div class="action-area">
+          <button id="combine-btn">COMBINE</button>
         </div>
       </div>
-      <div class="action-area"><button id="combine-btn">COMBINE</button></div>
+
       <div class="leaf-container">
         <div class="leaf-header">
           <div class="leaf-label">Discoveries</div>
@@ -726,10 +738,8 @@
       const defaultWordData = START_WORDS.map((word) => ({
         word,
         isLeaf: false,
-        // Initial words have no recipe
       }));
       let wordData = [],
-        // Dynamic storage key based on game mode
         storageKey = `alchemy_data_${gameMode.toLowerCase()}`,
         storedData = localStorage.getItem(storageKey);
 
@@ -775,7 +785,9 @@
 
         // Click handler to view recipe
         d.onclick = () => {
-          // Prefer the saved recipe (if unlocked recently), fallback to generic lookup (old saves)
+          // Check if we just dragged (to prevent click after drag)
+          if (leafList.classList.contains("was-dragging")) return;
+
           const recipe = w.recipe || findRecipeFor(w.word);
           showResultModal(w.word, recipe, true);
         };
@@ -813,9 +825,9 @@
 
       function enableDragScroll(slider, direction = "y") {
         let isDown = false;
-        let startCursorX, startCursorY;
-        let originalScrollLeft, originalScrollTop;
-        let snapTimeout;
+        let startX, startY;
+        let scrollLeft, scrollTop;
+        let hasMoved = false;
 
         const stateKey =
           slider.id === "reel-1"
@@ -829,43 +841,57 @@
           updateSelection(slider, stateKey, isReel);
         };
 
-        const handleSnapDisable = () => {
-          if (snapTimeout) clearTimeout(snapTimeout);
-          slider.classList.add("is-dragging");
-        };
-
-        const handleMouseMove = (e) => {
+        const onPointerMove = (e) => {
           if (!isDown) return;
-          const walkX = e.pageX - startCursorX;
-          const walkY = e.pageY - startCursorY;
-          if (direction === "x") {
-            slider.scrollLeft = originalScrollLeft - walkX;
-          } else {
-            slider.scrollTop = originalScrollTop - walkY;
+          e.preventDefault();
+          const x = e.pageX;
+          const y = e.pageY;
+          const walkX = x - startX;
+          const walkY = y - startY;
+
+          // Threshold check to distinguish click from drag
+          if (!hasMoved && (Math.abs(walkX) > 5 || Math.abs(walkY) > 5)) {
+            hasMoved = true;
+            slider.classList.add("is-dragging"); // Disable snap / change cursor
+          }
+
+          if (hasMoved) {
+            if (direction === "x") {
+              slider.scrollLeft = scrollLeft - walkX;
+            } else {
+              slider.scrollTop = scrollTop - walkY;
+            }
           }
         };
 
-        const handleMouseUp = () => {
-          if (!isDown) return;
+        const onPointerUp = () => {
           isDown = false;
           slider.classList.remove("cursor-grabbing");
-          window.removeEventListener("mousemove", handleMouseMove);
-          window.removeEventListener("mouseup", handleMouseUp);
           slider.classList.remove("is-dragging");
+          window.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("pointerup", onPointerUp);
+
+          if (hasMoved) {
+            // We actually dragged, so suppress the click
+            slider.classList.add("was-dragging");
+            setTimeout(() => slider.classList.remove("was-dragging"), 50);
+          }
+
           forceSelectionUpdate();
         };
 
         slider.addEventListener("pointerdown", (e) => {
           if (e.pointerType !== "mouse") return;
-          handleSnapDisable();
           isDown = true;
+          hasMoved = false;
           slider.classList.add("cursor-grabbing");
-          startCursorX = e.pageX;
-          startCursorY = e.pageY;
-          originalScrollLeft = slider.scrollLeft;
-          originalScrollTop = slider.scrollTop;
-          window.addEventListener("pointermove", handleMouseMove);
-          window.addEventListener("pointerup", handleMouseUp);
+          startX = e.pageX;
+          startY = e.pageY;
+          scrollLeft = slider.scrollLeft;
+          scrollTop = slider.scrollTop;
+
+          window.addEventListener("pointermove", onPointerMove);
+          window.addEventListener("pointerup", onPointerUp);
         });
       }
 
@@ -958,7 +984,6 @@
           void layout.offsetWidth;
           layout.classList.add("magical-pulse");
         }
-        // "Element" pulse removed here, now handled by .forge-pulse class in combineWords
       }
 
       undiscoveredBtn.onclick = () => {
@@ -1051,8 +1076,6 @@
 
         if (!exists) {
           triggerMagicalPulse(typeStr);
-
-          // Save the specific recipe used to discover this item
           result.recipe = recipeText;
 
           wordData.push(result);
@@ -1061,7 +1084,6 @@
 
           if (isLeaf) {
             showResultModal(result.word, recipeText, false);
-
             const newEl = createLeafItem(result);
             insertSorted(leafList, newEl, false);
             setTimeout(() => {
@@ -1075,12 +1097,15 @@
             showToast("New Element", result.word, true, recipeText, typeStr);
 
             const currentActiveLeft = reel1.querySelector(".reel-item.active");
+            const currentActiveRight = reel2.querySelector(".reel-item.active");
+            const prevScrollTop = reel2.scrollTop;
+            const prevOffset = currentActiveRight
+              ? currentActiveRight.offsetTop
+              : 0;
 
             const i1 = createReelItem(result);
             const i2 = createReelItem(result);
 
-            // Apply forge effect to new elements - RIGHT REEL ONLY
-            // i1.classList.add("forge-pulse"); // Removed
             i2.classList.add("forge-pulse");
 
             insertSorted(reel1, i1, true);
@@ -1091,6 +1116,11 @@
                 behavior: "instant",
                 block: "center",
               });
+            }
+
+            if (currentActiveRight) {
+              const newOffset = currentActiveRight.offsetTop;
+              reel2.scrollTop = prevScrollTop + (newOffset - prevOffset);
             }
 
             setTimeout(() => {
@@ -1111,7 +1141,6 @@
             recipeText,
             typeStr
           );
-
           if (isLeaf) {
             const existingEl = [...leafList.children].find(
               (el) => el.dataset.word === result.word

@@ -114,17 +114,22 @@ gemma3:12b model using ollama.
       /* --- Header --- */
       header {
         text-align: center;
-        padding: 0.5rem;
+        padding: 0.5rem 1rem;
         font-weight: bold;
         letter-spacing: 1px;
         border-bottom: 1px solid #333;
         height: 60px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
         background: #111;
         z-index: 10;
-        font-size: 24px;
+        font-size: 20px;
+      }
+
+      header a {
+        font-size: 16px;
+        color: var(--color-discovery);
       }
 
       /* --- Mixer Area --- */
@@ -614,7 +619,10 @@ gemma3:12b model using ollama.
   </head>
   <body>
     <main class="game-layout">
-      <header>aLLMchemy</header>
+      <header>
+        aLLMchemy
+        <a href="puzzle.html">Museum Mode</a>
+      </header>
       <div class="mixer-container">
         <div class="selection-line" id="selection-line"></div>
         <div class="reel" id="reel-1">
@@ -7901,17 +7909,6 @@ gemma3:12b model using ollama.
         .filter((w) => w.isLeaf)
         .forEach((w) => leafList.appendChild(createLeafItem(w)));
 
-      setTimeout(() => {
-        reel1.children[1].scrollIntoView({
-          behavior: "instant",
-          block: "center",
-        });
-        reel2.children[reel2.children.length - 2].scrollIntoView({
-          behavior: "instant",
-          block: "center",
-        });
-      }, 0);
-
       function insertSorted(container, newEl, isReel) {
         const selector = isReel ? ".reel-item" : ".leaf-item";
 
@@ -8089,8 +8086,14 @@ gemma3:12b model using ollama.
       addScrollListener(leafList, () => updateSelection(leafList, null, false));
       window.addEventListener("load", () => {
         // Initial scroll to the center of the list
-        reel1.scrollTop = reel1.scrollHeight / 2 - reel1.clientHeight / 2;
-        reel2.scrollTop = reel2.scrollHeight / 2 - reel2.clientHeight / 2;
+        reel1.children[1].scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
+        reel2.children[reel2.children.length - 2].scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
 
         setTimeout(() => {
           updateSelection(reel1, "reel1", true);

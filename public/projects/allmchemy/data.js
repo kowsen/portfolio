@@ -16292,6 +16292,6 @@ const GAME_DATA = {
 };
 
 const GAME_ID =
-  new URLSearchParams(window.location.search).get("game") ?? "Museum";
+  new URLSearchParams(window.location.search).get("game") ?? "Elements";
 
 const { COMBO_MAP, LEAF_EMOJI, START_WORDS } = GAME_DATA[GAME_ID];

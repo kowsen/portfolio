@@ -665,8 +665,8 @@
       <header>
         aLLMchemy
         <select id="mode-select">
-          <option value="Museum">Museum</option>
           <option value="Elements">Elements</option>
+          <option value="Museum">Museum</option>
           <option value="Coffee">Coffee</option>
           <option value="Owl">Owl</option>
         </select>
@@ -723,7 +723,7 @@
     <script>
       /* --- Game Mode Handling --- */
       const urlParams = new URLSearchParams(window.location.search);
-      const gameMode = urlParams.get("game") || "Museum";
+      const gameMode = urlParams.get("game") || "Elements";
       const modeSelect = document.getElementById("mode-select");
       modeSelect.value = gameMode;
 

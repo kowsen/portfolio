@@ -30629,7 +30629,7 @@ const Q5 = ve`
     }
 
     &.good {
-      background-color: #b8860b;
+      background-color: #3d9970;
 
       .arrow {
         opacity: 1;
@@ -31002,7 +31002,7 @@ const t6 = ve`
   }
 
   &.good {
-    background-color: #cea643;
+    background-color: #86a191;
   }
 
   &.rejected {
@@ -31017,7 +31017,7 @@ const t6 = ve`
   }
 
   &.locked.valid.good {
-    background-color: #b8860b;
+    background-color: #3d9970;
   } */
 `,
   n6 = ve`

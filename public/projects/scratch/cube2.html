@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triangular Grid Game</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #f8fafc;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        touch-action: none;
+      }
+      canvas {
+        display: block;
+        cursor: grab;
+      }
+      canvas:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // --- Configuration ---
+      const PADDING = 40;
+      const ASPECT_RATIO = 52 / 60;
+
+      // "Acceptable touch target size"
+      const TARGET_SIZE = 54;
+
+      // Dynamic Dimensions
+      let ROWS = 0;
+      let COLS = 0;
+      let TRIANGLE_WIDTH = TARGET_SIZE;
+      let TRIANGLE_HEIGHT = TARGET_SIZE * ASPECT_RATIO;
+
+      // Curated Palette
+      const PALETTE = [
+        "#10b981", // Emerald
+        "#3b82f6", // Blue
+        "#f59e0b", // Amber
+        "#f43f5e", // Rose
+      ];
+
+      // --- State ---
+      let grid = [];
+      let offsetX = 0;
+      let offsetY = 0;
+
+      // Physics Vectors
+      let axisConfig = {
+        horiz: { x: 1, y: 0, step: 0 },
+        diagA: { x: 0, y: 0, step: 0 },
+        diagB: { x: 0, y: 0, step: 0 },
+      };
+
+      let drag = {
+        active: false,
+        start: { x: 0, y: 0 },
+        current: { x: 0, y: 0 },
+        originCell: null,
+        lockedAxis: null,
+        strip: [],
+        pixelOffset: 0,
+        velocity: 0,
+        lastProjection: 0,
+        isAnimating: false,
+        dataShift: 1,
+      };
+
+      const isPointingUp = (r, c) => (r + c) % 2 === 0;
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function calculateDimensions() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const availableW = canvas.width - PADDING * 2;
+        const availableH = canvas.height - PADDING * 2;
+
+        // Calculate how many columns fit
+        // Grid Width Formula: (COLS + 1) * Width / 2
+        // Solve for COLS: COLS <= (2 * GridWidth / Width) - 1
+        COLS = Math.floor((2 * availableW) / TRIANGLE_WIDTH - 1);
+
+        // Calculate how many rows fit
+        ROWS = Math.floor(availableH / TRIANGLE_HEIGHT);
+
+        // Ensure minimum playable size
+        if (COLS < 3) COLS = 3;
+        if (ROWS < 3) ROWS = 3;
+
+        // Update Physics Config
+        axisConfig.horiz.step = TRIANGLE_WIDTH;
+        const dx = TRIANGLE_WIDTH / 2;
+        const dy = TRIANGLE_HEIGHT;
+        const diagDist = Math.sqrt(dx * dx + dy * dy);
+        const normX = dx / diagDist;
+        const normY = dy / diagDist;
+        axisConfig.diagA = { x: normX, y: normY, step: diagDist };
+        axisConfig.diagB = { x: normX, y: -normY, step: diagDist };
+
+        // Center the grid
+        const gridWidth = ((COLS + 1) * TRIANGLE_WIDTH) / 2;
+        const gridHeight = ROWS * TRIANGLE_HEIGHT;
+        offsetX = (canvas.width - gridWidth) / 2;
+        offsetY = (canvas.height - gridHeight) / 2;
+      }
+
+      function initGame() {
+        calculateDimensions();
+
+        // Create a balanced deck
+        let deck = [];
+        const totalCells = ROWS * COLS;
+        const perColor = Math.floor(totalCells / PALETTE.length);
+
+        PALETTE.forEach((color) => {
+          for (let i = 0; i < perColor; i++) deck.push(color);
+        });
+
+        // Fill remainder randomly
+        while (deck.length < totalCells) {
+          deck.push(PALETTE[Math.floor(Math.random() * PALETTE.length)]);
+        }
+
+        deck = shuffleArray(deck);
+
+        grid = [];
+        let idx = 0;
+        for (let r = 0; r < ROWS; r++) {
+          let row = [];
+          for (let c = 0; c < COLS; c++) {
+            row.push({ color: deck[idx++] });
+          }
+          grid.push(row);
+        }
+      }
+
+      // Re-init game on resize to refill the screen
+      window.addEventListener("resize", () => {
+        // Debounce slightly if needed, but direct init is fine for this complexity
+        initGame();
+      });
+
+      // --- Core Logic ---
+
+      function getTriangleCenter(r, c) {
+        const up = isPointingUp(r, c);
+        const x = c * (TRIANGLE_WIDTH / 2);
+        const y = r * TRIANGLE_HEIGHT;
+        const cx = offsetX + x + TRIANGLE_WIDTH / 2;
+        const cy =
+          offsetY +
+          (up ? y + TRIANGLE_HEIGHT * 0.66 : y + TRIANGLE_HEIGHT * 0.33);
+        return { x: cx, y: cy };
+      }
+
+      function getCellAt(mx, my) {
+        const hitRadius = TRIANGLE_WIDTH * 0.45; // Slightly larger hit area
+        const hitRadiusSq = hitRadius * hitRadius;
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const center = getTriangleCenter(r, c);
+            const dx = mx - center.x;
+            const dy = my - center.y;
+            if (dx * dx + dy * dy < hitRadiusSq) return { r, c };
+          }
+        }
+        return null;
+      }
+
+      function getStrip(r, c, axis) {
+        let strip = [];
+
+        if (axis === "horiz") {
+          for (let i = 0; i < COLS; i++) strip.push({ r, c: i });
+          strip.sort((a, b) => a.c - b.c);
+        } else if (axis === "diagA") {
+          const k = Math.ceil((c - r) / 2);
+          for (let rr = 0; rr < ROWS; rr++) {
+            for (let cc = 0; cc < COLS; cc++) {
+              if (Math.ceil((cc - rr) / 2) === k) strip.push({ r: rr, c: cc });
+            }
+          }
+          strip.sort((a, b) => a.r + a.c - (b.r + b.c));
+        } else if (axis === "diagB") {
+          const k = Math.floor((c + r) / 2);
+          for (let rr = 0; rr < ROWS; rr++) {
+            for (let cc = 0; cc < COLS; cc++) {
+              if (Math.floor((cc + rr) / 2) === k) strip.push({ r: rr, c: cc });
+            }
+          }
+          strip.sort((a, b) => a.c - a.r - (b.c - b.r));
+        }
+        return strip;
+      }
+
+      function rotateArray(arr, steps) {
+        if (arr.length === 0) return arr;
+        const len = arr.length;
+        const n = ((steps % len) + len) % len;
+        return [...arr.slice(len - n), ...arr.slice(0, len - n)];
+      }
+
+      function shiftStripData(strip, direction) {
+        const colors = strip.map((p) => grid[p.r][p.c].color);
+        const shiftAmount = direction * drag.dataShift;
+        const newColors = rotateArray(colors, shiftAmount);
+
+        strip.forEach((pos, i) => {
+          grid[pos.r][pos.c].color = newColors[i];
+        });
+      }
+
+      // --- Shared Physics / Logic ---
+
+      function handleShift() {
+        const config = axisConfig[drag.lockedAxis];
+        if (!config) return false;
+
+        const step = config.step;
+        const halfStep = step / 2;
+        let shifted = false;
+
+        if (drag.pixelOffset > halfStep) {
+          shiftStripData(drag.strip, 1);
+          drag.pixelOffset -= step;
+
+          if (drag.active) {
+            drag.start.x += step * config.x;
+            drag.start.y += step * config.y;
+            drag.lastProjection -= step;
+          }
+          shifted = true;
+        } else if (drag.pixelOffset < -halfStep) {
+          shiftStripData(drag.strip, -1);
+          drag.pixelOffset += step;
+
+          if (drag.active) {
+            drag.start.x -= step * config.x;
+            drag.start.y -= step * config.y;
+            drag.lastProjection += step;
+          }
+          shifted = true;
+        }
+        return shifted;
+      }
+
+      // --- Input Handling ---
+
+      canvas.addEventListener("pointerdown", (e) => {
+        drag.velocity = 0;
+        drag.isAnimating = false;
+
+        const cell = getCellAt(e.clientX, e.clientY);
+        if (cell) {
+          drag.active = true;
+          drag.start = { x: e.clientX, y: e.clientY };
+          drag.current = { x: e.clientX, y: e.clientY };
+          drag.originCell = cell;
+          drag.lockedAxis = null;
+          drag.strip = [];
+          drag.pixelOffset = 0;
+          drag.lastProjection = 0;
+          canvas.setPointerCapture(e.pointerId);
+        }
+      });
+
+      canvas.addEventListener("pointermove", (e) => {
+        if (!drag.active) return;
+
+        drag.current = { x: e.clientX, y: e.clientY };
+        const dx = drag.current.x - drag.start.x;
+        const dy = drag.current.y - drag.start.y;
+
+        if (!drag.lockedAxis) {
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 5) {
+            const ndx = dx / dist;
+            const ndy = dy / dist;
+
+            // Dot products with configured axes
+            const scoreH = Math.abs(
+              ndx * axisConfig.horiz.x + ndy * axisConfig.horiz.y
+            );
+            const scoreDA = Math.abs(
+              ndx * axisConfig.diagA.x + ndy * axisConfig.diagA.y
+            );
+            const scoreDB = Math.abs(
+              ndx * axisConfig.diagB.x + ndy * axisConfig.diagB.y
+            );
+
+            let bestAxis = "horiz";
+            let maxScore = scoreH;
+
+            if (scoreDA > maxScore) {
+              maxScore = scoreDA;
+              bestAxis = "diagA";
+            }
+            if (scoreDB > maxScore) {
+              maxScore = scoreDB;
+              bestAxis = "diagB";
+            }
+
+            if (maxScore > 0.96 || dist > 20) {
+              drag.lockedAxis = bestAxis;
+              drag.strip = getStrip(
+                drag.originCell.r,
+                drag.originCell.c,
+                drag.lockedAxis
+              );
+              drag.dataShift = 2;
+
+              const config = axisConfig[bestAxis];
+              drag.lastProjection = dx * config.x + dy * config.y;
+            }
+          }
+        }
+
+        if (drag.lockedAxis) {
+          const config = axisConfig[drag.lockedAxis];
+          const projection = dx * config.x + dy * config.y;
+
+          drag.velocity = projection - drag.lastProjection;
+          drag.lastProjection = projection;
+          drag.pixelOffset = projection;
+
+          handleShift();
+        }
+      });
+
+      canvas.addEventListener("pointerup", stopDrag);
+      canvas.addEventListener("pointercancel", stopDrag);
+
+      function stopDrag() {
+        if (drag.active && drag.lockedAxis) {
+          drag.active = false;
+          drag.isAnimating = true;
+        } else {
+          drag.active = false;
+          drag.lockedAxis = null;
+          drag.strip = [];
+          drag.pixelOffset = 0;
+          drag.velocity = 0;
+          drag.isAnimating = false;
+        }
+      }
+
+      // --- Physics Loop ---
+
+      function updatePhysics() {
+        if (drag.active) return;
+        if (!drag.isAnimating) return;
+
+        drag.pixelOffset += drag.velocity;
+        drag.velocity *= 0.95;
+
+        handleShift();
+
+        if (Math.abs(drag.velocity) < 0.5) {
+          drag.velocity = 0;
+          drag.pixelOffset = drag.pixelOffset * 0.8;
+
+          if (Math.abs(drag.pixelOffset) < 0.5) {
+            drag.pixelOffset = 0;
+            drag.isAnimating = false;
+            drag.lockedAxis = null;
+            drag.strip = [];
+          }
+        }
+      }
+
+      // --- Helpers for Robust Ghost Positioning ---
+
+      function findLogicalNeighbor(r, c, axis, direction) {
+        if (axis === "horiz") {
+          return { r: r, c: c + direction };
+        } else if (axis === "diagA") {
+          const k = Math.ceil((c - r) / 2);
+          const candidates = [
+            { r: r + 1 * direction, c: c },
+            { r: r, c: c + 1 * direction },
+            { r: r + 1 * direction, c: c + 1 * direction },
+          ];
+          const match = candidates.find(
+            (cand) => Math.ceil((cand.c - cand.r) / 2) === k
+          );
+          return match || { r: r + direction, c: c + direction };
+        } else if (axis === "diagB") {
+          const k = Math.floor((c + r) / 2);
+          const candidates = [
+            { r: r - 1 * direction, c: c },
+            { r: r, c: c + 1 * direction },
+            { r: r - 1 * direction, c: c + 1 * direction },
+          ];
+          const match = candidates.find(
+            (cand) => Math.floor((cand.c + cand.r) / 2) === k
+          );
+          return match || { r: r - direction, c: c + direction };
+        }
+      }
+
+      function defineTrianglePath(ctx, r, c, visualOffset) {
+        const center = getTriangleCenter(r, c);
+        const cx = center.x + (visualOffset ? visualOffset.x : 0);
+        const cy = center.y + (visualOffset ? visualOffset.y : 0);
+
+        const up = isPointingUp(r, c);
+        const w = TRIANGLE_WIDTH;
+        const h = TRIANGLE_HEIGHT;
+
+        const pad = 2;
+
+        if (up) {
+          // Clockwise
+          ctx.moveTo(cx, cy - 0.66 * h - pad);
+          ctx.lineTo(cx + 0.5 * w + pad, cy + 0.33 * h + pad);
+          ctx.lineTo(cx - 0.5 * w - pad, cy + 0.33 * h + pad);
+        } else {
+          // Clockwise
+          ctx.moveTo(cx - 0.5 * w - pad, cy - 0.33 * h - pad);
+          ctx.lineTo(cx + 0.5 * w + pad, cy - 0.33 * h - pad);
+          ctx.lineTo(cx, cy + 0.66 * h + pad);
+        }
+        ctx.closePath();
+      }
+
+      function drawTriangle(
+        r,
+        c,
+        visualOffset,
+        invertOrientation = false,
+        color = null
+      ) {
+        const center = getTriangleCenter(r, c);
+        const cx = center.x + (visualOffset ? visualOffset.x : 0);
+        const cy = center.y + (visualOffset ? visualOffset.y : 0);
+
+        let up = isPointingUp(r, c);
+        if (invertOrientation) {
+          up = !up;
+        }
+
+        const w = TRIANGLE_WIDTH;
+        const h = TRIANGLE_HEIGHT;
+
+        ctx.beginPath();
+        if (up) {
+          ctx.moveTo(cx, cy - 0.66 * h);
+          ctx.lineTo(cx - 0.5 * w, cy + 0.33 * h);
+          ctx.lineTo(cx + 0.5 * w, cy + 0.33 * h);
+        } else {
+          ctx.moveTo(cx - 0.5 * w, cy - 0.33 * h);
+          ctx.lineTo(cx + 0.5 * w, cy - 0.33 * h);
+          ctx.lineTo(cx, cy + 0.66 * h);
+        }
+        ctx.closePath();
+
+        if (color) {
+          ctx.fillStyle = color;
+        } else if (grid[r] && grid[r][c]) {
+          ctx.fillStyle = grid[r][c].color;
+        }
+
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = Math.max(2, TRIANGLE_WIDTH * 0.05);
+        ctx.lineJoin = "round";
+
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.fill();
+      }
+
+      function render() {
+        updatePhysics();
+
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+
+        // Clip
+        ctx.beginPath();
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            defineTrianglePath(ctx, r, c, null);
+          }
+        }
+        ctx.clip();
+
+        // Draw Static
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const isMoving =
+              (drag.active || drag.isAnimating) &&
+              drag.strip.some((p) => p.r === r && p.c === c);
+            if (!isMoving) {
+              drawTriangle(r, c, null);
+            }
+          }
+        }
+
+        // Draw Moving
+        if ((drag.active || drag.isAnimating) && drag.strip.length > 0) {
+          const config = axisConfig[drag.lockedAxis];
+          const vx = drag.pixelOffset * config.x;
+          const vy = drag.pixelOffset * config.y;
+
+          const ghostForward = [];
+          const ghostBackward = [];
+          const len = drag.strip.length;
+
+          {
+            let curr = drag.strip[len - 1];
+            for (let i = 0; i < len; i++) {
+              const next = findLogicalNeighbor(
+                curr.r,
+                curr.c,
+                drag.lockedAxis,
+                1
+              );
+              ghostForward.push(next);
+              curr = next;
+            }
+          }
+
+          {
+            let curr = drag.strip[0];
+            const temp = [];
+            for (let i = 0; i < len; i++) {
+              const prev = findLogicalNeighbor(
+                curr.r,
+                curr.c,
+                drag.lockedAxis,
+                -1
+              );
+              temp.push(prev);
+              curr = prev;
+            }
+            for (let i = len - 1; i >= 0; i--) {
+              ghostBackward.push(temp[i]);
+            }
+          }
+
+          drag.strip.forEach((pos, i) => {
+            const color = grid[pos.r][pos.c].color;
+
+            drawTriangle(pos.r, pos.c, { x: vx, y: vy }, false, color);
+
+            if (ghostForward[i]) {
+              drawTriangle(
+                ghostForward[i].r,
+                ghostForward[i].c,
+                { x: vx, y: vy },
+                false,
+                color
+              );
+            }
+
+            if (ghostBackward[i]) {
+              drawTriangle(
+                ghostBackward[i].r,
+                ghostBackward[i].c,
+                { x: vx, y: vy },
+                false,
+                color
+              );
+            }
+          });
+        }
+
+        ctx.restore();
+
+        requestAnimationFrame(render);
+      }
+
+      initGame();
+      render();
+    </script>
+  </body>
+</html>

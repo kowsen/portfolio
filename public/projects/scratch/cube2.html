@@ -2,22 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Added viewport-fit=cover and disabled zooming for full immersive mobile experience -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>Triangular Grid Game</title>
     <style>
+      html {
+        height: 100%;
+        overflow: hidden;
+      }
       body {
         margin: 0;
+        padding: 0;
         overflow: hidden;
-        background-color: #f8fafc;
+        /* Changed background to match canvas color to hide "white bars" */
+        background-color: #1e293b;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        /* Use fixed positioning to lock viewport on mobile */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
         touch-action: none;
       }
       canvas {
         display: block;
+        /* Ensure canvas fills the flex container */
+        width: 100%;
+        height: 100%;
         cursor: grab;
       }
       canvas:active {
@@ -34,7 +52,7 @@
 
       // --- Configuration ---
       // "Acceptable touch target size"
-      const TARGET_SIZE = 54;
+      const TARGET_SIZE = 81;
 
       const PADDING = 8; // Reduced padding to maximize screen usage
       const ASPECT_RATIO = 52 / 60;
@@ -157,7 +175,6 @@
 
       // Re-init game on resize to refill the screen
       window.addEventListener("resize", () => {
-        // Debounce slightly if needed, but direct init is fine for this complexity
         initGame();
       });
 

@@ -418,46 +418,47 @@
     </script>
 
     <script type="text/javascript">
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("service_worker.js");
-        });
+      // if ("serviceWorker" in navigator) {
+      //   window.addEventListener("load", () => {
+      //     navigator.serviceWorker.register("service_worker.js");
+      //   });
 
-        channel.addEventListener("message", (event) => {
-          if (event.data === "UPDATE_AVAILABLE") {
-            onUpdateAvailable();
-          } else if (event.data === "UPDATE_COMPLETE") {
-            onUpdateComplete();
-          } else if (event.data === "READY") {
-            onReady();
-          }
-        });
+      //   channel.addEventListener("message", (event) => {
+      //     if (event.data === "UPDATE_AVAILABLE") {
+      //       onUpdateAvailable();
+      //     } else if (event.data === "UPDATE_COMPLETE") {
+      //       onUpdateComplete();
+      //     } else if (event.data === "READY") {
+      //       onReady();
+      //     }
+      //   });
 
-        navigator.serviceWorker.ready.then((registration) => {
-          channel.postMessage("INIT");
-        });
-      } else {
-        startGame();
-      }
+      //   navigator.serviceWorker.ready.then((registration) => {
+      //     channel.postMessage("INIT");
+      //   });
+      // } else {
+      //   startGame();
+      // }
 
-      var noSleep = new NoSleep();
-      document.addEventListener(
-        "click",
-        function enableNoSleep() {
-          console.log("ACTIVATING NO SLEEP");
-          document.removeEventListener("click", enableNoSleep, false);
-          noSleep.enable();
-        },
-        false
-      );
+      // var noSleep = new NoSleep();
+      // document.addEventListener(
+      //   "click",
+      //   function enableNoSleep() {
+      //     console.log("ACTIVATING NO SLEEP");
+      //     document.removeEventListener("click", enableNoSleep, false);
+      //     noSleep.enable();
+      //   },
+      //   false
+      // );
 
-      if (navigator.wakeLock) {
-        try {
-          navigator.wakeLock.request();
-        } catch (err) {
-          console.error("can't get wake lock");
-        }
-      }
+      // if (navigator.wakeLock) {
+      //   try {
+      //     navigator.wakeLock.request();
+      //   } catch (err) {
+      //     console.error("can't get wake lock");
+      //   }
+      // }
+      onReady();
     </script>
   </body>
 </html>

@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Triangular Match-3</title>
+    <style>
+      html {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #0f172a;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      #header {
+        height: 100px;
+        width: 100%;
+        background-color: #020617;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 32px;
+        box-sizing: border-box;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .header-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        width: 100px; /* Fixed width for alignment */
+      }
+      .header-group.right {
+        align-items: flex-end;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: calc(100% - 100px);
+        cursor: grab;
+        position: absolute;
+        top: 100px;
+        left: 0;
+      }
+      canvas:active {
+        cursor: grabbing;
+      }
+
+      .score-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #94a3b8;
+        margin-bottom: 2px;
+      }
+      .score-value {
+        font-size: 36px;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+      #moves-display {
+        color: #38bdf8;
+      }
+
+      #combo-display {
+        font-size: 24px;
+        font-weight: bold;
+        color: #facc15;
+        opacity: 0;
+        transition: opacity 0.3s;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        width: 200px;
+      }
+
+      /* Modal Styles */
+      #modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(5px);
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+      }
+      #modal-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .modal-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        max-width: 300px;
+        width: 80%;
+      }
+      #modal-overlay.visible .modal-card {
+        transform: scale(1);
+      }
+
+      .modal-title {
+        color: #fff;
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .modal-score-label {
+        color: #94a3b8;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 20px;
+      }
+      .modal-score-value {
+        color: #fbbf24;
+        font-size: 48px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+      .modal-high-score {
+        color: #cbd5e1;
+        font-size: 16px;
+        margin-bottom: 30px;
+      }
+
+      .btn-retry {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+      }
+      .btn-retry:hover {
+        background: #2563eb;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header">
+      <div class="header-group">
+        <div class="score-label">Score</div>
+        <div id="score-display" class="score-value">0</div>
+      </div>
+
+      <div id="combo-display">MATCH!</div>
+
+      <div class="header-group right">
+        <div class="score-label">Moves</div>
+        <div id="moves-display" class="score-value">20</div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-title">Out of Moves!</div>
+
+        <div class="modal-score-label">Final Score</div>
+        <div id="final-score" class="modal-score-value">0</div>
+        <div id="high-score-display" class="modal-high-score">
+          High Score: 0
+        </div>
+
+        <button class="btn-retry" onclick="location.reload()">Try Again</button>
+      </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+      /**
+       * TRIANGULAR MATCH-3 (Game Loop Complete)
+       * =======================================
+       * 1. Move Counter: Starts at 20, decrements on match.
+       * 2. Game Over: Triggered when moves=0 and board settled.
+       * 3. High Score: Persisted via localStorage.
+       * 4. UI: Updates for layout and duration.
+       */
+
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score-display");
+      const movesEl = document.getElementById("moves-display");
+      const comboEl = document.getElementById("combo-display");
+      const modalEl = document.getElementById("modal-overlay");
+      const finalScoreEl = document.getElementById("final-score");
+      const highScoreEl = document.getElementById("high-score-display");
+
+      // --- Configuration ---
+      const TARGET_SIZE = 81;
+      const PADDING = 16;
+      const ASPECT_RATIO = 52 / 60;
+
+      const GRAVITY_ACCEL = 0.25;
+      const BOUNCE_DAMPING = 0.35;
+      const REVERT_STIFFNESS = 0.2;
+
+      let ROWS = 0;
+      let COLS = 0;
+      let TRIANGLE_WIDTH = TARGET_SIZE;
+      let TRIANGLE_HEIGHT = TARGET_SIZE * ASPECT_RATIO;
+
+      const PALETTE = [
+        "#ef4444", // Ruby Red
+        "#f97316", // Tangerine
+        "#eab308", // Lemon Yellow
+        "#84cc16", // Lime Green
+        "#06b6d4", // Cyan
+        "#8b5cf6", // Purple
+      ];
+
+      // State
+      let grid = [];
+      let offsetX = 0;
+      let offsetY = 0;
+      let score = 0;
+      let scoreMultiplier = 1;
+      let time = 0;
+
+      let movesLeft = 20;
+      let isGameOver = false;
+      let comboTimeout = null; // Handle text timing
+
+      let isProcessingMatches = false;
+      let isFalling = false;
+      let checkQueue = [];
+      let predictedMatches = [];
+      let invalidMoveTime = -1;
+
+      let axisConfig = {
+        horiz: { x: 1, y: 0, step: 0 },
+        diagA: { x: 0, y: 0, step: 0 },
+        diagB: { x: 0, y: 0, step: 0 },
+      };
+
+      let drag = {
+        active: false,
+        start: { x: 0, y: 0 },
+        current: { x: 0, y: 0 },
+        originCell: null,
+        lockedAxis: null,
+        strip: [],
+        pixelOffset: 0,
+        velocity: 0,
+        lastProjection: 0,
+        isAnimating: false,
+        dataShift: 1,
+        netDragShift: 0,
+        isReverting: false,
+      };
+
+      const isPointingUp = (r, c) => (r + c) % 2 === 0;
+
+      function createCell(color) {
+        return {
+          color: color,
+          ghostColor: null,
+          animDist: 0,
+          animVel: 0,
+        };
+      }
+
+      function calculateDimensions() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+
+        const availableW = canvas.width - PADDING * 2;
+        const availableH = canvas.height - PADDING * 2;
+
+        COLS = Math.floor((2 * availableW) / TRIANGLE_WIDTH - 1);
+        ROWS = Math.floor(availableH / TRIANGLE_HEIGHT);
+
+        if (COLS < 3) COLS = 3;
+        if (ROWS < 3) ROWS = 3;
+
+        axisConfig.horiz.step = TRIANGLE_WIDTH;
+        const dx = TRIANGLE_WIDTH / 2;
+        const dy = TRIANGLE_HEIGHT;
+        const diagDist = Math.sqrt(dx * dx + dy * dy);
+
+        const normX = dx / diagDist;
+        const normY = dy / diagDist;
+
+        axisConfig.diagA = { x: normX, y: normY, step: diagDist };
+        axisConfig.diagB = { x: normX, y: -normY, step: diagDist };
+
+        const gridWidth = ((COLS + 1) * TRIANGLE_WIDTH) / 2;
+        const gridHeight = ROWS * TRIANGLE_HEIGHT;
+        offsetX = (canvas.width - gridWidth) / 2;
+        offsetY = (canvas.height - gridHeight) / 2;
+      }
+
+      function initGame() {
+        calculateDimensions();
+        score = 0;
+        scoreEl.innerText = score;
+        movesLeft = 20;
+        movesEl.innerText = movesLeft;
+
+        grid = [];
+        for (let r = 0; r < ROWS; r++) {
+          let row = [];
+          for (let c = 0; c < COLS; c++) {
+            row.push(
+              createCell(PALETTE[Math.floor(Math.random() * PALETTE.length)])
+            );
+          }
+          grid.push(row);
+        }
+      }
+
+      function endGame() {
+        if (isGameOver) return;
+        isGameOver = true;
+
+        // High Score Logic
+        const savedHigh = localStorage.getItem("triMatchHigh") || 0;
+        let highScore = parseInt(savedHigh);
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem("triMatchHigh", highScore);
+        }
+
+        finalScoreEl.innerText = score;
+        highScoreEl.innerText = `High Score: ${highScore}`;
+        modalEl.classList.add("visible");
+      }
+
+      window.addEventListener("resize", initGame);
+
+      function getTriangleCenter(r, c) {
+        const up = isPointingUp(r, c);
+        const x = c * (TRIANGLE_WIDTH / 2);
+        const y = r * TRIANGLE_HEIGHT;
+        const cx = offsetX + x + TRIANGLE_WIDTH / 2;
+        const cy =
+          offsetY +
+          (up ? y + TRIANGLE_HEIGHT * 0.66 : y + TRIANGLE_HEIGHT * 0.33);
+        return { x: cx, y: cy };
+      }
+
+      function getCellAt(mx, my) {
+        const rect = canvas.getBoundingClientRect();
+        const localX = mx - rect.left;
+        const localY = my - rect.top;
+
+        const hitRadius = TRIANGLE_WIDTH * 0.45;
+        const hitRadiusSq = hitRadius * hitRadius;
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const center = getTriangleCenter(r, c);
+            const dx = localX - center.x;
+            const dy = localY - center.y;
+            if (dx * dx + dy * dy < hitRadiusSq) return { r, c };
+          }
+        }
+        return null;
+      }
+
+      function getStrip(r, c, axis) {
+        let strip = [];
+        if (axis === "horiz") {
+          for (let i = 0; i < COLS; i++) strip.push({ r, c: i });
+          strip.sort((a, b) => a.c - b.c);
+        } else if (axis === "diagA") {
+          const k = Math.ceil((c - r) / 2);
+          for (let rr = 0; rr < ROWS; rr++) {
+            for (let cc = 0; cc < COLS; cc++) {
+              if (Math.ceil((cc - rr) / 2) === k) strip.push({ r: rr, c: cc });
+            }
+          }
+          strip.sort((a, b) => a.r + a.c - (b.r + b.c));
+        } else if (axis === "diagB") {
+          const k = Math.floor((c + r) / 2);
+          for (let rr = 0; rr < ROWS; rr++) {
+            for (let cc = 0; cc < COLS; cc++) {
+              if (Math.floor((cc + rr) / 2) === k) strip.push({ r: rr, c: cc });
+            }
+          }
+          strip.sort((a, b) => {
+            if (a.r !== b.r) return b.r - a.r;
+            return a.c - b.c;
+          });
+        }
+        return strip;
+      }
+
+      function rotateArray(arr, steps) {
+        if (arr.length === 0) return arr;
+        const len = arr.length;
+        const n = ((steps % len) + len) % len;
+        return [...arr.slice(len - n), ...arr.slice(0, len - n)];
+      }
+
+      function rotateStripDataOnly(strip, shiftAmount) {
+        const colors = strip.map((p) => grid[p.r][p.c].color);
+        const newColors = rotateArray(colors, shiftAmount);
+        strip.forEach((pos, i) => {
+          grid[pos.r][pos.c].color = newColors[i];
+          grid[pos.r][pos.c].animDist = 0;
+          grid[pos.r][pos.c].animVel = 0;
+          grid[pos.r][pos.c].ghostColor = null;
+        });
+      }
+
+      function shiftStripData(strip, direction) {
+        const shiftAmount = direction * drag.dataShift;
+        drag.netDragShift += shiftAmount;
+        rotateStripDataOnly(strip, shiftAmount);
+      }
+
+      function getNeighbors(r, c) {
+        const n = [];
+        if (c > 0) n.push({ r, c: c - 1 });
+        if (c < COLS - 1) n.push({ r, c: c + 1 });
+        const up = isPointingUp(r, c);
+        if (up) {
+          if (r < ROWS - 1) n.push({ r: r + 1, c: c });
+        } else {
+          if (r > 0) n.push({ r: r - 1, c: c });
+        }
+        return n;
+      }
+
+      function checkSpecificMatches(candidates) {
+        let visited = new Set();
+        let matches = [];
+        let uniqueCandidates = new Set(candidates.map((c) => `${c.r},${c.c}`));
+
+        uniqueCandidates.forEach((key) => {
+          const [r, c] = key.split(",").map(Number);
+          if (visited.has(key)) return;
+          if (!grid[r] || !grid[r][c] || !grid[r][c].color) return;
+
+          const color = grid[r][c].color;
+          let group = [];
+          let queue = [{ r, c }];
+          visited.add(key);
+          group.push({ r, c });
+
+          let head = 0;
+          while (head < queue.length) {
+            const curr = queue[head++];
+            const neighbors = getNeighbors(curr.r, curr.c);
+
+            for (let neigh of neighbors) {
+              const nKey = `${neigh.r},${neigh.c}`;
+              if (!visited.has(nKey)) {
+                const cell = grid[neigh.r][neigh.c];
+                if (cell && cell.color === color) {
+                  visited.add(nKey);
+                  group.push(neigh);
+                  queue.push(neigh);
+                }
+              }
+            }
+          }
+
+          if (group.length >= 3) {
+            group.forEach((g) => {
+              if (!matches.some((m) => m.r === g.r && m.c === g.c)) {
+                matches.push(g);
+              }
+            });
+          }
+        });
+
+        return matches;
+      }
+
+      function predictMatches() {
+        if (!drag.active || !drag.lockedAxis || drag.strip.length === 0) return;
+
+        const config = axisConfig[drag.lockedAxis];
+        const predictedAdditionalShift =
+          Math.round(drag.pixelOffset / config.step) * drag.dataShift;
+        const strip = drag.strip;
+        const len = strip.length;
+
+        const totalShift = drag.netDragShift + predictedAdditionalShift;
+        const normalizedTotalShift = ((totalShift % len) + len) % len;
+
+        if (normalizedTotalShift === 0) {
+          predictedMatches = [];
+          return;
+        }
+
+        if (predictedAdditionalShift === 0) {
+          const originIdx = strip.findIndex(
+            (p) => p.r === drag.originCell.r && p.c === drag.originCell.c
+          );
+          const shift = ((drag.netDragShift % len) + len) % len;
+          const newIdx = (originIdx + shift) % len;
+          predictedMatches = checkSpecificMatches([strip[newIdx]]);
+        } else {
+          const currentColors = strip.map((p) => grid[p.r][p.c].color);
+          const rotatedColors = rotateArray(
+            currentColors,
+            predictedAdditionalShift
+          );
+          const oldColors = strip.map((p) => grid[p.r][p.c].color);
+
+          strip.forEach((p, i) => (grid[p.r][p.c].color = rotatedColors[i]));
+
+          const originIdx = strip.findIndex(
+            (p) => p.r === drag.originCell.r && p.c === drag.originCell.c
+          );
+          const shift = ((totalShift % len) + len) % len;
+          const newIdx = (originIdx + shift) % len;
+
+          predictedMatches = checkSpecificMatches([strip[newIdx]]);
+
+          strip.forEach((p, i) => (grid[p.r][p.c].color = oldColors[i]));
+        }
+      }
+
+      function applyGravity() {
+        let moved = false;
+        let newCandidates = [];
+
+        let stripsByK = {};
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const k = Math.floor((c + r) / 2);
+            if (!stripsByK[k]) stripsByK[k] = [];
+            stripsByK[k].push({ r, c });
+          }
+        }
+
+        const stepDist = axisConfig.diagB.step;
+
+        Object.values(stripsByK).forEach((strip) => {
+          strip.sort((a, b) => {
+            if (a.r !== b.r) return b.r - a.r;
+            return a.c - b.c;
+          });
+
+          for (let i = 0; i < strip.length; i++) {
+            const curr = strip[i];
+
+            if (grid[curr.r][curr.c].color === null) {
+              let foundIndex = -1;
+              let logicalDistance = 0;
+
+              for (let j = i + 1; j < strip.length; j++) {
+                const check = strip[j];
+                logicalDistance++;
+                if (grid[check.r][check.c].color !== null) {
+                  foundIndex = j;
+                  break;
+                }
+              }
+
+              if (foundIndex !== -1) {
+                const source = strip[foundIndex];
+                const sourceCell = grid[source.r][source.c];
+                const currCell = grid[curr.r][curr.c];
+
+                currCell.color = sourceCell.color;
+                currCell.animDist =
+                  sourceCell.animDist + logicalDistance * stepDist;
+                currCell.animVel = sourceCell.animVel;
+
+                sourceCell.color = null;
+                sourceCell.animDist = 0;
+                sourceCell.animVel = 0;
+
+                newCandidates.push(curr);
+                moved = true;
+              } else {
+                const currCell = grid[curr.r][curr.c];
+                currCell.color =
+                  PALETTE[Math.floor(Math.random() * PALETTE.length)];
+
+                let spotsAbove = strip.length - 1 - i;
+                currCell.animDist = (spotsAbove + 1) * stepDist;
+                currCell.animVel = 0;
+
+                newCandidates.push(curr);
+                moved = true;
+              }
+            }
+          }
+        });
+
+        return { moved, newCandidates };
+      }
+
+      function updateFallingPhysics() {
+        if (!isFalling) return;
+
+        let activeCount = 0;
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const cell = grid[r][c];
+
+            if (cell.animDist > 0.1 || Math.abs(cell.animVel) > 0.1) {
+              activeCount++;
+              cell.animVel -= GRAVITY_ACCEL;
+              cell.animDist += cell.animVel;
+
+              if (cell.animDist <= 0) {
+                cell.animDist = 0;
+                cell.animVel = -cell.animVel * BOUNCE_DAMPING;
+                cell.ghostColor = null;
+
+                if (Math.abs(cell.animVel) < GRAVITY_ACCEL * 2) {
+                  cell.animVel = 0;
+                }
+              }
+            } else {
+              cell.animDist = 0;
+              cell.animVel = 0;
+              cell.ghostColor = null;
+            }
+          }
+        }
+
+        if (activeCount === 0) {
+          isFalling = false;
+          if (checkQueue.length > 0) {
+            resolveMatches(checkQueue);
+            checkQueue = [];
+          } else {
+            // Board is settled and no more checks pending.
+            // Check for Game Over condition
+            if (movesLeft <= 0 && !isGameOver) {
+              endGame();
+            }
+          }
+        }
+      }
+
+      function resolveMatches(candidates, silent = false) {
+        if (isFalling) {
+          checkQueue.push(...candidates);
+          return;
+        }
+
+        isProcessingMatches = true;
+        const matches = checkSpecificMatches(candidates);
+
+        if (matches.length > 0) {
+          if (!silent) {
+            // Score = Base Points * Multiplier
+            let points = matches.length * 10 * scoreMultiplier;
+            score += points;
+            scoreEl.innerText = score;
+
+            // Update Combo Text
+            comboEl.innerText =
+              scoreMultiplier > 1 ? `MATCH! x${scoreMultiplier}` : "MATCH!";
+            comboEl.style.opacity = 1;
+
+            if (comboTimeout) clearTimeout(comboTimeout);
+            comboTimeout = setTimeout(() => (comboEl.style.opacity = 0), 2000); // 2 seconds
+
+            // Increment for next chain link
+            scoreMultiplier++;
+          }
+
+          matches.forEach((p) => {
+            const cell = grid[p.r][p.c];
+            cell.ghostColor = cell.color;
+            cell.color = null;
+            cell.animDist = 0;
+            cell.animVel = 0;
+          });
+
+          setTimeout(() => {
+            const result = applyGravity();
+            if (result.moved) {
+              isFalling = true;
+              checkQueue.push(...result.newCandidates);
+            } else {
+              isProcessingMatches = false;
+              if (movesLeft <= 0 && !isGameOver) endGame();
+            }
+          }, 150);
+        } else {
+          isProcessingMatches = false;
+          if (movesLeft <= 0 && !isGameOver) endGame();
+        }
+      }
+
+      canvas.addEventListener("pointerdown", (e) => {
+        if (
+          isProcessingMatches ||
+          isFalling ||
+          drag.isReverting ||
+          isGameOver ||
+          movesLeft <= 0
+        )
+          return;
+
+        drag.velocity = 0;
+        drag.isAnimating = false;
+        drag.pixelOffset = 0;
+        drag.netDragShift = 0;
+        drag.isReverting = false;
+        predictedMatches = [];
+
+        const cell = getCellAt(e.clientX, e.clientY);
+        if (cell) {
+          drag.active = true;
+          drag.start = { x: e.clientX, y: e.clientY };
+          drag.current = { x: e.clientX, y: e.clientY };
+          drag.originCell = cell;
+          drag.lockedAxis = null;
+          drag.strip = [];
+          drag.lastProjection = 0;
+          canvas.setPointerCapture(e.pointerId);
+        }
+      });
+
+      canvas.addEventListener("pointermove", (e) => {
+        if (!drag.active) return;
+
+        drag.current = { x: e.clientX, y: e.clientY };
+        const dx = drag.current.x - drag.start.x;
+        const dy = drag.current.y - drag.start.y;
+
+        if (!drag.lockedAxis) {
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 5) {
+            const ndx = dx / dist;
+            const ndy = dy / dist;
+
+            const scoreH = Math.abs(
+              ndx * axisConfig.horiz.x + ndy * axisConfig.horiz.y
+            );
+            const scoreDA = Math.abs(
+              ndx * axisConfig.diagA.x + ndy * axisConfig.diagA.y
+            );
+            const scoreDB = Math.abs(
+              ndx * axisConfig.diagB.x + ndy * axisConfig.diagB.y
+            );
+
+            let bestAxis = "horiz";
+            let maxScore = scoreH;
+            if (scoreDA > maxScore) {
+              maxScore = scoreDA;
+              bestAxis = "diagA";
+            }
+            if (scoreDB > maxScore) {
+              maxScore = scoreDB;
+              bestAxis = "diagB";
+            }
+
+            if (maxScore > 0.96 || dist > 20) {
+              drag.lockedAxis = bestAxis;
+              drag.strip = getStrip(
+                drag.originCell.r,
+                drag.originCell.c,
+                drag.lockedAxis
+              );
+              drag.dataShift = 2;
+              const config = axisConfig[bestAxis];
+              drag.lastProjection = dx * config.x + dy * config.y;
+            }
+          }
+        }
+
+        if (drag.lockedAxis) {
+          const config = axisConfig[drag.lockedAxis];
+          const projection = dx * config.x + dy * config.y;
+          drag.velocity = projection - drag.lastProjection;
+          drag.lastProjection = projection;
+          drag.pixelOffset = projection;
+          handleShift();
+          predictMatches();
+        }
+      });
+
+      canvas.addEventListener("pointerup", stopDrag);
+      canvas.addEventListener("pointercancel", stopDrag);
+
+      function stopDrag() {
+        if (drag.active && drag.lockedAxis) {
+          drag.active = false;
+          predictedMatches = [];
+
+          const config = axisConfig[drag.lockedAxis];
+          const snapSteps = Math.round(drag.pixelOffset / config.step);
+
+          if (drag.netDragShift !== 0 || snapSteps !== 0) {
+            const strip = drag.strip;
+            const originIdx = strip.findIndex(
+              (p) => p.r === drag.originCell.r && p.c === drag.originCell.c
+            );
+
+            const snapShift = snapSteps * drag.dataShift;
+            if (snapShift !== 0) {
+              const currentColors = strip.map((p) => grid[p.r][p.c].color);
+              const rotatedColors = rotateArray(currentColors, snapShift);
+              strip.forEach(
+                (p, i) => (grid[p.r][p.c].color = rotatedColors[i])
+              );
+            }
+
+            const totalShift = drag.netDragShift + snapShift;
+            const len = strip.length;
+            const shift = ((totalShift % len) + len) % len;
+            const newIdx = (originIdx + shift) % len;
+            const targetCell = strip[newIdx];
+
+            const potentialMatches = checkSpecificMatches([targetCell]);
+
+            if (snapShift !== 0) {
+              const currentColors = strip.map((p) => grid[p.r][p.c].color);
+              const rotatedColors = rotateArray(currentColors, -snapShift);
+              strip.forEach(
+                (p, i) => (grid[p.r][p.c].color = rotatedColors[i])
+              );
+            }
+
+            if (potentialMatches.length > 0) {
+              drag.isAnimating = true;
+              scoreMultiplier = 1;
+              movesLeft--;
+              movesEl.innerText = movesLeft;
+            } else {
+              drag.isReverting = true;
+              drag.isAnimating = true;
+              invalidMoveTime = time;
+            }
+          } else {
+            drag.velocity = 0;
+            drag.pixelOffset = 0;
+            drag.lockedAxis = null;
+            drag.strip = [];
+          }
+        } else {
+          drag.active = false;
+          drag.lockedAxis = null;
+          drag.strip = [];
+        }
+      }
+
+      function handleShift() {
+        const config = axisConfig[drag.lockedAxis];
+        if (!config) return false;
+
+        const step = config.step;
+        const halfStep = step / 2;
+        let shifted = false;
+
+        while (drag.pixelOffset > halfStep) {
+          shiftStripData(drag.strip, 1);
+          drag.pixelOffset -= step;
+          if (drag.active) {
+            drag.start.x += step * config.x;
+            drag.start.y += step * config.y;
+            drag.lastProjection -= step;
+          }
+          shifted = true;
+        }
+
+        while (drag.pixelOffset < -halfStep) {
+          shiftStripData(drag.strip, -1);
+          drag.pixelOffset += step;
+          if (drag.active) {
+            drag.start.x -= step * config.x;
+            drag.start.y -= step * config.y;
+            drag.lastProjection += step;
+          }
+          shifted = true;
+        }
+        return shifted;
+      }
+
+      function updatePhysics() {
+        if (drag.active) return;
+
+        if (drag.isAnimating) {
+          if (drag.isReverting) {
+            const config = axisConfig[drag.lockedAxis];
+            const targetOffset =
+              -(drag.netDragShift / drag.dataShift) * config.step;
+
+            const diff = targetOffset - drag.pixelOffset;
+            drag.velocity = diff * REVERT_STIFFNESS;
+            drag.pixelOffset += drag.velocity;
+
+            handleShift();
+
+            if (
+              drag.netDragShift === 0 &&
+              Math.abs(drag.pixelOffset) < 2 &&
+              Math.abs(drag.velocity) < 1
+            ) {
+              drag.pixelOffset = 0;
+              drag.velocity = 0;
+              drag.isReverting = false;
+              drag.isAnimating = false;
+              drag.lockedAxis = null;
+              drag.strip = [];
+            }
+          } else {
+            drag.pixelOffset += drag.velocity;
+            drag.velocity *= 0.9;
+            handleShift();
+
+            if (Math.abs(drag.velocity) < 0.5) {
+              if (Math.abs(drag.pixelOffset) > 5) {
+                drag.pixelOffset *= 0.8;
+              } else {
+                const strip = drag.strip;
+                if (drag.netDragShift !== 0) {
+                  const originIdx = strip.findIndex(
+                    (p) =>
+                      p.r === drag.originCell.r && p.c === drag.originCell.c
+                  );
+                  if (originIdx !== -1) {
+                    const len = strip.length;
+                    const shift = ((drag.netDragShift % len) + len) % len;
+                    const newIdx = (originIdx + shift) % len;
+                    const targetCell = strip[newIdx];
+                    resolveMatches([targetCell]);
+                  }
+                }
+
+                drag.velocity = 0;
+                drag.pixelOffset = 0;
+                drag.isAnimating = false;
+                drag.lockedAxis = null;
+                drag.strip = [];
+                drag.netDragShift = 0;
+              }
+            }
+          }
+        }
+      }
+
+      function drawTriangleShape(ctx, r, c, cx, cy, w, h, up, pad = 0) {
+        if (up) {
+          ctx.moveTo(cx, cy - 0.66 * h - pad);
+          ctx.lineTo(cx + 0.5 * w + pad, cy + 0.33 * h + pad);
+          ctx.lineTo(cx - 0.5 * w - pad, cy + 0.33 * h + pad);
+        } else {
+          ctx.moveTo(cx - 0.5 * w - pad, cy - 0.33 * h - pad);
+          ctx.lineTo(cx + 0.5 * w + pad, cy - 0.33 * h - pad);
+          ctx.lineTo(cx, cy + 0.66 * h + pad);
+        }
+        ctx.closePath();
+      }
+
+      function drawTriangle(r, c, dragOffset, colorOverride = null) {
+        const cell = grid[r] && grid[r][c];
+        if (colorOverride) {
+          drawSingleTriangleLayer(r, c, dragOffset, colorOverride, false);
+          return;
+        }
+        if (!cell) return;
+
+        if (cell.ghostColor) {
+          drawSingleTriangleLayer(r, c, dragOffset, cell.ghostColor, true);
+        }
+        if (cell.color) {
+          drawSingleTriangleLayer(r, c, dragOffset, cell.color, false);
+        }
+      }
+
+      function drawSingleTriangleLayer(r, c, dragOffset, color, isGhost) {
+        let finalX = 0;
+        let finalY = 0;
+
+        if (dragOffset) {
+          finalX += dragOffset.x;
+          finalY += dragOffset.y;
+        }
+
+        if (!isGhost && grid[r] && grid[r][c] && grid[r][c].animDist > 0.1) {
+          finalX += grid[r][c].animDist * axisConfig.diagB.x;
+          finalY += grid[r][c].animDist * axisConfig.diagB.y;
+        }
+
+        const center = getTriangleCenter(r, c);
+        const cx = center.x + finalX;
+        const cy = center.y + finalY;
+        const up = isPointingUp(r, c);
+        const w = TRIANGLE_WIDTH;
+        const h = TRIANGLE_HEIGHT;
+
+        ctx.beginPath();
+        drawTriangleShape(ctx, r, c, cx, cy, w, h, up, 0);
+
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = Math.max(2, TRIANGLE_WIDTH * 0.05);
+        ctx.lineJoin = "round";
+        ctx.fill();
+        ctx.stroke();
+
+        if (!isGhost) {
+          ctx.fillStyle = "rgba(255,255,255,0.1)";
+          ctx.fill();
+        } else {
+          ctx.fillStyle = "rgba(0,0,0,0.2)";
+          ctx.fill();
+        }
+      }
+
+      function findLogicalNeighbor(r, c, axis, direction) {
+        if (axis === "horiz") return { r: r, c: c + direction };
+        if (axis === "diagA") {
+          const k = Math.ceil((c - r) / 2);
+          const candidates = [
+            { r: r + 1 * direction, c: c },
+            { r: r, c: c + 1 * direction },
+            { r: r + 1 * direction, c: c + 1 * direction },
+          ];
+          return (
+            candidates.find(
+              (cand) => Math.ceil((cand.c - cand.r) / 2) === k
+            ) || { r: r + direction, c: c + direction }
+          );
+        }
+        if (axis === "diagB") {
+          const k = Math.floor((c + r) / 2);
+          const candidates = [
+            { r: r - 1 * direction, c: c },
+            { r: r, c: c + 1 * direction },
+            { r: r - 1 * direction, c: c + 1 * direction },
+          ];
+          return (
+            candidates.find(
+              (cand) => Math.floor((cand.c + cand.r) / 2) === k
+            ) || { r: r - direction, c: c + direction }
+          );
+        }
+      }
+
+      function drawContour(matchCells) {
+        const edges = new Map();
+
+        matchCells.forEach((p) => {
+          let renderX = 0;
+          let renderY = 0;
+          if (
+            (drag.active || drag.isAnimating) &&
+            drag.strip.some((s) => s.r === p.r && s.c === p.c)
+          ) {
+            const config = axisConfig[drag.lockedAxis];
+            renderX = drag.pixelOffset * config.x;
+            renderY = drag.pixelOffset * config.y;
+          }
+
+          const center = getTriangleCenter(p.r, p.c);
+          const cx = center.x + renderX;
+          const cy = center.y + renderY;
+          const up = isPointingUp(p.r, p.c);
+          const w = TRIANGLE_WIDTH;
+          const h = TRIANGLE_HEIGHT;
+
+          let v1, v2, v3;
+          if (up) {
+            v1 = { x: cx, y: cy - 0.66 * h };
+            v2 = { x: cx + 0.5 * w, y: cy + 0.33 * h };
+            v3 = { x: cx - 0.5 * w, y: cy + 0.33 * h };
+          } else {
+            v1 = { x: cx - 0.5 * w, y: cy - 0.33 * h };
+            v2 = { x: cx + 0.5 * w, y: cy - 0.33 * h };
+            v3 = { x: cx, y: cy + 0.66 * h };
+          }
+
+          const addEdge = (a, b) => {
+            const ka = `${Math.round(a.x * 10)},${Math.round(a.y * 10)}`;
+            const kb = `${Math.round(b.x * 10)},${Math.round(b.y * 10)}`;
+            const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+            edges.set(key, (edges.get(key) || 0) + 1);
+          };
+
+          addEdge(v1, v2);
+          addEdge(v2, v3);
+          addEdge(v3, v1);
+        });
+
+        ctx.beginPath();
+        edges.forEach((count, key) => {
+          if (count === 1) {
+            const [p1, p2] = key.split("|");
+            const [x1, y1] = p1.split(",").map((n) => parseInt(n) / 10);
+            const [x2, y2] = p2.split(",").map((n) => parseInt(n) / 10);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+          }
+        });
+
+        const alpha = 0.5 + (Math.sin(time * 0.005) + 1) * 0.25;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "white";
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      function render(timestamp) {
+        time = timestamp;
+        updatePhysics();
+        updateFallingPhysics();
+
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (invalidMoveTime > 0) {
+          const elapsed = time - invalidMoveTime;
+          const duration = 800;
+          if (elapsed < duration) {
+            const progress = elapsed / duration;
+            const intensity = Math.sin(progress * Math.PI);
+            ctx.fillStyle = `rgba(220, 38, 38, ${intensity * 0.25})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          } else {
+            invalidMoveTime = -1;
+          }
+        }
+
+        ctx.save();
+
+        ctx.beginPath();
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const center = getTriangleCenter(r, c);
+            const up = isPointingUp(r, c);
+            drawTriangleShape(
+              ctx,
+              r,
+              c,
+              center.x,
+              center.y,
+              TRIANGLE_WIDTH,
+              TRIANGLE_HEIGHT,
+              up,
+              2
+            );
+          }
+        }
+        ctx.clip();
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const isDragged =
+              (drag.active || drag.isAnimating) &&
+              drag.strip.some((p) => p.r === r && p.c === c);
+            if (!isDragged) {
+              drawTriangle(r, c, null);
+            }
+          }
+        }
+
+        if ((drag.active || drag.isAnimating) && drag.strip.length > 0) {
+          const config = axisConfig[drag.lockedAxis];
+          const vx = drag.pixelOffset * config.x;
+          const vy = drag.pixelOffset * config.y;
+
+          const ghostForward = [];
+          const ghostBackward = [];
+          const len = drag.strip.length;
+
+          let curr = drag.strip[len - 1];
+          for (let i = 0; i < len; i++) {
+            const next = findLogicalNeighbor(
+              curr.r,
+              curr.c,
+              drag.lockedAxis,
+              1
+            );
+            ghostForward.push(next);
+            curr = next;
+          }
+
+          curr = drag.strip[0];
+          const temp = [];
+          for (let i = 0; i < len; i++) {
+            const prev = findLogicalNeighbor(
+              curr.r,
+              curr.c,
+              drag.lockedAxis,
+              -1
+            );
+            temp.push(prev);
+            curr = prev;
+          }
+          for (let i = len - 1; i >= 0; i--) ghostBackward.push(temp[i]);
+
+          drag.strip.forEach((pos, i) => {
+            const color = grid[pos.r][pos.c].color;
+            drawTriangle(pos.r, pos.c, { x: vx, y: vy }, color);
+
+            if (ghostForward[i])
+              drawTriangle(
+                ghostForward[i].r,
+                ghostForward[i].c,
+                { x: vx, y: vy },
+                color
+              );
+            if (ghostBackward[i])
+              drawTriangle(
+                ghostBackward[i].r,
+                ghostBackward[i].c,
+                { x: vx, y: vy },
+                color
+              );
+          });
+        }
+
+        if (predictedMatches.length > 0) {
+          drawContour(predictedMatches);
+        }
+
+        ctx.restore();
+        requestAnimationFrame(render);
+      }
+
+      initGame();
+      requestAnimationFrame(render);
+    </script>
+  </body>
+</html>

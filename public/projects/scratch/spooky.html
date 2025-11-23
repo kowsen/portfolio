@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Birthday!</title>
+    <!-- Font: Permanent Marker -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* --- CSS Reset & Layout --- */
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #111;
+        font-family: "Permanent Marker", cursive;
+        cursor: crosshair; /* Fun cursor */
+        touch-action: none; /* Prevent scrolling on mobile */
+      }
+
+      /* --- The Canvas --- */
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        will-change: filter;
+        transition: filter 1.5s ease-out;
+      }
+
+      .grayscale {
+        filter: grayscale(100%) brightness(0.8);
+      }
+
+      /* --- The Curtain (Start Screen) --- */
+      #curtain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        cursor: pointer;
+        transition: opacity 0.8s ease-out;
+        user-select: none;
+      }
+
+      #curtain h1 {
+        font-size: 4rem;
+        margin: 0;
+        text-align: center;
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        animation: pulse 2s infinite;
+      }
+
+      #curtain p {
+        font-size: 1.2rem;
+        opacity: 0.8;
+        margin-top: 20px;
+        max-width: 80%;
+        text-align: center;
+      }
+
+      /* --- The Main Text Overlay --- */
+      #message-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-10deg);
+        z-index: 50;
+        text-align: center;
+        pointer-events: none;
+        width: 100%;
+      }
+
+      #birthday-text {
+        font-size: clamp(3rem, 10vw, 9rem);
+        line-height: 1.1;
+        color: #fff;
+        text-shadow: 6px 6px 0px rgba(0, 0, 0, 0.3);
+        transition: color 0.1s, transform 0.1s; /* Faster update for shake effect */
+      }
+
+      .instruction {
+        position: fixed;
+        bottom: 30px;
+        width: 100%;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1rem;
+        z-index: 40;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 2s;
+      }
+
+      /* --- Animations --- */
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(0.95);
+          opacity: 0.7;
+        }
+      }
+
+      .hidden {
+        pointer-events: none !important;
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body class="grayscale">
+    <audio id="bg-music" preload="auto">
+      <source src="https://goodbirth.day/cosmonut.ogg" type="audio/ogg" />
+    </audio>
+
+    <canvas id="tunnel-canvas"></canvas>
+
+    <div id="message-container">
+      <div id="birthday-text">HAPPY BIRTHDAY !</div>
+    </div>
+
+    <div class="instruction" id="controls-hint">
+      Move mouse to steer • Click & Hold for WARP SPEED
+    </div>
+
+    <div id="curtain">
+      <h1>CLICK TO START</h1>
+      <p>(Warning: Flashing colors & Motion)</p>
+    </div>
+
+    <script>
+      /**
+       * CONFIGURATION
+       */
+      const PALETTE = [
+        "#F94144",
+        "#F3722C",
+        "#F8961E",
+        "#F9844A",
+        "#F9C74F",
+        "#90BE6D",
+        "#43AA8B",
+        "#4D908E",
+        "#577590",
+        "#277DA1",
+      ];
+
+      const CONFIG = {
+        layerCount: 12,
+        baseSpeed: 0.002,
+        warpSpeed: 0.0034, // Reduced to 1.7x base speed (0.002 * 1.7)
+        baseRotation: Math.PI / 6,
+        warpRotation: Math.PI / 2, // Spin faster in warp
+        loopGapCorrection: 0.44,
+        emojis: ["🎈", "🎁", "🍰", "🎉", "🎂", "🕯️"],
+      };
+
+      // State
+      let isPlaying = false;
+      let isWarping = false;
+      let time = 0;
+      let currentSpeed = CONFIG.baseSpeed;
+      let currentRotationMax = CONFIG.baseRotation;
+
+      // Mouse / Input State
+      let mouse = { x: 0, y: 0 };
+      let targetMouse = { x: 0, y: 0 }; // Smooth interpolation
+
+      // Objects
+      let layers = [];
+      let particles = []; // Confetti array
+      let canvas, ctx, width, height;
+      let nextColorIndex = 0;
+
+      /**
+       * INITIALIZATION
+       */
+      function init() {
+        canvas = document.getElementById("tunnel-canvas");
+        ctx = canvas.getContext("2d", { alpha: false });
+
+        resize();
+        window.addEventListener("resize", resize);
+
+        // Initialize Layers
+        for (let i = 0; i < CONFIG.layerCount; i++) {
+          layers.push({
+            progress: i / CONFIG.layerCount,
+            colorIdx: i % PALETTE.length,
+          });
+          nextColorIndex = (i + 1) % PALETTE.length;
+        }
+
+        // Center mouse initially
+        mouse.x = width / 2;
+        mouse.y = height / 2;
+        targetMouse.x = width / 2;
+        targetMouse.y = height / 2;
+
+        // Input Listeners
+        setupInputs();
+
+        requestAnimationFrame(loop);
+        document
+          .getElementById("curtain")
+          .addEventListener("click", startExperience);
+      }
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      function setupInputs() {
+        // Mouse Move
+        window.addEventListener("mousemove", (e) => {
+          targetMouse.x = e.clientX;
+          targetMouse.y = e.clientY;
+        });
+
+        // Touch Move
+        window.addEventListener(
+          "touchmove",
+          (e) => {
+            e.preventDefault();
+            targetMouse.x = e.touches[0].clientX;
+            targetMouse.y = e.touches[0].clientY;
+          },
+          { passive: false }
+        );
+
+        // Warp Triggers (Mouse)
+        window.addEventListener("mousedown", () => (isWarping = true));
+        window.addEventListener("mouseup", () => (isWarping = false));
+
+        // Warp Triggers (Touch)
+        window.addEventListener("touchstart", (e) => {
+          isWarping = true;
+          targetMouse.x = e.touches[0].clientX;
+          targetMouse.y = e.touches[0].clientY;
+        });
+        window.addEventListener("touchend", () => (isWarping = false));
+      }
+
+      /**
+       * INTERACTION & AUDIO
+       */
+      function startExperience() {
+        if (isPlaying) return;
+        isPlaying = true;
+
+        // UI
+        const curtain = document.getElementById("curtain");
+        curtain.style.opacity = 0;
+        setTimeout(() => curtain.classList.add("hidden"), 800);
+        document.body.classList.remove("grayscale");
+
+        // Show hint after a moment
+        setTimeout(() => {
+          document.getElementById("controls-hint").style.opacity = 1;
+        }, 2000);
+
+        // Audio
+        const audio = document.getElementById("bg-music");
+        audio.volume = 0;
+        audio.play().catch((e) => console.log("Audio logic", e));
+
+        // Fade In
+        const fadeInterval = setInterval(() => {
+          if (audio.volume < 0.5) {
+            audio.volume = Math.min(0.5, audio.volume + 0.05);
+          } else {
+            clearInterval(fadeInterval);
+          }
+        }, 200);
+
+        // Loop
+        audio.addEventListener("timeupdate", () => {
+          if (audio.currentTime > audio.duration - CONFIG.loopGapCorrection) {
+            audio.currentTime = 0;
+            audio.play();
+          }
+        });
+      }
+
+      /**
+       * PARTICLE SYSTEM
+       */
+      function spawnParticle() {
+        if (Math.random() > 0.01) return; // Limiter reduced by factor of 10 (1% chance vs 10%)
+
+        // Spawn at back (progress 0)
+        // Random angle
+        const angle = Math.random() * Math.PI * 2;
+        // Random radius from center
+        const radius = Math.random() * 100;
+
+        particles.push({
+          emoji:
+            CONFIG.emojis[Math.floor(Math.random() * CONFIG.emojis.length)],
+          progress: 0,
+          angle: angle,
+          radiusOffset: radius,
+          spin: Math.random() * 0.2 - 0.1,
+          currentRotation: Math.random() * Math.PI,
+        });
+      }
+
+      function drawParticles() {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          let p = particles[i];
+
+          // Move
+          p.progress += currentSpeed;
+          p.currentRotation += p.spin;
+
+          if (p.progress >= 1.2) {
+            particles.splice(i, 1);
+            continue;
+          }
+
+          // 3D Projection Logic similar to tunnel
+          // Easing: Expo in for movement (starts slow, flies past face)
+          const z = Math.pow(p.progress, 3);
+          const size = 20 + z * 150; // Grow as it gets closer
+
+          // Position: Lerp between Vanishing Point (Mouse) and Screen Center?
+          // No, let's keep them anchored to the tunnel center logic
+          // We use the same interpolated mouse position
+          const depthAlpha = Math.min(1, p.progress * 2); // Fade in
+
+          // Calculate Tunnel Center at this specific depth (progress)
+          // Tunnel logic: p=0 is at Mouse, p=1 is at Center (conceptually for steering)
+          const tunnelX = mouse.x + (width / 2 - mouse.x) * p.progress;
+          const tunnelY = mouse.y + (height / 2 - mouse.y) * p.progress;
+
+          // Add the particle's own offset relative to that center
+          // The offset grows as it gets closer (perspective)
+          const visualRadius = p.radiusOffset * (1 + z * 5);
+          const px = tunnelX + Math.cos(p.angle) * visualRadius;
+          const py = tunnelY + Math.sin(p.angle) * visualRadius;
+
+          // Draw
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(p.currentRotation);
+          ctx.globalAlpha = depthAlpha;
+          ctx.font = `${size}px serif`;
+          ctx.fillText(p.emoji, 0, 0);
+          ctx.restore();
+        }
+      }
+
+      /**
+       * ANIMATION LOOP
+       */
+      function loop() {
+        if (isPlaying) {
+          // 1. Physics Interpolation (Smooth Steering & Speed)
+          const smoothing = 0.08;
+          mouse.x += (targetMouse.x - mouse.x) * smoothing;
+          mouse.y += (targetMouse.y - mouse.y) * smoothing;
+
+          // Warp Speed logic
+          const targetSpeedVal = isWarping
+            ? CONFIG.warpSpeed
+            : CONFIG.baseSpeed;
+          const targetRotVal = isWarping
+            ? CONFIG.warpRotation
+            : CONFIG.baseRotation;
+
+          currentSpeed += (targetSpeedVal - currentSpeed) * 0.05;
+          currentRotationMax += (targetRotVal - currentRotationMax) * 0.05;
+
+          time += currentSpeed;
+
+          // Text Shake on Warp
+          const textContainer = document.getElementById("birthday-text");
+          if (isWarping) {
+            const shakeX = (Math.random() - 0.5) * 10;
+            const shakeY = (Math.random() - 0.5) * 10;
+            textContainer.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
+          } else {
+            textContainer.style.transform = `none`;
+          }
+
+          // Update Layer Progress
+          layers.forEach((layer) => {
+            layer.progress += currentSpeed;
+            if (layer.progress >= 1) {
+              layer.progress -= 1;
+              layer.colorIdx = nextColorIndex;
+              nextColorIndex = (nextColorIndex + 1) % PALETTE.length;
+            }
+          });
+
+          // Spawn new particles
+          spawnParticle();
+        }
+
+        // 2. Background (Deepest color)
+        const deepColorIdx =
+          (nextColorIndex + PALETTE.length - 1) % PALETTE.length;
+        ctx.fillStyle = PALETTE[deepColorIdx];
+        ctx.fillRect(0, 0, width, height);
+
+        // 3. Text Color Cycle
+        const textCycleIdx =
+          Math.floor(time * (isWarping ? 10 : 3)) % PALETTE.length;
+        document.getElementById("birthday-text").style.color =
+          PALETTE[textCycleIdx];
+
+        // 4. Draw Tunnel
+        const sortedLayers = [...layers].sort(
+          (a, b) => a.progress - b.progress
+        );
+
+        sortedLayers.forEach((layer) => {
+          const p = layer.progress;
+
+          // Dynamic Size
+          // We square progress for exponential growth (perspective)
+          const size = Math.max(width, height) * Math.pow(p, 2) * 2;
+
+          // Dynamic Rotation
+          const rotation = currentRotationMax * Math.pow(1 - p, 2);
+
+          // Dynamic Center (The Steering Magic)
+          // At p=0 (back), the center should be the MOUSE.
+          // At p=1 (front), the center should be the SCREEN CENTER.
+          // This makes it look like we are traveling FROM the mouse TO the screen.
+          const cx = mouse.x + (width / 2 - mouse.x) * p;
+          const cy = mouse.y + (height / 2 - mouse.y) * p;
+
+          const halfSize = size / 2;
+
+          ctx.fillStyle = PALETTE[layer.colorIdx];
+
+          ctx.beginPath();
+          // Outer Boundary (Clockwise)
+          ctx.moveTo(0, 0);
+          ctx.lineTo(width, 0);
+          ctx.lineTo(width, height);
+          ctx.lineTo(0, height);
+          ctx.closePath();
+
+          // Inner Hole (Counter-Clockwise)
+          // We calculate rotated corners
+          const getPoint = (multX, multY) => {
+            const ux = multX * halfSize;
+            const uy = multY * halfSize;
+            const cos = Math.cos(rotation);
+            const sin = Math.sin(rotation);
+            return {
+              x: cx + (ux * cos - uy * sin),
+              y: cy + (ux * sin + uy * cos),
+            };
+          };
+
+          const p1 = getPoint(-1, -1); // TL
+          const p4 = getPoint(-1, 1); // BL
+          const p3 = getPoint(1, 1); // BR
+          const p2 = getPoint(1, -1); // TR
+
+          // Draw CCW
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.closePath();
+
+          ctx.fill();
+        });
+
+        // 5. Draw Particles (On top of tunnel)
+        if (isPlaying) drawParticles();
+
+        requestAnimationFrame(loop);
+      }
+
+      init();
+    </script>
+  </body>
+</html>

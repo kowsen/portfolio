@@ -24,6 +24,19 @@
         touch-action: none;
       }
 
+      /* 1. Define the Keyframes for the Pulse */
+      @keyframes background-pulse {
+        0% {
+          background-color: #020617; /* Starting color (and end color for loop) */
+        }
+        50% {
+          background-color: #060a1d; /* Midpoint color */
+        }
+        100% {
+          background-color: #020617; /* Back to the start color */
+        }
+      }
+
       #header {
         height: 100px;
         width: 100%;
@@ -38,6 +51,12 @@
         z-index: 10;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         border-bottom: 1px solid #1e293b;
+
+        /* Apply the animation */
+        animation-name: background-pulse;
+        animation-duration: 5s; /* The pulse takes 5 seconds */
+        animation-timing-function: ease-in-out; /* Smooths the transition speed */
+        animation-iteration-count: infinite; /* Loops forever */
       }
 
       .header-group {

@@ -1945,6 +1945,40 @@
 
       initGame();
       requestAnimationFrame(render);
+
+      function enableHighPerformanceMode() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        const audioCtx = new AudioContext();
+
+        // Create a silent oscillator
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 60; // 60Hz sound (inaudible/low)
+
+        // Mute it completely so the user hears nothing
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+
+        // Prevent garbage collection
+        window.keepAudioAlive = oscillator;
+      }
+
+      // Call this on the first user interaction (touchstart/click)
+      document.addEventListener(
+        "touchstart",
+        function () {
+          enableHighPerformanceMode();
+        },
+        { once: true }
+      );
     </script>
   </body>
 </html>

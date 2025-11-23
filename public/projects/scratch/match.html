@@ -22,19 +22,9 @@
         width: 100%;
         height: 100%;
         touch-action: none;
-      }
-
-      /* 1. Define the Keyframes for the Pulse */
-      @keyframes background-pulse {
-        0% {
-          background-color: #020617; /* Starting color (and end color for loop) */
-        }
-        50% {
-          background-color: #060a1d; /* Midpoint color */
-        }
-        100% {
-          background-color: #020617; /* Back to the start color */
-        }
+        /* Prevent selection flickering */
+        -webkit-user-select: none;
+        user-select: none;
       }
 
       #header {
@@ -51,12 +41,6 @@
         z-index: 10;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         border-bottom: 1px solid #1e293b;
-
-        /* Apply the animation */
-        animation-name: background-pulse;
-        animation-duration: 5s; /* The pulse takes 5 seconds */
-        animation-timing-function: ease-in-out; /* Smooths the transition speed */
-        animation-iteration-count: infinite; /* Loops forever */
       }
 
       .header-group {
@@ -78,9 +62,37 @@
         position: absolute;
         top: 100px;
         left: 0;
+        /* PERFORMANCE FIX: Force GPU Layer Promotion */
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
+        -webkit-tap-highlight-color: transparent;
       }
       canvas:active {
         cursor: grabbing;
+      }
+
+      /* PERFORMANCE FIX: The "Dummy Ticker"
+         An invisible animation that forces the browser compositor 
+         to run at 60fps/120fps even when not touching the screen. 
+      */
+      @keyframes force-high-refresh {
+        0% {
+          opacity: 0.99;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      #fps-locker {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+        visibility: hidden; /* Use visibility so it doesn't paint, but animation runs */
+        animation: force-high-refresh 1s infinite linear;
+        z-index: -1;
       }
 
       .score-label {
@@ -195,6 +207,8 @@
     </style>
   </head>
   <body>
+    <div id="fps-locker"></div>
+
     <div id="header">
       <div class="header-group">
         <div class="score-label">Score</div>
@@ -209,7 +223,6 @@
       </div>
     </div>
 
-    <!-- Game Over Modal -->
     <div id="modal-overlay">
       <div class="modal-card">
         <div class="modal-title">Out of Moves!</div>
@@ -220,7 +233,6 @@
           High Score: 0
         </div>
 
-        <!-- Changed onclick to call resetGame() instead of location.reload() -->
         <button class="btn-retry" onclick="resetGame()">Try Again</button>
       </div>
     </div>
@@ -229,14 +241,21 @@
 
     <script>
       /**
-       * TRIANGULAR MATCH-3 (Fix: Try Again)
-       * ===================================
-       * 1. Added resetGame() function to handle restarts programmatically.
-       * 2. Updated button to call resetGame().
+       * TRIANGULAR MATCH-3
        */
 
       const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
+
+      /** * PERFORMANCE FIX: Context Attributes
+       * 1. alpha: false -> Tells browser the canvas is opaque, optimizing compositing.
+       * 2. desynchronized: true -> Crucial for mobile. Hints to bypass the standard
+       * compositor queue to reduce latency and decouple from main thread throttling.
+       */
+      const ctx = canvas.getContext("2d", {
+        alpha: false,
+        desynchronized: true,
+      });
+
       const scoreEl = document.getElementById("score-display");
       const movesEl = document.getElementById("moves-display");
       const comboEl = document.getElementById("combo-display");
@@ -1788,23 +1807,6 @@
         ctx.shadowBlur = 0;
       }
 
-      const framePace = 1000 / 60;
-      let lastTimestamp = -1;
-      function renderWrapper(timestamp) {
-        let numFrames = 1;
-        if (lastTimestamp !== -1) {
-          const time = timestamp - lastTimestamp;
-          numFrames = Math.max(Math.floor(time / framePace), 1);
-        }
-        lastTimestamp = timestamp;
-
-        for (let i = 0; i < numFrames; i++) {
-          render(timestamp);
-        }
-
-        requestAnimationFrame(renderWrapper);
-      }
-
       function render(timestamp) {
         time = timestamp;
         updatePhysics();
@@ -1976,10 +1978,12 @@
         });
 
         ctx.restore();
+
+        requestAnimationFrame(render);
       }
 
       initGame();
-      requestAnimationFrame(renderWrapper);
+      requestAnimationFrame(render);
     </script>
   </body>
 </html>

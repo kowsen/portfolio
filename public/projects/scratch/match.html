@@ -45,7 +45,7 @@
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
-        width: 100px; /* Fixed width for alignment */
+        width: 100px;
       }
       .header-group.right {
         align-items: flex-end;
@@ -71,8 +71,8 @@
         color: #94a3b8;
         margin-bottom: 2px;
       }
-      .score-value {
-        font-size: 36px;
+      #score-display {
+        font-size: 42px;
         font-weight: 800;
         color: #fff;
         line-height: 1;
@@ -80,22 +80,22 @@
       }
       #moves-display {
         color: #38bdf8;
+        font-size: 36px;
+        font-weight: 800;
+        line-height: 1;
       }
-
       #combo-display {
-        font-size: 24px;
+        font-size: 18px;
         font-weight: bold;
         color: #facc15;
         opacity: 0;
         transition: opacity 0.3s;
         position: absolute;
-        left: 50%;
+        left: 55%;
         transform: translateX(-50%);
-        text-align: center;
-        width: 200px;
+        pointer-events: none;
       }
 
-      /* Modal Styles */
       #modal-overlay {
         position: absolute;
         top: 0;
@@ -179,14 +179,14 @@
     <div id="header">
       <div class="header-group">
         <div class="score-label">Score</div>
-        <div id="score-display" class="score-value">0</div>
+        <div id="score-display">0</div>
       </div>
 
       <div id="combo-display">MATCH!</div>
 
       <div class="header-group right">
         <div class="score-label">Moves</div>
-        <div id="moves-display" class="score-value">20</div>
+        <div id="moves-display">10</div>
       </div>
     </div>
 
@@ -201,7 +201,8 @@
           High Score: 0
         </div>
 
-        <button class="btn-retry" onclick="location.reload()">Try Again</button>
+        <!-- Changed onclick to call resetGame() instead of location.reload() -->
+        <button class="btn-retry" onclick="resetGame()">Try Again</button>
       </div>
     </div>
 
@@ -209,12 +210,10 @@
 
     <script>
       /**
-       * TRIANGULAR MATCH-3 (Game Loop Complete)
-       * =======================================
-       * 1. Move Counter: Starts at 20, decrements on match.
-       * 2. Game Over: Triggered when moves=0 and board settled.
-       * 3. High Score: Persisted via localStorage.
-       * 4. UI: Updates for layout and duration.
+       * TRIANGULAR MATCH-3 (Fix: Try Again)
+       * ===================================
+       * 1. Added resetGame() function to handle restarts programmatically.
+       * 2. Updated button to call resetGame().
        */
 
       const canvas = document.getElementById("gameCanvas");
@@ -227,7 +226,6 @@
       const highScoreEl = document.getElementById("high-score-display");
 
       // --- Configuration ---
-      const TARGET_SIZE = 81;
       const PADDING = 16;
       const ASPECT_RATIO = 52 / 60;
 
@@ -235,14 +233,14 @@
       const BOUNCE_DAMPING = 0.35;
       const REVERT_STIFFNESS = 0.2;
 
-      let ROWS = 0;
-      let COLS = 0;
-      let TRIANGLE_WIDTH = TARGET_SIZE;
-      let TRIANGLE_HEIGHT = TARGET_SIZE * ASPECT_RATIO;
+      // Fixed Grid Dimensions
+      let ROWS = 8;
+      let COLS = 7;
+      let TRIANGLE_WIDTH = 0; // Calculated dynamically
+      let TRIANGLE_HEIGHT = 0;
 
       const PALETTE = [
         "#ef4444", // Ruby Red
-        "#f97316", // Tangerine
         "#eab308", // Lemon Yellow
         "#84cc16", // Lime Green
         "#06b6d4", // Cyan
@@ -259,18 +257,26 @@
 
       let movesLeft = 20;
       let isGameOver = false;
-      let comboTimeout = null; // Handle text timing
+      let comboTimeout = null;
 
       let isProcessingMatches = false;
       let isFalling = false;
       let checkQueue = [];
       let predictedMatches = [];
       let invalidMoveTime = -1;
+      let bombEffects = []; // { r: number, startTime: number, duration: number }
 
       let axisConfig = {
         horiz: { x: 1, y: 0, step: 0 },
         diagA: { x: 0, y: 0, step: 0 },
         diagB: { x: 0, y: 0, step: 0 },
+      };
+
+      // Default Gravity: Screen Down (Logical Horizontal +1)
+      // Since we rotated 90deg CW, Logical X+ is Visual Y+ (Down).
+      let activeGravity = {
+        axis: "horiz",
+        dir: 1,
       };
 
       let drag = {
@@ -297,6 +303,10 @@
           ghostColor: null,
           animDist: 0,
           animVel: 0,
+          animVel: 0,
+          popStartTime: 0,
+          spawnTime: 0,
+          type: "normal", // normal, bomb, wipe
         };
       }
 
@@ -307,11 +317,31 @@
         const availableW = canvas.width - PADDING * 2;
         const availableH = canvas.height - PADDING * 2;
 
-        COLS = Math.floor((2 * availableW) / TRIANGLE_WIDTH - 1);
-        ROWS = Math.floor(availableH / TRIANGLE_HEIGHT);
+        // Enforce Fixed Grid
+        // Visual Width (Logical Rows) = 4 widths => ROWS = 5 (approx 4.33 widths)
+        // Visual Height (Logical Cols) = 8 widths (16 triangles) => COLS = 16
+        // User requested one fewer row and col:
+        COLS = 15;
+        ROWS = 4;
 
-        if (COLS < 3) COLS = 3;
-        if (ROWS < 3) ROWS = 3;
+        // ROTATION LOGIC:
+        // The grid is rendered rotated 90 degrees.
+        // Logical Width (Cols) must fit in Physical Height.
+        // Logical Height (Rows) must fit in Physical Width.
+
+        // 1. Scale based on Logical Width (fitting into Physical Height)
+        // Grid Width Formula: (COLS + 1) * Width / 2
+        // Solve for Width: Width <= (2 * AvailableH) / (COLS + 1)
+        const maxW_by_width = (2 * availableH) / (COLS + 1);
+
+        // 2. Scale based on Logical Height (fitting into Physical Width)
+        // Grid Height Formula: ROWS * Height => ROWS * (Width * Aspect)
+        // Solve for Width: Width <= AvailableW / (ROWS * Aspect)
+        const maxW_by_height = availableW / (ROWS * ASPECT_RATIO);
+
+        // Use the smaller of the two to ensure it fits
+        TRIANGLE_WIDTH = Math.min(maxW_by_width, maxW_by_height);
+        TRIANGLE_HEIGHT = TRIANGLE_WIDTH * ASPECT_RATIO;
 
         axisConfig.horiz.step = TRIANGLE_WIDTH;
         const dx = TRIANGLE_WIDTH / 2;
@@ -326,6 +356,14 @@
 
         const gridWidth = ((COLS + 1) * TRIANGLE_WIDTH) / 2;
         const gridHeight = ROWS * TRIANGLE_HEIGHT;
+
+        // Center the logical grid within the logical canvas (which has same dims as physical, just rotated space)
+        // We want the center of the grid to align with center of canvas.
+        // Center of canvas = (W/2, H/2).
+        // Center of grid = (offsetX + GW/2, offsetY + GH/2).
+        // We want these to match in the logical space.
+        // Note: In render(), we rotate around (W/2, H/2).
+        // So we just need to ensure the grid is centered relative to W and H.
         offsetX = (canvas.width - gridWidth) / 2;
         offsetY = (canvas.height - gridHeight) / 2;
       }
@@ -336,6 +374,7 @@
         scoreEl.innerText = score;
         movesLeft = 20;
         movesEl.innerText = movesLeft;
+        scoreMultiplier = 1; // Ensure multiplier resets
 
         grid = [];
         for (let r = 0; r < ROWS; r++) {
@@ -349,11 +388,41 @@
         }
       }
 
+      // New function to handle soft reset
+      function resetGame() {
+        modalEl.classList.remove("visible");
+        isGameOver = false;
+
+        // Reset physics/logic flags
+        isProcessingMatches = false;
+        isFalling = false;
+        checkQueue = [];
+        predictedMatches = [];
+
+        // Reset Drag State
+        drag = {
+          active: false,
+          start: { x: 0, y: 0 },
+          current: { x: 0, y: 0 },
+          originCell: null,
+          lockedAxis: null,
+          strip: [],
+          pixelOffset: 0,
+          velocity: 0,
+          lastProjection: 0,
+          isAnimating: false,
+          dataShift: 1,
+          netDragShift: 0,
+          isReverting: false,
+        };
+
+        initGame();
+      }
+
       function endGame() {
         if (isGameOver) return;
         isGameOver = true;
 
-        // High Score Logic
         const savedHigh = localStorage.getItem("triMatchHigh") || 0;
         let highScore = parseInt(savedHigh);
         if (score > highScore) {
@@ -366,7 +435,7 @@
         modalEl.classList.add("visible");
       }
 
-      window.addEventListener("resize", initGame);
+      window.addEventListener("resize", calculateDimensions);
 
       function getTriangleCenter(r, c) {
         const up = isPointingUp(r, c);
@@ -379,19 +448,32 @@
         return { x: cx, y: cy };
       }
 
-      function getCellAt(mx, my) {
+      function getLogicalPos(evt) {
         const rect = canvas.getBoundingClientRect();
-        const localX = mx - rect.left;
-        const localY = my - rect.top;
+        const mx = evt.clientX - rect.left;
+        const my = evt.clientY - rect.top;
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
 
+        // Rotate -90 degrees around center to map Screen -> Logical
+        // (x, y) -> (y, -x)
+        // dx = mx - cx, dy = my - cy
+        // lx = cx + dy
+        // ly = cy - dx
+        const lx = cx + (my - cy);
+        const ly = cy - (mx - cx);
+        return { x: lx, y: ly };
+      }
+
+      function getCellAt(lx, ly) {
         const hitRadius = TRIANGLE_WIDTH * 0.45;
         const hitRadiusSq = hitRadius * hitRadius;
 
         for (let r = 0; r < ROWS; r++) {
           for (let c = 0; c < COLS; c++) {
             const center = getTriangleCenter(r, c);
-            const dx = localX - center.x;
-            const dy = localY - center.y;
+            const dx = lx - center.x;
+            const dy = ly - center.y;
             if (dx * dx + dy * dy < hitRadiusSq) return { r, c };
           }
         }
@@ -435,9 +517,14 @@
 
       function rotateStripDataOnly(strip, shiftAmount) {
         const colors = strip.map((p) => grid[p.r][p.c].color);
+        const types = strip.map((p) => grid[p.r][p.c].type);
+
         const newColors = rotateArray(colors, shiftAmount);
+        const newTypes = rotateArray(types, shiftAmount);
+
         strip.forEach((pos, i) => {
           grid[pos.r][pos.c].color = newColors[i];
+          grid[pos.r][pos.c].type = newTypes[i];
           grid[pos.r][pos.c].animDist = 0;
           grid[pos.r][pos.c].animVel = 0;
           grid[pos.r][pos.c].ghostColor = null;
@@ -463,9 +550,9 @@
         return n;
       }
 
-      function checkSpecificMatches(candidates) {
+      function getMatchGroups(candidates) {
         let visited = new Set();
-        let matches = [];
+        let groups = [];
         let uniqueCandidates = new Set(candidates.map((c) => `${c.r},${c.c}`));
 
         uniqueCandidates.forEach((key) => {
@@ -473,11 +560,18 @@
           if (visited.has(key)) return;
           if (!grid[r] || !grid[r][c] || !grid[r][c].color) return;
 
-          const color = grid[r][c].color;
+          // Start BFS
           let group = [];
           let queue = [{ r, c }];
-          visited.add(key);
+          let visitedInGroup = new Set();
+          visitedInGroup.add(key);
           group.push({ r, c });
+
+          // Determine the "target color" for this group
+          // If the starting cell is a bomb, the color is effectively "wild" until we find a normal cell
+          let targetColor =
+            grid[r][c].type === "bomb" ? null : grid[r][c].color;
+          let coloredCount = grid[r][c].type === "bomb" ? 0 : 1;
 
           let head = 0;
           while (head < queue.length) {
@@ -486,26 +580,106 @@
 
             for (let neigh of neighbors) {
               const nKey = `${neigh.r},${neigh.c}`;
-              if (!visited.has(nKey)) {
+              if (!visited.has(nKey) && !visitedInGroup.has(nKey)) {
                 const cell = grid[neigh.r][neigh.c];
-                if (cell && cell.color === color) {
-                  visited.add(nKey);
-                  group.push(neigh);
-                  queue.push(neigh);
+                if (cell && cell.color) {
+                  const isBomb = cell.type === "bomb";
+
+                  // Matching Logic:
+                  // 1. If we don't have a target color yet (started with bombs),
+                  //    and this is a normal cell, it sets the target color.
+                  // 2. If we do have a target color, this cell must match it OR be a bomb.
+                  // 3. If we don't have a target color and this is a bomb, it matches.
+
+                  let match = false;
+                  if (targetColor === null) {
+                    if (!isBomb) {
+                      targetColor = cell.color;
+                      match = true;
+                    } else {
+                      match = true; // Bomb matches undefined color (wild + wild)
+                    }
+                  } else {
+                    if (isBomb || cell.color === targetColor) {
+                      match = true;
+                    }
+                  }
+
+                  if (match) {
+                    visitedInGroup.add(nKey);
+                    group.push(neigh);
+                    queue.push(neigh);
+                    if (!isBomb) coloredCount++;
+                  }
                 }
               }
             }
           }
 
-          if (group.length >= 3) {
-            group.forEach((g) => {
-              if (!matches.some((m) => m.r === g.r && m.c === g.c)) {
-                matches.push(g);
-              }
-            });
+          // VALIDATION:
+          // 1. Group size >= 3
+          // 2. Colored items >= 3 (New Rule: Bomb only triggers if match would exist without it)
+          if (group.length >= 3 && coloredCount >= 3) {
+            groups.push(group);
+            visitedInGroup.forEach((k) => visited.add(k));
           }
         });
 
+        return groups;
+      }
+
+      function areGroupsAdjacent(groupA, groupB) {
+        for (let cellA of groupA) {
+          const neighbors = getNeighbors(cellA.r, cellA.c);
+          for (let cellB of groupB) {
+            if (neighbors.some((n) => n.r === cellB.r && n.c === cellB.c)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function mergeAdjacentGroups(groups) {
+        let superGroups = [];
+        let visited = new Set(); // Set of group indices
+
+        for (let i = 0; i < groups.length; i++) {
+          if (visited.has(i)) continue;
+
+          let superGroup = [...groups[i]];
+          visited.add(i);
+          let queue = [i];
+
+          while (queue.length > 0) {
+            let currentIdx = queue.shift();
+
+            for (let j = 0; j < groups.length; j++) {
+              if (!visited.has(j)) {
+                if (areGroupsAdjacent(groups[currentIdx], groups[j])) {
+                  visited.add(j);
+                  superGroup.push(...groups[j]);
+                  queue.push(j);
+                }
+              }
+            }
+          }
+          superGroups.push(superGroup);
+        }
+        return superGroups;
+      }
+
+      function checkSpecificMatches(candidates) {
+        const groups = getMatchGroups(candidates);
+        // Flatten groups to unique matches for existing logic
+        let matches = [];
+        groups.forEach((g) => {
+          g.forEach((p) => {
+            if (!matches.some((m) => m.r === p.r && m.c === p.c)) {
+              matches.push(p);
+            }
+          });
+        });
         return matches;
       }
 
@@ -527,12 +701,7 @@
         }
 
         if (predictedAdditionalShift === 0) {
-          const originIdx = strip.findIndex(
-            (p) => p.r === drag.originCell.r && p.c === drag.originCell.c
-          );
-          const shift = ((drag.netDragShift % len) + len) % len;
-          const newIdx = (originIdx + shift) % len;
-          predictedMatches = checkSpecificMatches([strip[newIdx]]);
+          predictedMatches = checkSpecificMatches(strip);
         } else {
           const currentColors = strip.map((p) => grid[p.r][p.c].color);
           const rotatedColors = rotateArray(
@@ -542,15 +711,7 @@
           const oldColors = strip.map((p) => grid[p.r][p.c].color);
 
           strip.forEach((p, i) => (grid[p.r][p.c].color = rotatedColors[i]));
-
-          const originIdx = strip.findIndex(
-            (p) => p.r === drag.originCell.r && p.c === drag.originCell.c
-          );
-          const shift = ((totalShift % len) + len) % len;
-          const newIdx = (originIdx + shift) % len;
-
-          predictedMatches = checkSpecificMatches([strip[newIdx]]);
-
+          predictedMatches = checkSpecificMatches(strip);
           strip.forEach((p, i) => (grid[p.r][p.c].color = oldColors[i]));
         }
       }
@@ -559,62 +720,131 @@
         let moved = false;
         let newCandidates = [];
 
-        let stripsByK = {};
+        // Dynamic Gravity Grouping based on Active Axis
+        let stripsByKey = {};
+        const axis = activeGravity.axis;
+
         for (let r = 0; r < ROWS; r++) {
           for (let c = 0; c < COLS; c++) {
-            const k = Math.floor((c + r) / 2);
-            if (!stripsByK[k]) stripsByK[k] = [];
-            stripsByK[k].push({ r, c });
+            let k;
+            if (axis === "horiz") {
+              k = r; // Group by row
+            } else if (axis === "diagA") {
+              k = Math.ceil((c - r) / 2);
+            } else {
+              // diagB
+              k = Math.floor((c + r) / 2);
+            }
+
+            if (!stripsByKey[k]) stripsByKey[k] = [];
+            stripsByKey[k].push({ r, c });
           }
         }
 
-        const stepDist = axisConfig.diagB.step;
+        const stepDist = axisConfig[axis].step;
+        const dir = activeGravity.dir; // +1 or -1
 
-        Object.values(stripsByK).forEach((strip) => {
+        // Calculate Stride (Physical distance per array index)
+        let stride = 0;
+        if (axis === "horiz") {
+          // Horizontal cells are packed closely (w/2)
+          stride = TRIANGLE_WIDTH / 2;
+        } else {
+          // Diagonals alternate between H and W. A good approximation is Height.
+          stride = TRIANGLE_HEIGHT;
+        }
+
+        Object.values(stripsByKey).forEach((strip) => {
           strip.sort((a, b) => {
-            if (a.r !== b.r) return b.r - a.r;
-            return a.c - b.c;
+            let valA, valB;
+            if (axis === "horiz") {
+              valA = a.c;
+              valB = b.c;
+            } else if (axis === "diagA") {
+              valA = a.r;
+              valB = b.r;
+            } else {
+              valA = a.c;
+              valB = b.c;
+            }
+
+            if (dir === 1) {
+              return valA - valB;
+            } else {
+              return valB - valA;
+            }
           });
 
-          for (let i = 0; i < strip.length; i++) {
+          for (let i = strip.length - 1; i >= 0; i--) {
             const curr = strip[i];
 
             if (grid[curr.r][curr.c].color === null) {
               let foundIndex = -1;
-              let logicalDistance = 0;
+              const destUp = isPointingUp(curr.r, curr.c);
 
-              for (let j = i + 1; j < strip.length; j++) {
+              // Look towards Source (0)
+              for (let j = i - 1; j >= 0; j--) {
                 const check = strip[j];
-                logicalDistance++;
-                if (grid[check.r][check.c].color !== null) {
+                const sourceUp = isPointingUp(check.r, check.c);
+
+                // GRAVITY UPDATE: Only pull if orientation matches
+                if (
+                  grid[check.r][check.c].color !== null &&
+                  sourceUp === destUp
+                ) {
                   foundIndex = j;
                   break;
                 }
               }
 
+              const currCenter = getTriangleCenter(curr.r, curr.c);
+
               if (foundIndex !== -1) {
                 const source = strip[foundIndex];
                 const sourceCell = grid[source.r][source.c];
+                const sourceCenter = getTriangleCenter(source.r, source.c);
                 const currCell = grid[curr.r][curr.c];
 
                 currCell.color = sourceCell.color;
-                currCell.animDist =
-                  sourceCell.animDist + logicalDistance * stepDist;
+                currCell.type = sourceCell.type; // Move type
+
+                // Calculate Exact Physical Distance for AnimDist
+                const dist = Math.sqrt(
+                  Math.pow(sourceCenter.x - currCenter.x, 2) +
+                    Math.pow(sourceCenter.y - currCenter.y, 2)
+                );
+
+                // Inherit momentum + exact physical gap
+                currCell.animDist = sourceCell.animDist + dist;
                 currCell.animVel = sourceCell.animVel;
 
                 sourceCell.color = null;
+                sourceCell.type = "normal"; // Reset source type
                 sourceCell.animDist = 0;
                 sourceCell.animVel = 0;
 
                 newCandidates.push(curr);
                 moved = true;
               } else {
+                // No source found, generate new
                 const currCell = grid[curr.r][curr.c];
                 currCell.color =
                   PALETTE[Math.floor(Math.random() * PALETTE.length)];
+                currCell.type = "normal"; // Ensure new cells are normal
 
-                let spotsAbove = strip.length - 1 - i;
-                currCell.animDist = (spotsAbove + 1) * stepDist;
+                // Logic: 'i' is the index in the sorted strip (0 is source, Last is dest)
+                // We are at 'i'. We looked back to 0 and found nothing.
+                // This means we are filling from off-screen.
+                // The "virtual" source is (i + 1) slots away in the negative direction.
+                // Using 'stride' gives the correct physical distance.
+
+                // UPDATE: If we are enforcing orientation, we might be hopping.
+                // For simplicity, we keep the linear distance metric, but maybe boost it if hopping?
+                // If axis is horiz, we hop (stride 2). If diag, we don't (stride 1).
+                // Actually, let's just use linear distance. It will slide in from "neighbor".
+                // If neighbor is wrong orientation, it might look like a flip, but it's a NEW tile.
+                // So it's acceptable.
+                currCell.animDist = (i + 1) * stride;
                 currCell.animVel = 0;
 
                 newCandidates.push(curr);
@@ -664,8 +894,6 @@
             resolveMatches(checkQueue);
             checkQueue = [];
           } else {
-            // Board is settled and no more checks pending.
-            // Check for Game Over condition
             if (movesLeft <= 0 && !isGameOver) {
               endGame();
             }
@@ -680,36 +908,230 @@
         }
 
         isProcessingMatches = true;
-        const matches = checkSpecificMatches(candidates);
+        const groups = getMatchGroups(candidates);
+
+        // Check for Powerups (Super Groups)
+        const superGroups = mergeAdjacentGroups(groups);
+        let bombLocations = [];
+        let wipeLocations = [];
+
+        superGroups.forEach((superGroup) => {
+          const uniqueCells = new Set(superGroup.map((c) => `${c.r},${c.c}`));
+          if (uniqueCells.size >= 5) {
+            console.log(`Powerup! Total size: ${uniqueCells.size}`);
+
+            // Determine powerup type: wipe for 8+, bomb for 5-7
+            const isWipe = uniqueCells.size >= 8;
+            const powerupType = isWipe ? "wipe" : "bomb";
+
+            // Select Powerup Location
+            // First, identify if any powerups of this type are being detonated in this match
+            const detonatedPowerupColumns = new Set();
+            superGroup.forEach((cell) => {
+              if (
+                grid[cell.r] &&
+                grid[cell.r][cell.c] &&
+                grid[cell.r][cell.c].type === powerupType
+              ) {
+                // In the rotated game, "columns" are actually logical rows (r coordinate)
+                // A powerup destroys its entire row (bomb) or all matching colors (wipe)
+                detonatedPowerupColumns.add(cell.r);
+              }
+            });
+
+            // Filter candidates to exclude cells in the same column as detonated powerups
+            let candidates = superGroup;
+            if (detonatedPowerupColumns.size > 0) {
+              const filteredCandidates = superGroup.filter(
+                (c) => !detonatedPowerupColumns.has(c.r)
+              );
+              // Only use filtered list if there are alternatives
+              if (filteredCandidates.length > 0) {
+                candidates = filteredCandidates;
+              }
+            }
+
+            // Prefer the cell that was the origin of the move if it's in the candidates
+            let target = candidates[0];
+            if (drag.originCell) {
+              const originInGroup = candidates.find(
+                (c) => c.r === drag.originCell.r && c.c === drag.originCell.c
+              );
+              if (originInGroup) {
+                target = originInGroup;
+              }
+            }
+
+            if (isWipe) {
+              wipeLocations.push(target);
+            } else {
+              bombLocations.push(target);
+            }
+          }
+        });
+
+        // Flatten for processing
+        let matches = [];
+        groups.forEach((g) => {
+          g.forEach((p) => {
+            if (!matches.some((m) => m.r === p.r && m.c === p.c)) {
+              matches.push(p);
+            }
+          });
+        });
 
         if (matches.length > 0) {
           if (!silent) {
-            // Score = Base Points * Multiplier
             let points = matches.length * 10 * scoreMultiplier;
             score += points;
             scoreEl.innerText = score;
 
-            // Update Combo Text
             comboEl.innerText =
               scoreMultiplier > 1 ? `MATCH! x${scoreMultiplier}` : "MATCH!";
             comboEl.style.opacity = 1;
 
             if (comboTimeout) clearTimeout(comboTimeout);
-            comboTimeout = setTimeout(() => (comboEl.style.opacity = 0), 2000); // 2 seconds
+            comboTimeout = setTimeout(() => (comboEl.style.opacity = 0), 2000);
 
-            // Increment for next chain link
             scoreMultiplier++;
           }
 
-          matches.forEach((p) => {
-            const cell = grid[p.r][p.c];
-            cell.ghostColor = cell.color;
-            cell.color = null;
-            cell.animDist = 0;
-            cell.animVel = 0;
+          // Filter out bomb locations from being popped (if they are being created)
+          // BUT wait, if we are matching an EXISTING bomb, it should be popped.
+          // The bombLocations array contains NEW bombs being created.
+          // We need to separate "matches that create bombs" from "matches that include bombs".
+
+          // Logic:
+          // 1. Identify if any matched cell is ALREADY a bomb.
+          // 2. If so, trigger Column Blast.
+
+          let blastRows = new Set();
+          matches.forEach((m) => {
+            if (grid[m.r][m.c].type === "bomb") {
+              blastRows.add(m.r);
+            }
+          });
+
+          // Add Blast Cells
+          blastRows.forEach((r) => {
+            // Visual Effect
+            bombEffects.push({
+              r: r,
+              startTime: time,
+              duration: 600,
+            });
+
+            // Destroy Row
+            for (let c = 0; c < COLS; c++) {
+              // Avoid duplicates
+              if (!matches.some((m) => m.r === r && m.c === c)) {
+                matches.push({ r, c });
+              }
+            }
+          });
+
+          // Wipe Logic:
+          // 1. Identify if any matched cell is a wipe.
+          // 2. If so, determine the target color and destroy all cells of that color.
+
+          matches.forEach((m) => {
+            if (grid[m.r][m.c].type === "wipe") {
+              // Determine the target color from the match group
+              // The wipe itself doesn't have a meaningful color for matching,
+              // but the match group does. Find the color of the match.
+
+              let targetColor = null;
+
+              // First, try to get the color from the match group (if wipe was matched with colors)
+              const matchGroup = groups.find((g) =>
+                g.some((cell) => cell.r === m.r && cell.c === m.c)
+              );
+
+              if (matchGroup) {
+                // Find the color of the match (from non-wipe cells)
+                for (let cell of matchGroup) {
+                  const cellData = grid[cell.r][cell.c];
+                  if (
+                    cellData.type !== "wipe" &&
+                    cellData.type !== "bomb" &&
+                    cellData.color
+                  ) {
+                    targetColor = cellData.color;
+                    break;
+                  }
+                }
+              }
+
+              // Fallback: if wipe was destroyed by bomb (not part of a match group),
+              // use the wipe's own color
+              if (!targetColor) {
+                targetColor = grid[m.r][m.c].color;
+              }
+
+              // If we found a target color, destroy all cells of that color
+              if (targetColor) {
+                console.log(
+                  `Wipe activated! Destroying all ${targetColor} cells`
+                );
+                for (let r = 0; r < ROWS; r++) {
+                  for (let c = 0; c < COLS; c++) {
+                    if (grid[r][c].color === targetColor) {
+                      // Avoid duplicates
+                      if (
+                        !matches.some((match) => match.r === r && match.c === c)
+                      ) {
+                        matches.push({ r, c });
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          });
+
+          // Filter out NEW bomb and wipe locations from being popped
+          const popMatches = matches.filter(
+            (m) =>
+              !bombLocations.some((b) => b.r === m.r && b.c === m.c) &&
+              !wipeLocations.some((w) => w.r === m.r && w.c === m.c)
+          );
+
+          popMatches.forEach((p) => {
+            grid[p.r][p.c].popStartTime = time;
+          });
+
+          // Create Bombs immediately (so they don't pop)
+          bombLocations.forEach((b) => {
+            const cell = grid[b.r][b.c];
+            cell.type = "bomb";
+            cell.popStartTime = 0; // Ensure it doesn't pop
+            cell.spawnTime = time; // Trigger Spawn Animation
+            // Keep existing color or set to special?
+            // If it's a wild card, maybe it keeps its color for visual continuity until next match?
+            // Or maybe we give it a specific "Bomb" look.
+            // Let's keep the color but add the bomb type, so it looks like a "Red Bomb".
+            // This helps visual continuity.
+          });
+
+          // Create Wipes immediately (so they don't pop)
+          wipeLocations.forEach((w) => {
+            const cell = grid[w.r][w.c];
+            cell.type = "wipe";
+            cell.popStartTime = 0; // Ensure it doesn't pop
+            cell.spawnTime = time; // Trigger Spawn Animation
           });
 
           setTimeout(() => {
+            popMatches.forEach((p) => {
+              const cell = grid[p.r][p.c];
+              cell.ghostColor = null;
+              cell.color = null;
+              cell.animDist = 0;
+              cell.animVel = 0;
+              cell.popStartTime = 0;
+              cell.type = "normal"; // Reset type just in case
+            });
+
             const result = applyGravity();
             if (result.moved) {
               isFalling = true;
@@ -718,7 +1140,7 @@
               isProcessingMatches = false;
               if (movesLeft <= 0 && !isGameOver) endGame();
             }
-          }, 150);
+          }, 400);
         } else {
           isProcessingMatches = false;
           if (movesLeft <= 0 && !isGameOver) endGame();
@@ -742,11 +1164,12 @@
         drag.isReverting = false;
         predictedMatches = [];
 
-        const cell = getCellAt(e.clientX, e.clientY);
+        const pos = getLogicalPos(e);
+        const cell = getCellAt(pos.x, pos.y);
         if (cell) {
           drag.active = true;
-          drag.start = { x: e.clientX, y: e.clientY };
-          drag.current = { x: e.clientX, y: e.clientY };
+          drag.start = { x: pos.x, y: pos.y };
+          drag.current = { x: pos.x, y: pos.y };
           drag.originCell = cell;
           drag.lockedAxis = null;
           drag.strip = [];
@@ -758,7 +1181,8 @@
       canvas.addEventListener("pointermove", (e) => {
         if (!drag.active) return;
 
-        drag.current = { x: e.clientX, y: e.clientY };
+        const pos = getLogicalPos(e);
+        drag.current = { x: pos.x, y: pos.y };
         const dx = drag.current.x - drag.start.x;
         const dy = drag.current.y - drag.start.y;
 
@@ -827,9 +1251,6 @@
 
           if (drag.netDragShift !== 0 || snapSteps !== 0) {
             const strip = drag.strip;
-            const originIdx = strip.findIndex(
-              (p) => p.r === drag.originCell.r && p.c === drag.originCell.c
-            );
 
             const snapShift = snapSteps * drag.dataShift;
             if (snapShift !== 0) {
@@ -840,13 +1261,7 @@
               );
             }
 
-            const totalShift = drag.netDragShift + snapShift;
-            const len = strip.length;
-            const shift = ((totalShift % len) + len) % len;
-            const newIdx = (originIdx + shift) % len;
-            const targetCell = strip[newIdx];
-
-            const potentialMatches = checkSpecificMatches([targetCell]);
+            const potentialMatches = checkSpecificMatches(strip);
 
             if (snapShift !== 0) {
               const currentColors = strip.map((p) => grid[p.r][p.c].color);
@@ -861,6 +1276,12 @@
               scoreMultiplier = 1;
               movesLeft--;
               movesEl.innerText = movesLeft;
+
+              // Gravity always falls down on screen (Logical Horiz +1)
+              activeGravity = {
+                axis: "horiz",
+                dir: 1,
+              };
             } else {
               drag.isReverting = true;
               drag.isAnimating = true;
@@ -949,17 +1370,7 @@
               } else {
                 const strip = drag.strip;
                 if (drag.netDragShift !== 0) {
-                  const originIdx = strip.findIndex(
-                    (p) =>
-                      p.r === drag.originCell.r && p.c === drag.originCell.c
-                  );
-                  if (originIdx !== -1) {
-                    const len = strip.length;
-                    const shift = ((drag.netDragShift % len) + len) % len;
-                    const newIdx = (originIdx + shift) % len;
-                    const targetCell = strip[newIdx];
-                    resolveMatches([targetCell]);
-                  }
+                  resolveMatches(strip);
                 }
 
                 drag.velocity = 0;
@@ -995,11 +1406,168 @@
         }
         if (!cell) return;
 
+        if (cell.popStartTime > 0) {
+          drawPoppingTriangle(r, c, dragOffset, cell);
+          return;
+        }
+
+        if (cell.spawnTime > 0 && time - cell.spawnTime < 400) {
+          drawSpawningTriangle(r, c, dragOffset, cell);
+          return;
+        }
+
         if (cell.ghostColor) {
           drawSingleTriangleLayer(r, c, dragOffset, cell.ghostColor, true);
         }
         if (cell.color) {
           drawSingleTriangleLayer(r, c, dragOffset, cell.color, false);
+        }
+      }
+
+      function drawSpawningTriangle(r, c, dragOffset, cell) {
+        const elapsed = time - cell.spawnTime;
+        const duration = 400;
+        const t = Math.min(elapsed / duration, 1);
+
+        // Elastic Scale: Overshoot to 1.2 then settle to 1.0
+        // sin(t * PI) gives a hump.
+        // Let's use a simple elastic out or just a sin bump.
+        // 0 -> 1.2 -> 1.0
+        let scale = 1;
+        if (t < 0.5) {
+          scale = t * 2.4; // 0 to 1.2
+        } else {
+          scale = 1.2 - (t - 0.5) * 0.4; // 1.2 to 1.0
+        }
+
+        let finalX = 0;
+        let finalY = 0;
+        if (dragOffset) {
+          finalX += dragOffset.x;
+          finalY += dragOffset.y;
+        }
+
+        const center = getTriangleCenter(r, c);
+        const cx = center.x + finalX;
+        const cy = center.y + finalY;
+        const up = isPointingUp(r, c);
+
+        const w = TRIANGLE_WIDTH * scale;
+        const h = TRIANGLE_HEIGHT * scale;
+
+        // Flash Effect
+        if (t < 0.5) {
+          ctx.save();
+          ctx.globalAlpha = 1 - t * 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.8, 0, Math.PI * 2);
+          ctx.fillStyle = "#fff";
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Draw Bomb
+        ctx.beginPath();
+        drawTriangleShape(ctx, r, c, cx, cy, w, h, up, 0);
+        ctx.fillStyle = "#475569";
+        ctx.strokeStyle = "#fff"; // Highlight stroke during spawn
+        ctx.lineWidth = Math.max(2, TRIANGLE_WIDTH * 0.05);
+        ctx.lineJoin = "round";
+        ctx.fill();
+        ctx.stroke();
+
+        // Differentiate between bomb and wipe icons
+        if (cell.type === "wipe") {
+          // Wipe Icon: Double circle with radiating lines
+          ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+          ctx.beginPath();
+          ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.2 * scale, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.3 * scale, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Radiating lines
+          for (let i = 0; i < 4; i++) {
+            const angle = (i * Math.PI) / 2 + Math.PI / 4;
+            const r1 = TRIANGLE_WIDTH * 0.32 * scale;
+            const r2 = TRIANGLE_WIDTH * 0.42 * scale;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+            ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+            ctx.stroke();
+          }
+        } else {
+          // Bomb Icon: Single circle with fuse
+          ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+          ctx.beginPath();
+          ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.25 * scale, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Fuse
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - TRIANGLE_WIDTH * 0.25 * scale);
+          ctx.quadraticCurveTo(
+            cx + 5 * scale,
+            cy - TRIANGLE_WIDTH * 0.4 * scale,
+            cx + 10 * scale,
+            cy - TRIANGLE_WIDTH * 0.35 * scale
+          );
+          ctx.stroke();
+
+          // Spark
+          ctx.fillStyle = "#fbbf24";
+          ctx.beginPath();
+          ctx.arc(
+            cx + 10 * scale,
+            cy - TRIANGLE_WIDTH * 0.35 * scale,
+            2 * scale,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+      }
+
+      function drawPoppingTriangle(r, c, dragOffset, cell) {
+        const elapsed = time - cell.popStartTime;
+        const duration = 300;
+
+        const t = Math.min(elapsed / duration, 1);
+        const scale = 1 + Math.sin(t * Math.PI) * 0.2;
+        const alpha = 1 - t;
+
+        let finalX = 0;
+        let finalY = 0;
+        if (dragOffset) {
+          finalX += dragOffset.x;
+          finalY += dragOffset.y;
+        }
+
+        const center = getTriangleCenter(r, c);
+        const cx = center.x + finalX;
+        const cy = center.y + finalY;
+        const up = isPointingUp(r, c);
+
+        const w = TRIANGLE_WIDTH * scale;
+        const h = TRIANGLE_HEIGHT * scale;
+
+        ctx.beginPath();
+        drawTriangleShape(ctx, r, c, cx, cy, w, h, up, 0);
+
+        ctx.fillStyle = cell.color;
+        ctx.globalAlpha = alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        if (t < 0.5) {
+          ctx.fillStyle = `rgba(255,255,255,${0.5 - t})`;
+          ctx.fill();
         }
       }
 
@@ -1013,8 +1581,19 @@
         }
 
         if (!isGhost && grid[r] && grid[r][c] && grid[r][c].animDist > 0.1) {
-          finalX += grid[r][c].animDist * axisConfig.diagB.x;
-          finalY += grid[r][c].animDist * axisConfig.diagB.y;
+          // Dynamic Vector Rendering
+          const axis = activeGravity.axis;
+          const dir = activeGravity.dir;
+          const config = axisConfig[axis];
+          // AnimDist is "Distance Behind".
+          // We want to draw at (Center - Dist * Dir * Vector)
+          // If Dir=1 (Moving R), Source is L. AnimDist 100 means draw at X-100.
+          // So ( -1 * 100 * 1 * vec ) = -100 vec. Correct.
+          // If Dir=-1 (Moving L), Source is R. AnimDist 100 means draw at X+100.
+          // So ( -1 * 100 * -1 * vec ) = +100 vec. Correct.
+
+          finalX += -1 * grid[r][c].animDist * dir * config.x;
+          finalY += -1 * grid[r][c].animDist * dir * config.y;
         }
 
         const center = getTriangleCenter(r, c);
@@ -1027,7 +1606,12 @@
         ctx.beginPath();
         drawTriangleShape(ctx, r, c, cx, cy, w, h, up, 0);
 
-        ctx.fillStyle = color;
+        if (!isGhost && grid[r] && grid[r][c] && grid[r][c].type === "bomb") {
+          ctx.fillStyle = "#475569"; // Slate 600 (Neutral)
+        } else {
+          ctx.fillStyle = color;
+        }
+
         ctx.strokeStyle = "#1e293b";
         ctx.lineWidth = Math.max(2, TRIANGLE_WIDTH * 0.05);
         ctx.lineJoin = "round";
@@ -1040,6 +1624,66 @@
         } else {
           ctx.fillStyle = "rgba(0,0,0,0.2)";
           ctx.fill();
+        }
+
+        // Render Bomb/Wipe Icon
+        if (
+          !isGhost &&
+          grid[r] &&
+          grid[r][c] &&
+          (grid[r][c].type === "bomb" || grid[r][c].type === "wipe")
+        ) {
+          // Differentiate between bomb and wipe icons
+          const cellType = grid[r][c].type;
+          if (cellType === "wipe") {
+            // Wipe Icon: Double circle with radiating lines
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.beginPath();
+            ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.3, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Radiating lines
+            for (let i = 0; i < 4; i++) {
+              const angle = (i * Math.PI) / 2 + Math.PI / 4;
+              const r1 = TRIANGLE_WIDTH * 0.32;
+              const r2 = TRIANGLE_WIDTH * 0.42;
+              ctx.beginPath();
+              ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+              ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+              ctx.stroke();
+            }
+          } else if (cellType === "bomb") {
+            // Bomb Icon: Single circle with fuse
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.beginPath();
+            ctx.arc(cx, cy, TRIANGLE_WIDTH * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Fuse
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - TRIANGLE_WIDTH * 0.25);
+            ctx.quadraticCurveTo(
+              cx + 5,
+              cy - TRIANGLE_WIDTH * 0.4,
+              cx + 10,
+              cy - TRIANGLE_WIDTH * 0.35
+            );
+            ctx.stroke();
+
+            // Spark
+            ctx.fillStyle = "#fbbf24";
+            ctx.beginPath();
+            ctx.arc(cx + 10, cy - TRIANGLE_WIDTH * 0.35, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
 
@@ -1148,20 +1792,15 @@
         ctx.fillStyle = "#1e293b";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        if (invalidMoveTime > 0) {
-          const elapsed = time - invalidMoveTime;
-          const duration = 800;
-          if (elapsed < duration) {
-            const progress = elapsed / duration;
-            const intensity = Math.sin(progress * Math.PI);
-            ctx.fillStyle = `rgba(220, 38, 38, ${intensity * 0.25})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          } else {
-            invalidMoveTime = -1;
-          }
-        }
-
         ctx.save();
+
+        // ROTATION: Rotate 90 degrees clockwise around center
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+        // Render Bomb Effects (Underlay or Overlay? Overlay is better for blast)
+        // Actually, let's do it AFTER the grid so it glows on top.
 
         ctx.beginPath();
         for (let r = 0; r < ROWS; r++) {
@@ -1253,6 +1892,46 @@
         if (predictedMatches.length > 0) {
           drawContour(predictedMatches);
         }
+
+        // Draw Bomb Effects
+        bombEffects = bombEffects.filter((effect) => {
+          const elapsed = time - effect.startTime;
+          if (elapsed > effect.duration) return false;
+
+          const t = elapsed / effect.duration;
+          const alpha = Math.max(0, 1 - t);
+          const widthScale = 1 + Math.sin(t * Math.PI) * 0.5;
+
+          // Draw Beam across the Row (Visual Column)
+          // Row 'r' corresponds to Y in Logical Space.
+          // We want to draw a rectangle covering the entire row.
+          // Y = r * HEIGHT. Height = HEIGHT. Width = Grid Width.
+
+          const y = effect.r * TRIANGLE_HEIGHT + offsetY;
+          const h = TRIANGLE_HEIGHT;
+          const w = ((COLS + 1) * TRIANGLE_WIDTH) / 2; // Approx grid width
+          const x = offsetX;
+
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+
+          // Main Beam
+          const gradient = ctx.createLinearGradient(x, y, x + w, y);
+          gradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
+          gradient.addColorStop(0.5, `rgba(255, 255, 255, ${alpha * 0.8})`);
+          gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x, y, w, h);
+
+          // Core Brightness
+          ctx.fillStyle = `rgba(255, 255, 200, ${alpha * 0.5})`;
+          ctx.fillRect(x, y + h * 0.25, w, h * 0.5);
+
+          ctx.restore();
+
+          return true;
+        });
 
         ctx.restore();
         requestAnimationFrame(render);

@@ -321,7 +321,7 @@
         // Visual Width (Logical Rows) = 4 widths => ROWS = 5 (approx 4.33 widths)
         // Visual Height (Logical Cols) = 8 widths (16 triangles) => COLS = 16
         // User requested one fewer row and col:
-        COLS = 15;
+        COLS = 13;
         ROWS = 4;
 
         // ROTATION LOGIC:
@@ -555,23 +555,24 @@
         let groups = [];
         let uniqueCandidates = new Set(candidates.map((c) => `${c.r},${c.c}`));
 
+        // Phase 1: Find all valid color-only matches (3+ same color, no powerups)
         uniqueCandidates.forEach((key) => {
           const [r, c] = key.split(",").map(Number);
           if (visited.has(key)) return;
           if (!grid[r] || !grid[r][c] || !grid[r][c].color) return;
 
-          // Start BFS
+          // Skip bombs in phase 1 (they're wildcards)
+          // Wipes can match by color, so don't skip them
+          if (grid[r][c].type === "bomb") return;
+
+          // Start BFS for color-only matches
           let group = [];
           let queue = [{ r, c }];
           let visitedInGroup = new Set();
           visitedInGroup.add(key);
           group.push({ r, c });
 
-          // Determine the "target color" for this group
-          // If the starting cell is a bomb, the color is effectively "wild" until we find a normal cell
-          let targetColor =
-            grid[r][c].type === "bomb" ? null : grid[r][c].color;
-          let coloredCount = grid[r][c].type === "bomb" ? 0 : 1;
+          const targetColor = grid[r][c].color;
 
           let head = 0;
           while (head < queue.length) {
@@ -582,47 +583,61 @@
               const nKey = `${neigh.r},${neigh.c}`;
               if (!visited.has(nKey) && !visitedInGroup.has(nKey)) {
                 const cell = grid[neigh.r][neigh.c];
-                if (cell && cell.color) {
-                  const isBomb = cell.type === "bomb";
-
-                  // Matching Logic:
-                  // 1. If we don't have a target color yet (started with bombs),
-                  //    and this is a normal cell, it sets the target color.
-                  // 2. If we do have a target color, this cell must match it OR be a bomb.
-                  // 3. If we don't have a target color and this is a bomb, it matches.
-
-                  let match = false;
-                  if (targetColor === null) {
-                    if (!isBomb) {
-                      targetColor = cell.color;
-                      match = true;
-                    } else {
-                      match = true; // Bomb matches undefined color (wild + wild)
-                    }
-                  } else {
-                    if (isBomb || cell.color === targetColor) {
-                      match = true;
-                    }
-                  }
-
-                  if (match) {
-                    visitedInGroup.add(nKey);
-                    group.push(neigh);
-                    queue.push(neigh);
-                    if (!isBomb) coloredCount++;
-                  }
+                // Match same-colored cells (including wipes, but not bombs)
+                if (
+                  cell &&
+                  cell.color === targetColor &&
+                  cell.type !== "bomb"
+                ) {
+                  visitedInGroup.add(nKey);
+                  group.push(neigh);
+                  queue.push(neigh);
                 }
               }
             }
           }
 
-          // VALIDATION:
-          // 1. Group size >= 3
-          // 2. Colored items >= 3 (New Rule: Bomb only triggers if match would exist without it)
-          if (group.length >= 3 && coloredCount >= 3) {
+          // Valid color match must have 3+ cells
+          if (group.length >= 3) {
             groups.push(group);
             visitedInGroup.forEach((k) => visited.add(k));
           }
+        });
+
+        // Phase 2: Add adjacent powerups to valid color matches
+        // Check ALL powerups on the board, not just those in candidates
+        const powerupsToAdd = new Map(); // groupIndex -> [powerup cells]
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const cell = grid[r][c];
+            if (!cell || !cell.color) continue;
+
+            const cellType = cell.type;
+            if (cellType !== "bomb") continue; // Only add bombs in Phase 2, wipes match by color in Phase 1
+
+            // Check if this powerup is adjacent to any valid match group
+            const neighbors = getNeighbors(r, c);
+            for (let i = 0; i < groups.length; i++) {
+              const group = groups[i];
+              const isAdjacent = neighbors.some((neigh) =>
+                group.some((cell) => cell.r === neigh.r && cell.c === neigh.c)
+              );
+
+              if (isAdjacent) {
+                if (!powerupsToAdd.has(i)) {
+                  powerupsToAdd.set(i, []);
+                }
+                powerupsToAdd.get(i).push({ r, c });
+                break; // Only add to first adjacent group
+              }
+            }
+          }
+        }
+
+        // Add powerups to their respective groups
+        powerupsToAdd.forEach((powerups, groupIndex) => {
+          groups[groupIndex].push(...powerups);
         });
 
         return groups;
@@ -921,7 +936,7 @@
             console.log(`Powerup! Total size: ${uniqueCells.size}`);
 
             // Determine powerup type: wipe for 8+, bomb for 5-7
-            const isWipe = uniqueCells.size >= 8;
+            const isWipe = uniqueCells.size >= 6;
             const powerupType = isWipe ? "wipe" : "bomb";
 
             // Select Powerup Location
@@ -1036,37 +1051,8 @@
 
           matches.forEach((m) => {
             if (grid[m.r][m.c].type === "wipe") {
-              // Determine the target color from the match group
-              // The wipe itself doesn't have a meaningful color for matching,
-              // but the match group does. Find the color of the match.
-
-              let targetColor = null;
-
-              // First, try to get the color from the match group (if wipe was matched with colors)
-              const matchGroup = groups.find((g) =>
-                g.some((cell) => cell.r === m.r && cell.c === m.c)
-              );
-
-              if (matchGroup) {
-                // Find the color of the match (from non-wipe cells)
-                for (let cell of matchGroup) {
-                  const cellData = grid[cell.r][cell.c];
-                  if (
-                    cellData.type !== "wipe" &&
-                    cellData.type !== "bomb" &&
-                    cellData.color
-                  ) {
-                    targetColor = cellData.color;
-                    break;
-                  }
-                }
-              }
-
-              // Fallback: if wipe was destroyed by bomb (not part of a match group),
-              // use the wipe's own color
-              if (!targetColor) {
-                targetColor = grid[m.r][m.c].color;
-              }
+              // Use the wipe's own color to determine what to destroy
+              const targetColor = grid[m.r][m.c].color;
 
               // If we found a target color, destroy all cells of that color
               if (targetColor) {
@@ -1606,8 +1592,8 @@
         ctx.beginPath();
         drawTriangleShape(ctx, r, c, cx, cy, w, h, up, 0);
 
-        if (!isGhost && grid[r] && grid[r][c] && grid[r][c].type === "bomb") {
-          ctx.fillStyle = "#475569"; // Slate 600 (Neutral)
+        if (grid[r] && grid[r][c] && grid[r][c].type === "bomb") {
+          ctx.fillStyle = "#475569"; // Slate 600 (Neutral) - Colorless for bombs only
         } else {
           ctx.fillStyle = color;
         }
@@ -1628,7 +1614,6 @@
 
         // Render Bomb/Wipe Icon
         if (
-          !isGhost &&
           grid[r] &&
           grid[r][c] &&
           (grid[r][c].type === "bomb" || grid[r][c].type === "wipe")
@@ -1870,22 +1855,37 @@
 
           drag.strip.forEach((pos, i) => {
             const color = grid[pos.r][pos.c].color;
+            const cellType = grid[pos.r][pos.c].type;
             drawTriangle(pos.r, pos.c, { x: vx, y: vy }, color);
 
-            if (ghostForward[i])
-              drawTriangle(
-                ghostForward[i].r,
-                ghostForward[i].c,
-                { x: vx, y: vy },
-                color
-              );
-            if (ghostBackward[i])
-              drawTriangle(
-                ghostBackward[i].r,
-                ghostBackward[i].c,
-                { x: vx, y: vy },
-                color
-              );
+            if (ghostForward[i]) {
+              const gf = ghostForward[i];
+              // Check if ghost position is within bounds
+              if (grid[gf.r] && grid[gf.r][gf.c]) {
+                // Temporarily set the ghost position's type to match the original cell
+                const originalType = grid[gf.r][gf.c].type;
+                grid[gf.r][gf.c].type = cellType;
+                drawTriangle(gf.r, gf.c, { x: vx, y: vy }, color);
+                grid[gf.r][gf.c].type = originalType;
+              } else {
+                // Ghost position is out of bounds, just draw with color override
+                drawTriangle(gf.r, gf.c, { x: vx, y: vy }, color);
+              }
+            }
+            if (ghostBackward[i]) {
+              const gb = ghostBackward[i];
+              // Check if ghost position is within bounds
+              if (grid[gb.r] && grid[gb.r][gb.c]) {
+                // Temporarily set the ghost position's type to match the original cell
+                const originalType = grid[gb.r][gb.c].type;
+                grid[gb.r][gb.c].type = cellType;
+                drawTriangle(gb.r, gb.c, { x: vx, y: vy }, color);
+                grid[gb.r][gb.c].type = originalType;
+              } else {
+                // Ghost position is out of bounds, just draw with color override
+                drawTriangle(gb.r, gb.c, { x: vx, y: vy }, color);
+              }
+            }
           });
         }
 

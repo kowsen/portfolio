@@ -1769,6 +1769,23 @@
         ctx.shadowBlur = 0;
       }
 
+      const framePace = 1000 / 60;
+      let lastTimestamp = -1;
+      function renderWrapper(timestamp) {
+        let numFrames = 1;
+        if (lastTimestamp !== -1) {
+          const time = timestamp - lastTimestamp;
+          numFrames = Math.max(Math.floor(time / framePace), 1);
+        }
+        lastTimestamp = timestamp;
+
+        for (let i = 0; i < numFrames; i++) {
+          render(timestamp);
+        }
+
+        requestAnimationFrame(renderWrapper);
+      }
+
       function render(timestamp) {
         time = timestamp;
         updatePhysics();
@@ -1940,45 +1957,10 @@
         });
 
         ctx.restore();
-        requestAnimationFrame(render);
       }
 
       initGame();
-      requestAnimationFrame(render);
-
-      function enableHighPerformanceMode() {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-
-        const audioCtx = new AudioContext();
-
-        // Create a silent oscillator
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-
-        oscillator.type = "sine";
-        oscillator.frequency.value = 60; // 60Hz sound (inaudible/low)
-
-        // Mute it completely so the user hears nothing
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        oscillator.start();
-
-        // Prevent garbage collection
-        window.keepAudioAlive = oscillator;
-      }
-
-      // Call this on the first user interaction (touchstart/click)
-      document.addEventListener(
-        "touchstart",
-        function () {
-          enableHighPerformanceMode();
-        },
-        { once: true }
-      );
+      requestAnimationFrame(renderWrapper);
     </script>
   </body>
 </html>

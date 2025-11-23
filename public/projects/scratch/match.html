@@ -936,7 +936,7 @@
             console.log(`Powerup! Total size: ${uniqueCells.size}`);
 
             // Determine powerup type: wipe for 8+, bomb for 5-7
-            const isWipe = uniqueCells.size >= 6;
+            const isWipe = uniqueCells.size >= 8;
             const powerupType = isWipe ? "wipe" : "bomb";
 
             // Select Powerup Location
@@ -1893,7 +1893,13 @@
           drawContour(predictedMatches);
         }
 
-        // Draw Bomb Effects
+        // Draw Bomb Effects (Optimized for mobile performance)
+        // Limit concurrent effects to prevent slowdown during long chain reactions
+        const MAX_CONCURRENT_EFFECTS = 3;
+        if (bombEffects.length > MAX_CONCURRENT_EFFECTS) {
+          bombEffects = bombEffects.slice(-MAX_CONCURRENT_EFFECTS);
+        }
+
         bombEffects = bombEffects.filter((effect) => {
           const elapsed = time - effect.startTime;
           if (elapsed > effect.duration) return false;

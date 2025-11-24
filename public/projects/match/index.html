@@ -1,5 +1,3 @@
-<!-- I didn't touch a line of this code, it was all written by Gemini and Claude. -->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -54,6 +52,21 @@
       }
       .header-group.right {
         align-items: flex-end;
+      }
+
+      /* FPS COUNTER STYLES */
+      #fps-display {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        color: #00ff00;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 2px 6px;
+        border-radius: 4px;
+        z-index: 200; /* Above modal and header */
+        pointer-events: none;
       }
 
       canvas {
@@ -210,6 +223,7 @@
   </head>
   <body>
     <div id="fps-locker"></div>
+    <div id="fps-display">FPS: 0</div>
 
     <div id="header">
       <div class="header-group">
@@ -246,6 +260,8 @@
        * TRIANGULAR MATCH-3
        */
 
+      const DEBUG = false;
+
       const canvas = document.getElementById("gameCanvas");
 
       /** * PERFORMANCE FIX: Context Attributes
@@ -264,6 +280,11 @@
       const modalEl = document.getElementById("modal-overlay");
       const finalScoreEl = document.getElementById("final-score");
       const highScoreEl = document.getElementById("high-score-display");
+      const fpsEl = document.getElementById("fps-display");
+
+      if (!DEBUG) {
+        fpsEl.style.display = "none";
+      }
 
       // --- Configuration ---
       const PADDING = 16;
@@ -272,6 +293,10 @@
       const GRAVITY_ACCEL = 0.25;
       const BOUNCE_DAMPING = 0.35;
       const REVERT_STIFFNESS = 0.2;
+
+      // TIMESTEP CONFIGURATION
+      const TARGET_FPS = 120;
+      const TARGET_MS_PER_FRAME = 1000 / TARGET_FPS;
 
       // Fixed Grid Dimensions
       let ROWS = 8;
@@ -294,6 +319,11 @@
       let score = 0;
       let scoreMultiplier = 1;
       let time = 0;
+      let lastTime = 0; // For Delta Time
+
+      // FPS Variables
+      let lastFpsTime = 0;
+      let frameCount = 0;
 
       let movesLeft = 20;
       let isGameOver = false;
@@ -415,6 +445,7 @@
         movesLeft = 20;
         movesEl.innerText = movesLeft;
         scoreMultiplier = 1; // Ensure multiplier resets
+        lastTime = performance.now();
 
         grid = [];
         for (let r = 0; r < ROWS; r++) {
@@ -912,7 +943,7 @@
         return { moved, newCandidates };
       }
 
-      function updateFallingPhysics() {
+      function updateFallingPhysics(dtFactor) {
         if (!isFalling) return;
 
         let activeCount = 0;
@@ -923,11 +954,14 @@
 
             if (cell.animDist > 0.1 || Math.abs(cell.animVel) > 0.1) {
               activeCount++;
-              cell.animVel -= GRAVITY_ACCEL;
-              cell.animDist += cell.animVel;
+
+              // Scale gravity by dtFactor (time scaling)
+              cell.animVel -= GRAVITY_ACCEL * dtFactor;
+              cell.animDist += cell.animVel * dtFactor;
 
               if (cell.animDist <= 0) {
                 cell.animDist = 0;
+                // Bounce dampening is an impulse (instantaneous change), so it doesn't need dt scaling
                 cell.animVel = -cell.animVel * BOUNCE_DAMPING;
                 cell.ghostColor = null;
 
@@ -1358,7 +1392,7 @@
         return shifted;
       }
 
-      function updatePhysics() {
+      function updatePhysics(dtFactor) {
         if (drag.active) return;
 
         if (drag.isAnimating) {
@@ -1368,8 +1402,10 @@
               -(drag.netDragShift / drag.dataShift) * config.step;
 
             const diff = targetOffset - drag.pixelOffset;
-            drag.velocity = diff * REVERT_STIFFNESS;
-            drag.pixelOffset += drag.velocity;
+
+            // Scaled revert spring logic
+            drag.velocity = diff * REVERT_STIFFNESS * dtFactor;
+            drag.pixelOffset += drag.velocity * dtFactor;
 
             handleShift();
 
@@ -1386,13 +1422,17 @@
               drag.strip = [];
             }
           } else {
-            drag.pixelOffset += drag.velocity;
-            drag.velocity *= 0.9;
+            drag.pixelOffset += drag.velocity * dtFactor;
+
+            // Frame-rate independent friction
+            // 0.9 per frame at 120fps becomes pow(0.9, dtFactor)
+            drag.velocity *= Math.pow(0.9, dtFactor);
+
             handleShift();
 
             if (Math.abs(drag.velocity) < 0.5) {
               if (Math.abs(drag.pixelOffset) > 5) {
-                drag.pixelOffset *= 0.8;
+                drag.pixelOffset *= Math.pow(0.8, dtFactor); // Damping also scaled
               } else {
                 const strip = drag.strip;
                 if (drag.netDragShift !== 0) {
@@ -1811,8 +1851,32 @@
 
       function render(timestamp) {
         time = timestamp;
-        updatePhysics();
-        updateFallingPhysics();
+
+        // --- DELTA TIME CALCULATION ---
+        if (!lastTime) lastTime = timestamp;
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
+        // Cap DeltaTime to prevent "spiraling" if tab is backgrounded
+        // Max lag compensation: 100ms
+        const cappedDelta = Math.min(deltaTime, 100);
+
+        // Calculate factor relative to 120fps (approx 8.33ms per frame)
+        // If running at 60fps (16.6ms), dtFactor will be ~2.0
+        const dtFactor = cappedDelta / TARGET_MS_PER_FRAME;
+
+        // --- FPS CALCULATION ---
+        frameCount++;
+        if (timestamp - lastFpsTime >= 1000) {
+          if (DEBUG) {
+            fpsEl.innerText = `FPS: ${frameCount}`;
+          }
+          frameCount = 0;
+          lastFpsTime = timestamp;
+        }
+
+        updatePhysics(dtFactor);
+        updateFallingPhysics(dtFactor);
 
         ctx.fillStyle = "#1e293b";
         ctx.fillRect(0, 0, canvas.width, canvas.height);

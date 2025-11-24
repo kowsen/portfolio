@@ -826,7 +826,7 @@
         else container.appendChild(newEl);
       }
 
-      /* --- RATCHET-STYLE PREDICTIVE SNAP (Quartic "Soft Landing" Feel) --- */
+      /* --- RATCHET-STYLE PREDICTIVE SNAP (Universal) --- */
       function enableDragScroll(slider, direction = "y") {
         let isDown = false;
         let startX, startY;
@@ -898,25 +898,75 @@
           slider.removeEventListener("pointercancel", onPointerUp);
 
           if (hasMoved) {
+            // 1. CALCULATE NATURAL MOMENTUM (Shared for both axes)
+            // Note: We inverse velocity because dragging DOWN/RIGHT reduces scroll position
+            const v = currentVelocity;
+            const amplitude =
+              v * MOMENTUM_LINEAR + v * Math.abs(v) * MOMENTUM_QUADRATIC;
+            let targetScroll;
+
             if (isReel) {
+              // --- VERTICAL: Fixed Grid (60px) ---
               const currentScroll = slider.scrollTop;
-
-              // 1. CALCULATE NATURAL MOMENTUM
-              const v = currentVelocity;
-              const amplitude =
-                v * MOMENTUM_LINEAR + v * Math.abs(v) * MOMENTUM_QUADRATIC;
-
-              // 2. PREDICT SNAP TARGET
-              let targetScroll =
+              targetScroll =
                 Math.round((currentScroll - amplitude) / ITEM_HEIGHT) *
                 ITEM_HEIGHT;
+
+              // Clamp
               const maxScroll = slider.scrollHeight - slider.clientHeight;
               targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
 
-              // 3. ANIMATE
-              startRatchetScroll(currentScroll, targetScroll, currentVelocity);
+              startRatchetScroll(
+                currentScroll,
+                targetScroll,
+                currentVelocity,
+                "y"
+              );
             } else {
-              slider.classList.remove("is-dragging");
+              // --- HORIZONTAL: Variable DOM Elements ---
+              const currentScroll = slider.scrollLeft;
+              // Where the physics would naturally take us
+              const rawDest = currentScroll - amplitude;
+
+              // Find the DOM element closest to that predicted center
+              const containerCenter = slider.clientWidth / 2;
+              const destCenter = rawDest + containerCenter;
+
+              let bestChild = null;
+              let bestDist = Infinity;
+
+              const children = slider.children;
+              for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                // Calculate center of this specific child
+                const childCenter = child.offsetLeft + child.offsetWidth / 2;
+                const dist = Math.abs(childCenter - destCenter);
+                if (dist < bestDist) {
+                  bestDist = dist;
+                  bestChild = child;
+                }
+              }
+
+              if (bestChild) {
+                // Snap exactly to center of that child
+                targetScroll =
+                  bestChild.offsetLeft +
+                  bestChild.offsetWidth / 2 -
+                  containerCenter;
+              } else {
+                targetScroll = currentScroll; // Fallback
+              }
+
+              // Clamp
+              const maxScroll = slider.scrollWidth - slider.clientWidth;
+              targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+              startRatchetScroll(
+                currentScroll,
+                targetScroll,
+                currentVelocity,
+                "x"
+              );
             }
 
             slider.classList.add("was-dragging");
@@ -926,13 +976,19 @@
           }
         };
 
-        function startRatchetScroll(startVal, targetVal, initialVelocity) {
+        function startRatchetScroll(
+          startVal,
+          targetVal,
+          initialVelocity,
+          axis
+        ) {
           if (animationID) cancelAnimationFrame(animationID);
 
           const totalDist = targetVal - startVal;
 
           if (Math.abs(totalDist) < 1) {
-            slider.scrollTop = targetVal;
+            if (axis === "x") slider.scrollLeft = targetVal;
+            else slider.scrollTop = targetVal;
             slider.classList.remove("is-dragging");
             forceSelectionUpdate();
             return;
@@ -941,7 +997,6 @@
           const effectiveVelocity = Math.max(Math.abs(initialVelocity), 0.5);
           let duration = Math.abs((2 * totalDist) / effectiveVelocity);
 
-          // Allow long durations for smoothness, but keep reasonable bounds
           duration = Math.min(Math.max(duration, 200), 2000);
 
           const startTime = Date.now();
@@ -951,23 +1006,23 @@
             let progress = elapsed / duration;
 
             if (progress >= 1) {
-              slider.scrollTop = targetVal;
+              if (axis === "x") slider.scrollLeft = targetVal;
+              else slider.scrollTop = targetVal;
+
               slider.classList.remove("is-dragging");
               forceSelectionUpdate();
               animationID = null;
               return;
             }
 
-            // QUARTIC EASE-OUT
-            // Formula: 1 - (1 - t)^4
-            // This creates the "Hard Brake + Soft Tail" effect.
-            // It drops velocity rapidly (braking) but leaves a long, slow tail
-            // for the final settling into the slot.
+            // QUARTIC EASE-OUT (The "Soft Landing")
             const ease = 1 - Math.pow(1 - progress, 4);
+            const newVal = startVal + totalDist * ease;
 
-            slider.scrollTop = startVal + totalDist * ease;
+            if (axis === "x") slider.scrollLeft = newVal;
+            else slider.scrollTop = newVal;
+
             forceSelectionUpdate();
-
             animationID = requestAnimationFrame(step);
           };
           animationID = requestAnimationFrame(step);

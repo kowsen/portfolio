@@ -221,11 +221,13 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
         cursor: grab;
-        touch-action: pan-y;
+        /* Disable browser native scroll so JS handles the physics */
+        touch-action: none;
       }
       .reel::-webkit-scrollbar {
         display: none;
       }
+      /* When dragging (or spinning via JS), disable snap so it flows smoothly */
       .reel.is-dragging {
         scroll-snap-type: none;
         cursor: grabbing;
@@ -341,7 +343,7 @@
         height: 100%;
         scrollbar-width: none;
         cursor: grab;
-        touch-action: pan-x;
+        touch-action: pan-y;
       }
       .leaf-scroller::-webkit-scrollbar {
         display: none;
@@ -824,11 +826,18 @@
         else container.appendChild(newEl);
       }
 
+      /* --- RATCHET-STYLE PREDICTIVE SNAP (Fixed Low-Speed) --- */
       function enableDragScroll(slider, direction = "y") {
         let isDown = false;
         let startX, startY;
-        let scrollLeft, scrollTop;
+        let startScroll;
         let hasMoved = false;
+
+        // Velocity tracking
+        let lastPos = 0;
+        let lastTime = 0;
+        let currentVelocity = 0;
+        let animationID = null;
 
         const stateKey =
           slider.id === "reel-1"
@@ -837,6 +846,10 @@
             ? "reel2"
             : null;
         const isReel = direction === "y";
+        const ITEM_HEIGHT = 60;
+
+        // Physics Constants
+        const MOMENTUM_MULTIPLIER = 250;
 
         const forceSelectionUpdate = () => {
           updateSelection(slider, stateKey, isReel);
@@ -845,54 +858,151 @@
         const onPointerMove = (e) => {
           if (!isDown) return;
           e.preventDefault();
+
           const x = e.pageX;
           const y = e.pageY;
           const walkX = x - startX;
           const walkY = y - startY;
 
-          // Threshold check to distinguish click from drag
+          const now = Date.now();
+          const currentPos = isReel ? y : x;
+          const dt = now - lastTime;
+          if (dt > 0) {
+            currentVelocity = (currentPos - lastPos) / dt;
+          }
+          lastPos = currentPos;
+          lastTime = now;
+
           if (!hasMoved && (Math.abs(walkX) > 5 || Math.abs(walkY) > 5)) {
             hasMoved = true;
-            slider.classList.add("is-dragging"); // Disable snap / change cursor
+            slider.classList.add("is-dragging");
           }
 
           if (hasMoved) {
             if (direction === "x") {
-              slider.scrollLeft = scrollLeft - walkX;
+              slider.scrollLeft = startScroll - walkX;
             } else {
-              slider.scrollTop = scrollTop - walkY;
+              slider.scrollTop = startScroll - walkY;
             }
           }
         };
 
-        const onPointerUp = () => {
+        const onPointerUp = (e) => {
+          if (!isDown) return;
           isDown = false;
           slider.classList.remove("cursor-grabbing");
-          slider.classList.remove("is-dragging");
-          window.removeEventListener("pointermove", onPointerMove);
-          window.removeEventListener("pointerup", onPointerUp);
+          slider.releasePointerCapture(e.pointerId);
+          slider.removeEventListener("pointermove", onPointerMove);
+          slider.removeEventListener("pointerup", onPointerUp);
+          slider.removeEventListener("pointercancel", onPointerUp);
 
           if (hasMoved) {
-            // We actually dragged, so suppress the click
+            if (isReel) {
+              const currentScroll = slider.scrollTop;
+
+              // 1. PREDICT DESTINATION
+              // Calculate amplitude based on velocity
+              const amplitude = currentVelocity * MOMENTUM_MULTIPLIER;
+
+              // Round to nearest slot
+              let targetScroll =
+                Math.round((currentScroll - amplitude) / ITEM_HEIGHT) *
+                ITEM_HEIGHT;
+
+              // Clamp to scroll bounds
+              const maxScroll = slider.scrollHeight - slider.clientHeight;
+              targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+              // 2. START ANIMATION
+              startRatchetScroll(currentScroll, targetScroll, currentVelocity);
+            } else {
+              slider.classList.remove("is-dragging");
+            }
+
             slider.classList.add("was-dragging");
             setTimeout(() => slider.classList.remove("was-dragging"), 50);
+          } else {
+            slider.classList.remove("is-dragging");
           }
-
-          forceSelectionUpdate();
         };
 
+        function startRatchetScroll(startVal, targetVal, initialVelocity) {
+          if (animationID) cancelAnimationFrame(animationID);
+
+          const totalDist = targetVal - startVal;
+
+          if (Math.abs(totalDist) < 1) {
+            slider.scrollTop = targetVal;
+            slider.classList.remove("is-dragging");
+            forceSelectionUpdate();
+            return;
+          }
+
+          // --- DURATION CALCULATION FIX ---
+          // Ensure we never divide by 0 or a tiny number.
+          // 0.5px/ms is a "brisk snap" speed.
+          // If the user flicked faster than 0.5, use their speed (physics).
+          // If they dragged slower (or stopped), use 0.5 (snappy UI).
+          const effectiveVelocity = Math.max(Math.abs(initialVelocity), 0.5);
+
+          // Math: Duration = 2 * Distance / Velocity
+          let duration = Math.abs((2 * totalDist) / effectiveVelocity);
+
+          // Safety Clamp:
+          // Never slower than 150ms (responsive snap)
+          // Never faster than 800ms (prevent dragging on forever)
+          duration = Math.min(Math.max(duration, 150), 800);
+
+          const startTime = Date.now();
+
+          const step = () => {
+            const elapsed = Date.now() - startTime;
+            let progress = elapsed / duration;
+
+            if (progress >= 1) {
+              slider.scrollTop = targetVal;
+              slider.classList.remove("is-dragging");
+              forceSelectionUpdate();
+              animationID = null;
+              return;
+            }
+
+            // Quadratic Ease-Out: Decelerates constantly like a brake
+            const ease = 1 - Math.pow(1 - progress, 2);
+
+            slider.scrollTop = startVal + totalDist * ease;
+            forceSelectionUpdate();
+
+            animationID = requestAnimationFrame(step);
+          };
+          animationID = requestAnimationFrame(step);
+        }
+
         slider.addEventListener("pointerdown", (e) => {
-          if (e.pointerType !== "mouse") return;
+          if (e.pointerType !== "mouse" && e.pointerType !== "touch") return;
+          slider.setPointerCapture(e.pointerId);
+
           isDown = true;
           hasMoved = false;
           slider.classList.add("cursor-grabbing");
+
+          if (animationID) {
+            cancelAnimationFrame(animationID);
+            animationID = null;
+          }
+
           startX = e.pageX;
           startY = e.pageY;
-          scrollLeft = slider.scrollLeft;
-          scrollTop = slider.scrollTop;
+          startScroll =
+            direction === "x" ? slider.scrollLeft : slider.scrollTop;
 
-          window.addEventListener("pointermove", onPointerMove);
-          window.addEventListener("pointerup", onPointerUp);
+          lastPos = isReel ? e.pageY : e.pageX;
+          lastTime = Date.now();
+          currentVelocity = 0;
+
+          slider.addEventListener("pointermove", onPointerMove);
+          slider.addEventListener("pointerup", onPointerUp);
+          slider.addEventListener("pointercancel", onPointerUp);
         });
       }
 
@@ -1106,8 +1216,6 @@
 
             const i1 = createReelItem(result);
             const i2 = createReelItem(result);
-
-            // REMOVED: i2.classList.add("forge-pulse");
 
             // NEW: Wait until i2 is visible in reel2 before animating
             const observer = new IntersectionObserver(

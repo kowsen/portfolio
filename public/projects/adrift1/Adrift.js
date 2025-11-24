@@ -458,7 +458,7 @@ var Godot = (function () {
         xhr.send(null);
       };
       setWindowTitle = function (title) {
-        document.title = title;
+        // document.title = title;
       };
     } else {
     }
@@ -1534,7 +1534,7 @@ var Godot = (function () {
         window.alert(UTF8ToString($0));
       },
       function ($0) {
-        document.title = UTF8ToString($0);
+        // document.title = UTF8ToString($0);
       },
       function ($0, $1) {
         var PNG_PTR = $0;

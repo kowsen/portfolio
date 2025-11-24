@@ -826,7 +826,7 @@
         else container.appendChild(newEl);
       }
 
-      /* --- RATCHET-STYLE PREDICTIVE SNAP (Fixed Low-Speed) --- */
+      /* --- RATCHET-STYLE PREDICTIVE SNAP (Quartic "Soft Landing" Feel) --- */
       function enableDragScroll(slider, direction = "y") {
         let isDown = false;
         let startX, startY;
@@ -849,7 +849,8 @@
         const ITEM_HEIGHT = 60;
 
         // Physics Constants
-        const MOMENTUM_MULTIPLIER = 250;
+        const MOMENTUM_LINEAR = 150;
+        const MOMENTUM_QUADRATIC = 80;
 
         const forceSelectionUpdate = () => {
           updateSelection(slider, stateKey, isReel);
@@ -900,20 +901,19 @@
             if (isReel) {
               const currentScroll = slider.scrollTop;
 
-              // 1. PREDICT DESTINATION
-              // Calculate amplitude based on velocity
-              const amplitude = currentVelocity * MOMENTUM_MULTIPLIER;
+              // 1. CALCULATE NATURAL MOMENTUM
+              const v = currentVelocity;
+              const amplitude =
+                v * MOMENTUM_LINEAR + v * Math.abs(v) * MOMENTUM_QUADRATIC;
 
-              // Round to nearest slot
+              // 2. PREDICT SNAP TARGET
               let targetScroll =
                 Math.round((currentScroll - amplitude) / ITEM_HEIGHT) *
                 ITEM_HEIGHT;
-
-              // Clamp to scroll bounds
               const maxScroll = slider.scrollHeight - slider.clientHeight;
               targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
 
-              // 2. START ANIMATION
+              // 3. ANIMATE
               startRatchetScroll(currentScroll, targetScroll, currentVelocity);
             } else {
               slider.classList.remove("is-dragging");
@@ -938,20 +938,11 @@
             return;
           }
 
-          // --- DURATION CALCULATION FIX ---
-          // Ensure we never divide by 0 or a tiny number.
-          // 0.5px/ms is a "brisk snap" speed.
-          // If the user flicked faster than 0.5, use their speed (physics).
-          // If they dragged slower (or stopped), use 0.5 (snappy UI).
           const effectiveVelocity = Math.max(Math.abs(initialVelocity), 0.5);
-
-          // Math: Duration = 2 * Distance / Velocity
           let duration = Math.abs((2 * totalDist) / effectiveVelocity);
 
-          // Safety Clamp:
-          // Never slower than 150ms (responsive snap)
-          // Never faster than 800ms (prevent dragging on forever)
-          duration = Math.min(Math.max(duration, 150), 800);
+          // Allow long durations for smoothness, but keep reasonable bounds
+          duration = Math.min(Math.max(duration, 200), 2000);
 
           const startTime = Date.now();
 
@@ -967,8 +958,12 @@
               return;
             }
 
-            // Quadratic Ease-Out: Decelerates constantly like a brake
-            const ease = 1 - Math.pow(1 - progress, 2);
+            // QUARTIC EASE-OUT
+            // Formula: 1 - (1 - t)^4
+            // This creates the "Hard Brake + Soft Tail" effect.
+            // It drops velocity rapidly (braking) but leaves a long, slow tail
+            // for the final settling into the slot.
+            const ease = 1 - Math.pow(1 - progress, 4);
 
             slider.scrollTop = startVal + totalDist * ease;
             forceSelectionUpdate();

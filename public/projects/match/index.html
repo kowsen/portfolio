@@ -272,7 +272,51 @@ TODO THINGS TO TRY
     <script>
       /**
        * TRIANGULAR MATCH-3
-       */
+       * ==================
+       * * GAME MECHANICS:
+       * ----------------
+       * 1. GRID STRUCTURE:
+       * - The game uses a triangular grid.
+       * - Orientation: The grid is rendered rotated 90 degrees clockwise.
+       * - Logical X+ axis corresponds to Visual Down (Gravity direction).
+       * - Logical Y+ axis corresponds to Visual Left.
+       * - Dimensions: 11 Logical Columns x 4 Logical Rows.
+       * * 2. MATCHING:
+       * - Matches are formed by 3 or more adjacent triangles of the same color.
+       * - Matches must be contiguous.
+       * * 3. POWERUPS:
+       * - BOMB (Created on match size 5-7):
+       * - Visual: Dark grey circle with a fuse.
+       * - Effect: Destroys the entire logical row (which appears as a vertical column visually).
+       * - WIPE (Created on match size 8+):
+       * - Visual: Dark grey double-circle with radiating lines.
+       * - Effect: Destroys ALL tiles of the matching color on the board.
+       * * 4. GRAVITY:
+       * - Gravity pulls tiles "Down" relative to the screen.
+       * - In Logical coordinates, this is the Positive X direction.
+       * - Gravity resolves per-strip, allowing triangles to swap orientation (Up <-> Down) to fill gaps.
+       * * 5. INPUT:
+       * - Dragging is supported along 3 axes:
+       * - Horizontal (Logical Row)
+       * - Diagonal A
+       * - Diagonal B
+       * - The game predicts matches and shows a "Contour" highlight.
+       * * CODE STRUCTURE & IMPORTANT NOTES:
+       * ---------------------------------
+       * 1. COORDINATE SYSTEM:
+       * - `getLogicalPos(evt)`: Transforms screen coordinates (Mouse/Touch) to Logical Grid coordinates.
+       * - `getTriangleCenter(r, c)`: Transforms Logical Grid coordinates to Screen coordinates for rendering.
+       * * 2. PHYSICS LOOP:
+       * - `applyGravity()`: Handles the falling logic. It searches "up" (Logical X-) for source tiles.
+       * - `updateFallingPhysics()`: Handles the smooth animation of falling tiles using `animDist` and `animVel`.
+       * * 3. RENDERING:
+       * - `render()`: The main game loop. This MUST be framerate independent (using delta time).
+       * - The context is rotated 90 degrees to align Logical X with Visual Down.
+       * - `drawTriangle()`: Handles drawing individual tiles, including ghosts, spawning animations, and powerup icons.
+       * * 4. PERFORMANCE:
+       * - `desynchronized: true`: Used in `getContext` to reduce input latency on mobile.
+       * - "Dummy Ticker": An invisible CSS animation (`#fps-locker`) forces the browser to maintain high refresh rates (60/120fps) even when idle.
+       * */
 
       const DEBUG = false;
 
@@ -386,7 +430,7 @@ TODO THINGS TO TRY
           color: color,
           ghostColor: null,
           animDist: 0,
-          animVel: 0,
+          initialAnimDist: 0, // Track the total fall distance for animation logic
           animVel: 0,
           popStartTime: 0,
           spawnTime: 0,
@@ -611,6 +655,7 @@ TODO THINGS TO TRY
           grid[pos.r][pos.c].color = newColors[i];
           grid[pos.r][pos.c].type = newTypes[i];
           grid[pos.r][pos.c].animDist = 0;
+          grid[pos.r][pos.c].initialAnimDist = 0; // Reset
           grid[pos.r][pos.c].animVel = 0;
           grid[pos.r][pos.c].ghostColor = null;
         });
@@ -887,11 +932,8 @@ TODO THINGS TO TRY
                 const check = strip[j];
                 const sourceUp = isPointingUp(check.r, check.c);
 
-                // GRAVITY UPDATE: Only pull if orientation matches
-                if (
-                  grid[check.r][check.c].color !== null &&
-                  sourceUp === destUp
-                ) {
+                // GRAVITY UPDATE: Pull from any source in the strip (swapping orientation if needed)
+                if (grid[check.r][check.c].color !== null) {
                   foundIndex = j;
                   break;
                 }
@@ -917,10 +959,13 @@ TODO THINGS TO TRY
                 // Inherit momentum + exact physical gap
                 currCell.animDist = sourceCell.animDist + dist;
                 currCell.animVel = sourceCell.animVel;
+                // Store initial full distance for rotation logic
+                currCell.initialAnimDist = currCell.animDist;
 
                 sourceCell.color = null;
                 sourceCell.type = "normal"; // Reset source type
                 sourceCell.animDist = 0;
+                sourceCell.initialAnimDist = 0;
                 sourceCell.animVel = 0;
 
                 newCandidates.push(curr);
@@ -945,6 +990,7 @@ TODO THINGS TO TRY
                 // If neighbor is wrong orientation, it might look like a flip, but it's a NEW tile.
                 // So it's acceptable.
                 currCell.animDist = (i + 1) * stride;
+                currCell.initialAnimDist = currCell.animDist;
                 currCell.animVel = 0;
 
                 newCandidates.push(curr);
@@ -1651,7 +1697,42 @@ TODO THINGS TO TRY
         }
       }
 
+      function getMorphedVertices(destUp, t, w, h) {
+        const h1 = 0.66 * h;
+        const h2 = 0.33 * h;
+        const w2 = 0.5 * w;
+
+        // Vertices relative to center (0,0)
+        // Up: T(0, -h1), BR(w2, h2), BL(-w2, h2)
+        // Down: B(0, h1), TR(w2, -h2), TL(-w2, -h2)
+
+        // Lerp helper
+        const l = (a, b) => a + (b - a) * t;
+
+        let v1, v2, v3;
+
+        if (!destUp) {
+          // Source is Up -> Dest is Down
+          // T -> TR
+          v1 = { x: l(0, w2), y: l(-h1, -h2) };
+          // BR -> B
+          v2 = { x: l(w2, 0), y: l(h2, h1) };
+          // BL -> TL
+          v3 = { x: l(-w2, -w2), y: l(h2, -h2) };
+        } else {
+          // Source is Down -> Dest is Up
+          // TL -> BL
+          v1 = { x: l(-w2, -w2), y: l(-h2, h2) }; // This effectively becomes BL
+          // TR -> T
+          v2 = { x: l(w2, 0), y: l(-h2, -h1) }; // This becomes T
+          // B -> BR
+          v3 = { x: l(0, w2), y: l(h1, h2) }; // This becomes BR
+        }
+        return [v1, v2, v3];
+      }
+
       function drawSingleTriangleLayer(r, c, dragOffset, color, isGhost) {
+        const center = getTriangleCenter(r, c);
         let finalX = 0;
         let finalY = 0;
 
@@ -1660,31 +1741,83 @@ TODO THINGS TO TRY
           finalY += dragOffset.y;
         }
 
-        if (!isGhost && grid[r] && grid[r][c] && grid[r][c].animDist > 0.1) {
-          // Dynamic Vector Rendering
-          const axis = activeGravity.axis;
-          const dir = activeGravity.dir;
-          const config = axisConfig[axis];
-          // AnimDist is "Distance Behind".
-          // We want to draw at (Center - Dist * Dir * Vector)
-          // If Dir=1 (Moving R), Source is L. AnimDist 100 means draw at X-100.
-          // So ( -1 * 100 * 1 * vec ) = -100 vec. Correct.
-          // If Dir=-1 (Moving L), Source is R. AnimDist 100 means draw at X+100.
-          // So ( -1 * 100 * -1 * vec ) = +100 vec. Correct.
+        let renderCx = center.x + finalX;
+        let renderCy = center.y + finalY;
 
-          finalX += -1 * grid[r][c].animDist * dir * config.x;
-          finalY += -1 * grid[r][c].animDist * dir * config.y;
+        let vertices = null; // If null, use standard drawTriangleShape
+
+        if (!isGhost && grid[r] && grid[r][c] && grid[r][c].animDist > 0.1) {
+          const cell = grid[r][c];
+          const axis = activeGravity.axis;
+          const config = axisConfig[axis];
+          const dir = activeGravity.dir;
+
+          // Default interpolation for other axes (e.g., diagonals)
+          // For Horizontal axis (Visual Vertical), we use advanced morphing
+          if (axis === "horiz") {
+            const stride = TRIANGLE_WIDTH / 2;
+            const totalSlots = Math.round(cell.initialAnimDist / stride);
+
+            // 1. Fix Position Interpolation (Wobble Fix)
+            // Instead of linear slide which ignores the zigzag, interpolate between Source Center and Dest Center
+            const ratio = cell.animDist / cell.initialAnimDist; // 1.0 -> 0.0
+            const t = 1 - ratio; // 0.0 -> 1.0
+
+            const sourceC = c - totalSlots * dir;
+
+            const sourceCenter = getTriangleCenter(r, sourceC);
+            const destCenter = getTriangleCenter(r, c);
+
+            renderCx =
+              sourceCenter.x * (1 - t) +
+              destCenter.x * t +
+              (dragOffset ? dragOffset.x : 0);
+            renderCy =
+              sourceCenter.y * (1 - t) +
+              destCenter.y * t +
+              (dragOffset ? dragOffset.y : 0);
+
+            // 2. Shape Morph (If Odd slots)
+            if (totalSlots % 2 !== 0) {
+              const destUp = isPointingUp(r, c);
+              vertices = getMorphedVertices(
+                destUp,
+                t,
+                TRIANGLE_WIDTH,
+                TRIANGLE_HEIGHT
+              );
+            }
+          } else {
+            // Standard fallback logic for Diagonals
+            renderCx += -1 * cell.animDist * dir * config.x;
+            renderCy += -1 * cell.animDist * dir * config.y;
+          }
         }
 
-        const center = getTriangleCenter(r, c);
-        const cx = center.x + finalX;
-        const cy = center.y + finalY;
-        const up = isPointingUp(r, c);
-        const w = TRIANGLE_WIDTH;
-        const h = TRIANGLE_HEIGHT;
+        ctx.save();
+        ctx.translate(renderCx, renderCy);
 
         ctx.beginPath();
-        drawTriangleShape(ctx, r, c, cx, cy, w, h, up, 0);
+        if (vertices) {
+          ctx.moveTo(vertices[0].x, vertices[0].y);
+          ctx.lineTo(vertices[1].x, vertices[1].y);
+          ctx.lineTo(vertices[2].x, vertices[2].y);
+          ctx.closePath();
+        } else {
+          // Standard Draw
+          const up = isPointingUp(r, c);
+          drawTriangleShape(
+            ctx,
+            r,
+            c,
+            0,
+            0,
+            TRIANGLE_WIDTH,
+            TRIANGLE_HEIGHT,
+            up,
+            0
+          );
+        }
 
         if (grid[r] && grid[r][c] && grid[r][c].type === "bomb") {
           ctx.fillStyle = "#475569"; // Slate 600 (Neutral) - Colorless for bombs only
@@ -1706,12 +1839,14 @@ TODO THINGS TO TRY
           ctx.fill();
         }
 
-        // Render Bomb/Wipe Icon
+        // Render Bomb/Wipe Icon (Simplified for morphed state, drawn at new 0,0)
         if (
           grid[r] &&
           grid[r][c] &&
           (grid[r][c].type === "bomb" || grid[r][c].type === "wipe")
         ) {
+          const cx = 0;
+          const cy = 0;
           // Differentiate between bomb and wipe icons
           const cellType = grid[r][c].type;
           if (cellType === "wipe") {
@@ -1764,6 +1899,7 @@ TODO THINGS TO TRY
             ctx.fill();
           }
         }
+        ctx.restore();
       }
 
       function findLogicalNeighbor(r, c, axis, direction) {

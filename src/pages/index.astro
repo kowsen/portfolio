@@ -9,6 +9,8 @@ const pageDescription = aboutRawContent()
   .replaceAll("&nbsp;", " ")
   .replaceAll("*", "")
   .replaceAll(/_.*?_/g, "")
+  .trim()
+  .split("\n")[0]
   .trim();
 ---
 

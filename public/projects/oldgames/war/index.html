@@ -1,210 +1,199 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <!-- Custom PreHead code is injected here -->
 
-    <!-- Custom PreHead code is injected here -->
-    
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta charset="utf-8" />
 
-    <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name ="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta charset="utf-8"/>
+    <!-- Builtin injector for disabling cache -->
+    <meta http-equiv="pragma" content="no-cache" />
 
-        <!-- Builtin injector for disabling cache -->
-        <meta http-equiv="pragma" content="no-cache"/>
+    <!-- Set the title bar of the page -->
+    <title>War Time</title>
 
-        <!-- Set the title bar of the page -->
-        <title>War Time</title>
+    <!-- Custom PreStyle code is injected here -->
 
-        <!-- Custom PreStyle code is injected here -->
-        
+    <!-- Set the background colour of the document -->
+    <style>
+      html,
+      body {
+        background: #0;
+        color: #cccccc;
+        margin: 0px;
+        padding: 0px;
+        border: 0px;
+        width: 100%;
+        height: 100%;
+        background: #22262c;
+      }
 
-        <!-- Set the background colour of the document -->
-        <style>
-            html, body {
-                background: #0;
-                color: #cccccc;
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-                width: 100%;
-                height: 100%;
-                background: #22262c;
-            }
+      canvas {
+        /* Prevents blurriness for low-res scaling */
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
 
-            canvas {
-                /* Prevents blurriness for low-res scaling */
-                image-rendering: pixelated;
-                image-rendering: crisp-edges;
-                
-                /* Ensure the transform originates from the center */
-                transform-origin: center;
-                -ms-touch-action: none;
-                touch-action: none;
-                margin: 0px;
-                border: 0px;
-            }
-            :-webkit-full-screen #canvas {
-                width: 100%;
-                height: 100%;
-            }
-            :-webkit-full-screen {
-                width: 100%;
-                height: 100%;
-            }
+        /* Ensure the transform originates from the center */
+        transform-origin: center;
+        -ms-touch-action: none;
+        touch-action: none;
+        margin: 0px;
+        border: 0px;
+      }
+      :-webkit-full-screen #canvas {
+        width: 100%;
+        height: 100%;
+      }
+      :-webkit-full-screen {
+        width: 100%;
+        height: 100%;
+      }
 
-            #curtain {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background: #22262c;
-                transition: opacity 400ms ease;
-                opacity: 1;
-            }
+      #curtain {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: #22262c;
+        transition: opacity 400ms ease;
+        opacity: 1;
+      }
 
-            #curtain img {
-                width: 40vmin;
-                height: 40vmin;
-                opacity: 0.6;
-                transition: opacity 200ms ease;
-            }
+      #curtain img {
+        width: 40vmin;
+        height: 40vmin;
+        opacity: 0.6;
+        transition: opacity 200ms ease;
+      }
 
-            #curtain img:hover {
-                opacity: 1;
-            }
+      #curtain img:hover {
+        opacity: 1;
+      }
 
-            #curtain.hidden {
-                opacity: 0;
-                pointer-events: none;
-            }
-            
-            /* Custom Runner Styles */
-            div.gm4html5_div_class {
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-                width: 100%;
-                height: 100%;
-                display: flex;       /* Use Flexbox */
-                justify-content: center; /* Horizontal center */
-                align-items: center;
-            }
-            div.gm4html5_login {
-                padding: 20px;
-                position: absolute;
-                border: solid 2px #000000;
-                background-color: #404040;
-                color:#00ff00;
-                border-radius: 15px;
-                box-shadow: #101010 20px 20px 40px;
-            }
-            div.gm4html5_cancel_button {
-                float: right;
-            }
-            div.gm4html5_login_button {
-                float: left;
-            }
-            div.gm4html5_login_header {
-                text-align: center;
-            }
-            /* END - Custom Runner Styles */
-            
-        </style>
+      #curtain.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
 
-        <!-- Custom PostStyle code is injected here -->
-        
+      /* Custom Runner Styles */
+      div.gm4html5_div_class {
+        margin: 0px;
+        padding: 0px;
+        border: 0px;
+        width: 100%;
+        height: 100%;
+        display: flex; /* Use Flexbox */
+        justify-content: center; /* Horizontal center */
+        align-items: center;
+      }
+      div.gm4html5_login {
+        padding: 20px;
+        position: absolute;
+        border: solid 2px #000000;
+        background-color: #404040;
+        color: #00ff00;
+        border-radius: 15px;
+        box-shadow: #101010 20px 20px 40px;
+      }
+      div.gm4html5_cancel_button {
+        float: right;
+      }
+      div.gm4html5_login_button {
+        float: left;
+      }
+      div.gm4html5_login_header {
+        text-align: center;
+      }
+      /* END - Custom Runner Styles */
+    </style>
 
-        <!-- Builtin injector for injecting flurry analytics code -->
-        
-    </head>
+    <!-- Custom PostStyle code is injected here -->
 
-    <!-- Custom PostHead code is injected here -->
-    
+    <!-- Builtin injector for injecting flurry analytics code -->
+  </head>
 
-    <!-- Custom PreBody code is injected here -->
-    
+  <!-- Custom PostHead code is injected here -->
 
-    <body>
-        <!-- Custom BodyStart code is injected here -->
-        
+  <!-- Custom PreBody code is injected here -->
 
-        <div class="gm4html5_div_class" id="gm4html5_div_id">
-            
-            <!-- Builtin injector for splash screen -->
-            
+  <body>
+    <!-- Custom BodyStart code is injected here -->
 
-            <!-- Custom PreCanvas code is injected here -->
-            
+    <div class="gm4html5_div_class" id="gm4html5_div_id">
+      <!-- Builtin injector for splash screen -->
 
-            <!-- Create the canvas element the game draws to -->
-            <canvas id="canvas" width="640" height="480" >
-                
-                <p>Your browser doesn't support HTML5 canvas.</p>
-            </canvas>
-            
-            <!-- Custom PostCanvas code is injected here -->
-            
-        </div>
+      <!-- Custom PreCanvas code is injected here -->
 
-        <div id="curtain">
-            <img alt="play" src="play.png">
-        </div>
+      <!-- Create the canvas element the game draws to -->
+      <canvas id="canvas" width="640" height="480">
+        <p>Your browser doesn't support HTML5 canvas.</p>
+      </canvas>
 
-        <!-- Run the game code -->
-        <script type="text/javascript" src="html5game/war_time.js?cachebust=1276872637"></script>
+      <!-- Custom PostCanvas code is injected here -->
+    </div>
 
-        <!-- Builtin injector for injecting runner path -->
-        
+    <div id="curtain">
+      <img alt="play" src="play.png" />
+    </div>
 
-        <script>
-            (() => {
-                const canvas = document.getElementById('canvas');
-                const baseWidth = 640;
-                const baseHeight = 480;
-                const padding = 16; // Padding per side
+    <!-- Run the game code -->
+    <script
+      type="text/javascript"
+      src="html5game/war_time.js?cachebust=1276872637"
+    ></script>
 
-                function resize() {
-                    // Calculate available space minus the 16px padding on both sides
-                    const availableWidth = window.innerWidth - (padding * 2);
-                    const availableHeight = window.innerHeight - (padding * 2);
+    <!-- Builtin injector for injecting runner path -->
 
-                    const scaleX = availableWidth / baseWidth;
-                    const scaleY = availableHeight / baseHeight;
+    <script>
+      (() => {
+        const canvas = document.getElementById("canvas");
+        const baseWidth = 640;
+        const baseHeight = 480;
+        const padding = 16; // Padding per side
 
-                    // Use the smaller scale to maintain aspect ratio
-                    const scale = Math.min(scaleX, scaleY);
+        function resize() {
+          // Calculate available space minus the 16px padding on both sides
+          const availableWidth = window.innerWidth - padding * 2;
+          const availableHeight = window.innerHeight - padding * 2;
 
-                    // Apply scaling
-                    canvas.style.transform = `scale(${scale})`;
-                }
+          const scaleX = availableWidth / baseWidth;
+          const scaleY = availableHeight / baseHeight;
 
-                // window.addEventListener('resize', resize);
-                // resize();
-                
+          // Use the smaller scale to maintain aspect ratio
+          const scale = Math.min(scaleX, scaleY);
 
-                const curtain = document.getElementById('curtain');
-                curtain.addEventListener('click', () => {
-                    curtain.classList.add('hidden');
-                    GameMaker_Init();
-                });
+          // Apply scaling
+          canvas.style.transform = `scale(${scale})`;
+        }
 
-                
-            })();
-        </script>
+        // window.addEventListener('resize', resize);
+        // resize();
 
-        <!-- Builtin injector for injecting google analytics code -->
-        
+        const curtain = document.getElementById("curtain");
+        curtain.addEventListener("click", () => {
+          curtain.classList.add("hidden");
+          GameMaker_Init();
+        });
+      })();
+    </script>
 
-        <!-- Custom BodyEnd code is injected here -->
-        
-    </body>
+    <!-- Builtin injector for injecting google analytics code -->
 
-    <!-- Custom PostBody code is injected here -->
-    
+    <!-- Custom BodyEnd code is injected here -->
+  </body>
+
+  <!-- Custom PostBody code is injected here -->
 </html>

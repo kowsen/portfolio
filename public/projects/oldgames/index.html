@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyle's Ancient Game Maker Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #22262c;
+            --text-color: #ccc;
+            --hover-color: #fff;
+            --accent-color: #555;
+            /* New variable for better description contrast */
+            --desc-color: #888ea0; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'IBM Plex Mono', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 24px;
+            /* Maximum width for the menu block to keep alignment tight */
+            max-width: 900px;
+        }
+
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: clamp(1.2rem, 4vw, 2.5rem);
+            font-weight: 400;
+            transition: color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 2rem;
+            white-space: nowrap;
+        }
+
+        a:hover {
+            color: var(--hover-color);
+        }
+
+        .year {
+            font-size: 0.6em;
+            color: var(--accent-color);
+            /* Ensure the date stays to the right */
+            margin-left: auto;
+        }
+
+        .description {
+            margin-top: 2.5rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--desc-color);
+            max-width: 600px;
+            white-space: normal;
+        }
+
+        @media (max-width: 600px) {
+            a {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="mario">
+            <span>Super Mario Test</span>
+            <span class="year">2005</span>
+        </a>
+        <a href="sparkler">
+            <span>Space Sparkler</span>
+            <span class="year">2007</span>
+        </a>
+        <a href="war">
+            <span>War Time</span>
+            <span class="year">2007</span>
+        </a>
+
+        <p class="description">
+            These are the only GameMaker games I made in elementary school that I was able to salvage. A lot of it was cobbled together from code snippets and art I found on the internet and they're deeply bad, but I still remember how fun they were to make.
+        </p>
+    </nav>
+
+</body>
+</html>

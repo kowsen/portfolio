@@ -14,8 +14,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            justify-content: flex-start; /* Anchor to the top instead of centering */
+            height: 100dvh; /* Use dynamic viewport height to account for mobile address bars */
             width: 100vw;
             overflow: hidden;
         }
@@ -29,7 +29,7 @@
             
             aspect-ratio: 9 / 16;
             width: 100%;
-            max-width: calc(100vh * 9 / 16);
+            max-width: calc(100dvh * 9 / 16); /* Scale dynamically with dvh */
             height: 100%;
             max-height: calc(100vw * 16 / 9);
             overflow: hidden;
@@ -518,12 +518,13 @@
             let isFlipAction = input.discreteFlip;
             let menuAction = isJumpAction || input.menuTap;
 
-            // Consume discrete triggers
+            // Consume discrete triggers so they only trigger once per tap/action
             input.discreteJump = false;
             input.discreteFlip = false;
+            input.menuTap = false; 
 
             if (gameState === 'START') {
-                if (menuAction && !lastMenuAction) { input.menuTap = false; initGame(); gameState = 'PLAYING'; }
+                if (menuAction && !lastMenuAction) { initGame(); gameState = 'PLAYING'; }
                 lastMenuAction = menuAction; return;
             }
             if (gameState === 'GAMEOVER') {
@@ -531,7 +532,7 @@
                     lastMenuAction = menuAction; 
                     return;
                 }
-                if (menuAction && !lastMenuAction) { input.menuTap = false; initGame(); gameState = 'PLAYING'; }
+                if (menuAction && !lastMenuAction) { initGame(); gameState = 'PLAYING'; }
                 lastMenuAction = menuAction; return;
             }
 

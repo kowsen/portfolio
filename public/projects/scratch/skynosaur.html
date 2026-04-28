@@ -140,9 +140,39 @@
 
     <script>
         // ==============================================================================
-        // CONSTANTS & BITMASKS
+        // CONSTANTS & CONFIGURATION
         // ==============================================================================
         const PALETTE = { bg: '#e0f8d0', light: '#88c070', dark: '#346856', black: '#081820' };
+
+        const GAME_CONFIG = {
+            // --- GAME FEEL & JUICE ---
+            SLOW_MO_MIN_SPEED: 0.75,       // The minimum speed the game drops to before landing (0.75 = 75% speed)
+            SLOW_MO_RATCHET_MULT: 0.92,    // How aggressively speed drops per frame (lower = faster slowdown)
+            SLOW_MO_RECOVER_RATE: 0.15,    // How fast game returns to 100% speed after landing
+
+            // --- DIFFICULTY THRESHOLDS ---
+            DIFF_1_FLOOR: 3,               // Floor where the first major difficulty spike hits (more enemies, 3-spike clusters)
+            MOVING_HOLE_FLOOR: 3,          // Floor where holes start moving back and forth
+            OSCILLATING_HOLE_FLOOR: 2,     // Floor where holes start changing size
+            
+            // --- OBSTACLE DENSITY ---
+            DIFF_1_EXTRA_OBSTACLE_CHANCE: 0.50, // 50% chance per chunk group to add a 4th obstacle at diff 1
+            DIFF_2_EXTRA_OBSTACLE_CHANCE: 0.85, // 85% chance per chunk group to add a 4th obstacle at diff 2
+
+            // --- HOLE CHANCES ---
+            MOVING_HOLE_CHANCE: 0.40,      // 40% chance for a hole to be moving (at or above MOVING_HOLE_FLOOR)
+            OSCILLATING_HOLE_CHANCE: 0.55, // 55% chance for a hole to oscillate (at or above OSCILLATING_HOLE_FLOOR)
+
+            // --- ENEMY SPAWN CHANCES ---
+            // Evaluated in reverse order (e.g., if roll > CANNON threshold, spawn Cannon. Else check Bouncer, etc.)
+            SPAWN_DIFF_0: { PATROL: 0.80 },
+            SPAWN_DIFF_1: { PATROL: 0.80, BOUNCER: 0.90, CANNON: 0.95 },
+            SPAWN_DIFF_2: { PATROL: 0.75, BOUNCER: 0.85, CANNON: 0.92, WAVER: 0.96 },
+
+            // --- SPIKE CLUSTER CHANCES ---
+            SPIKE_DOUBLE_CHANCE: 0.60,     // 60% chance for a second spike next to the first
+            SPIKE_TRIPLE_CHANCE: 0.30      // 30% chance for a third spike (only applies after DIFF_1_FLOOR)
+        };
 
         const PAD_RIGHT = 0x01;
         const PAD_LEFT  = 0x02;
@@ -220,6 +250,7 @@
         let deathAnimationY = 0;
         let deathAnimationVY = 0;
         let visualRotation = 0;
+        let wasFlipping = false;
 
         const input = {
             rawJump: false,
@@ -251,7 +282,7 @@
         }
 
         function getDifficulty(floorN) {
-            return Math.floor((floorN + 6) / 12);
+            return Math.floor((floorN >= GAME_CONFIG.DIFF_1_FLOOR ? floorN + 9 : floorN) / 12);
         }
 
         // ==============================================================================
@@ -353,9 +384,9 @@
                 let hLocalIdx = ((chunkX % HOLE_BAG_SIZE) + HOLE_BAG_SIZE) % HOLE_BAG_SIZE;
                 
                 let hBag = [1, 1, 1, 1, 1]; 
-                if (floorN >= 6) {
+                if (floorN >= GAME_CONFIG.DIFF_1_FLOOR) {
                     hBag = [1, 1, 1, 2, 2]; // Exactly two 2-hole chunks per bag
-                } else if (floorN >= 2) {
+                } else if (floorN >= GAME_CONFIG.OSCILLATING_HOLE_FLOOR) {
                     hBag = [1, 1, 1, 1, 0]; // Exactly one breather chunk per bag
                 }
                 
@@ -395,12 +426,12 @@
                         let rType = prng(floorN ^ globalSeed, chunkX, 20 + i);
                         let holeType = 0;
                         if (dynamicHolesUsed === 0) {
-                            if (floorN >= 6 && rType > 0.6) { holeType = 2; dynamicHolesUsed++; }
-                            else if (floorN >= 4 && rType > 0.45) { holeType = 1; dynamicHolesUsed++; }
+                            if (floorN >= GAME_CONFIG.MOVING_HOLE_FLOOR && rType > (1.0 - GAME_CONFIG.MOVING_HOLE_CHANCE)) { holeType = 2; dynamicHolesUsed++; }
+                            else if (floorN >= GAME_CONFIG.OSCILLATING_HOLE_FLOOR && rType > (1.0 - GAME_CONFIG.OSCILLATING_HOLE_CHANCE)) { holeType = 1; dynamicHolesUsed++; }
                         }
 
                         let widths = [2, 3, 4, 5];
-                        let widthTiles = (holeType === 2) ? Math.max(2, 4 - Math.min(4, Math.floor((floorN - 6) / 5))) : 
+                        let widthTiles = (holeType === 2) ? Math.max(2, 4 - Math.min(4, Math.floor((floorN - GAME_CONFIG.MOVING_HOLE_FLOOR) / 5))) : 
                                          (diff === 0) ? widths[1 + Math.floor(rHoleW * 2)] : (diff === 1) ? widths[Math.floor(rHoleW * 4)] : 
                                          (rHoleW < 0.4) ? 2 : (rHoleW < 0.8) ? 5 : (rHoleW < 0.9) ? 3 : 4;
                         
@@ -508,8 +539,8 @@
             let localIdx = ((chunkX % BAG_SIZE) + BAG_SIZE) % BAG_SIZE;
             
             let numObstacles = 3; // 75% coverage at diff 0
-            if (diff === 1) numObstacles = prng(floorN ^ globalSeed, blockId, 100) > 0.5 ? 4 : 3;
-            else if (diff >= 2) numObstacles = prng(floorN ^ globalSeed, blockId, 100) > 0.15 ? 4 : 3;
+            if (diff === 1) numObstacles = prng(floorN ^ globalSeed, blockId, 100) > (1.0 - GAME_CONFIG.DIFF_1_EXTRA_OBSTACLE_CHANCE) ? 4 : 3;
+            else if (diff >= 2) numObstacles = prng(floorN ^ globalSeed, blockId, 100) > (1.0 - GAME_CONFIG.DIFF_2_EXTRA_OBSTACLE_CHANCE) ? 4 : 3;
             
             let bag = [0, 1, 2, 3];
             for (let i = BAG_SIZE - 1; i > 0; i--) {
@@ -552,9 +583,9 @@
                 let r = prng(floorN ^ globalSeed, chunkX, 5), type = 'SPIKE', dirX = (obsX > chunkX * CHUNK_WIDTH + CHUNK_WIDTH / 2) ? -1 : 1;
                 
                 // Heavily favor SPIKE
-                if (diff === 0 && r > 0.8) type = 'PATROL';
-                else if (diff === 1) type = (r > 0.95) ? 'CANNON' : (r > 0.90) ? 'BOUNCER' : (r > 0.8) ? 'PATROL' : 'SPIKE';
-                else if (diff >= 2) type = (r > 0.96) ? 'WAVER' : (r > 0.92) ? 'CANNON' : (r > 0.85) ? 'BOUNCER' : (r > 0.75) ? 'PATROL' : 'SPIKE';
+                if (diff === 0 && r > GAME_CONFIG.SPAWN_DIFF_0.PATROL) type = 'PATROL';
+                else if (diff === 1) type = (r > GAME_CONFIG.SPAWN_DIFF_1.CANNON) ? 'CANNON' : (r > GAME_CONFIG.SPAWN_DIFF_1.BOUNCER) ? 'BOUNCER' : (r > GAME_CONFIG.SPAWN_DIFF_1.PATROL) ? 'PATROL' : 'SPIKE';
+                else if (diff >= 2) type = (r > GAME_CONFIG.SPAWN_DIFF_2.WAVER) ? 'WAVER' : (r > GAME_CONFIG.SPAWN_DIFF_2.CANNON) ? 'CANNON' : (r > GAME_CONFIG.SPAWN_DIFF_2.BOUNCER) ? 'BOUNCER' : (r > GAME_CONFIG.SPAWN_DIFF_2.PATROL) ? 'PATROL' : 'SPIKE';
                 
                 if (type === 'BOUNCER') {
                     activeEntities.push({ type, x: obsX, y: floorY - 8, prevX: obsX, prevY: floorY - 8, baseFloorY: floorY, vx: dirX * Math.min(2.5, 1.6 + (diff * 0.2)), vy: -2.0, dirX, timer: 0 });
@@ -564,12 +595,12 @@
                     activeEntities.push({ type, x: obsX, y: floorY, prevX: obsX, prevY: floorY, vx: (type === 'PATROL') ? (dirX * Math.min(2.5, 1.6 + (diff * 0.15))) : 0, dirX, fireRate: Math.max(80, 240 - (diff * 30)), bulletSpeed: Math.min(2.5, 1.2 + (diff * 0.15)), timer: 0 });
                 } else if (type === 'SPIKE') {
                     activeEntities.push({ type, x: obsX, y: floorY, prevX: obsX, prevY: floorY, vx: 0, dirX });
-                    // Cluster logic: 3x more common via clustering beds of spikes
-                    if (prng(floorN ^ globalSeed, chunkX, 6) > 0.4) {
+                    // Cluster logic
+                    if (prng(floorN ^ globalSeed, chunkX, 6) > (1.0 - GAME_CONFIG.SPIKE_DOUBLE_CHANCE)) {
                         activeEntities.push({ type, x: obsX + 10, y: floorY, prevX: obsX + 10, prevY: floorY, vx: 0, dirX });
                     }
                     // Gate the 3rd spike until after the first difficulty spike
-                    if (diff > 0 && prng(floorN ^ globalSeed, chunkX, 7) > 0.7) {
+                    if (diff > 0 && prng(floorN ^ globalSeed, chunkX, 7) > (1.0 - GAME_CONFIG.SPIKE_TRIPLE_CHANCE)) {
                         activeEntities.push({ type, x: obsX + 20, y: floorY, prevX: obsX + 20, prevY: floorY, vx: 0, dirX });
                     }
                 }
@@ -603,7 +634,7 @@
             wMarioX = 20 << 8; wMarioY = 0 << 8; wMarioVX = 0; wMarioVY = 0; wMarioState = STATE_FALL; wMarioFacing = 0;      
             autoDirection = 1; topFloor = 0; currentFloor = 0; backflipStartFloor = 0; cameraY = -196; targetCameraY = -196; frameCount = 0;
             cameraX = 20 - 22; activeEntities = []; spawnedChunks.clear(); floorCliffs = {}; globalSeed = Math.floor(Math.random() * 1000000);
-            particles = []; ghosts = []; cameraShake = 0; flashTimer = 0; globalTimeScale = 1.0; visualRotation = 0;
+            particles = []; ghosts = []; cameraShake = 0; flashTimer = 0; globalTimeScale = 1.0; visualRotation = 0; wasFlipping = false;
             
             chunkCache.clear();
             chunkQueue = [];
@@ -692,30 +723,51 @@
             let px = Math.floor(wMarioX / 256), py = Math.floor(wMarioY / 256);
             let inAir = (wMarioState === STATE_JUMP || wMarioState === STATE_BACKFLIP || wMarioState === STATE_FALL);
             
-            // IMMINENT LANDING SLOW-MO LOGIC (Activates strictly during the descent arc toward a new high floor)
+            // IMMINENT LANDING SLOW-MO LOGIC (Activates as we ascend into the next floor's airspace)
+            let currentHeightFloor = Math.floor(-py / FLOOR_SPACING);
             let floorBelowN = Math.floor((-py + 24) / FLOOR_SPACING);
             let floorBelowY = -floorBelowN * FLOOR_SPACING;
             let distToFloor = floorBelowY - py;
-            let landingPending = (floorBelowN > topFloor && distToFloor > 0 && (getSolidType(px - 4, floorBelowY) || getSolidType(px + 3, floorBelowY)));
+            
+            let ascendingIntoNewFloor = (currentHeightFloor > topFloor);
+            let fallingTowardsNewFloor = (floorBelowN > topFloor && distToFloor > 0 && (getSolidType(px - 4, floorBelowY) || getSolidType(px + 3, floorBelowY)));
 
-            if (landingPending && inAir && wMarioVY > 0) {
-                globalTimeScale = Math.max(0.6, globalTimeScale * 0.94);
+            if ((ascendingIntoNewFloor || fallingTowardsNewFloor) && inAir) {
+                globalTimeScale = Math.max(GAME_CONFIG.SLOW_MO_MIN_SPEED, globalTimeScale * GAME_CONFIG.SLOW_MO_RATCHET_MULT);
             } else {
-                globalTimeScale = globalTimeScale + (1.0 - globalTimeScale) * 0.15;
+                globalTimeScale = globalTimeScale + (1.0 - globalTimeScale) * GAME_CONFIG.SLOW_MO_RECOVER_RATE;
             }
 
             // Update visual rotation for backflip and landing smoothing
             if (wMarioState === STATE_BACKFLIP) {
                 visualRotation = (py * 0.1) * ((wMarioFacing === 1) ? 1 : -1);
+                wasFlipping = true;
             } else {
-                // Instantly wrap rotation to the primary circle to prevent lerping through multiple backwards spins
-                if (Math.abs(visualRotation) > Math.PI) {
-                    let offset = visualRotation - Math.atan2(Math.sin(visualRotation), Math.cos(visualRotation));
+                if (wasFlipping) {
+                    let normalized = Math.atan2(Math.sin(visualRotation), Math.cos(visualRotation));
+                    
+                    if (wMarioFacing === 0) {
+                        // Facing right: Forward roll is CW (+). We need visualRotation to increase to 0.
+                        if (normalized > 0) normalized -= 2 * Math.PI;
+                        // Guarantee at least a half-roll to make it look like a physical forward roll
+                        if (normalized > -Math.PI) normalized -= 2 * Math.PI;
+                    } else {
+                        // Facing left: Forward roll is CCW (-). We need visualRotation to decrease to 0.
+                        if (normalized < 0) normalized += 2 * Math.PI;
+                        // Guarantee at least a half-roll to make it look like a physical forward roll
+                        if (normalized < Math.PI) normalized += 2 * Math.PI;
+                    }
+                    
+                    let offset = visualRotation - normalized;
                     visualRotation -= offset;
                     prevVisualRotation -= offset; 
+                    
+                    wasFlipping = false;
                 }
-                visualRotation *= 0.8; // Smoothly return to flat 0
-                if (Math.abs(visualRotation) < 0.01) visualRotation = 0;
+                
+                // Non-linear ease-out (starts fast, slows down, then snaps)
+                visualRotation *= 0.82; 
+                if (Math.abs(visualRotation) < 0.15) visualRotation = 0; // Firm snap to upright
             }
 
             wMarioY = addQ88(wMarioY, wMarioVY);

@@ -44,6 +44,7 @@
             touch-action: none;
         }
 
+        /* --- Crisp HTML UI Overlay --- */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -60,15 +61,19 @@
             top: 16.25%;
             left: 50%;
             transform: translate(-50%, -50%);
+            /* Scale precisely with container width to stay proportional at all resolutions */
             font-size: 25cqw;
             font-weight: 700;
             line-height: 1;
             margin: 0;
             padding: 0;
+            
+            /* Dark Green palette color #346856 with transparency */
             color: rgba(52, 104, 86, 0.4);
             text-align: center;
             z-index: 1;
             white-space: nowrap;
+            /* Heartbeat score juice */
             transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -78,7 +83,7 @@
 
         #menu-screen {
             position: absolute;
-            top: 150%; 
+            top: 150%; /* Start off-screen */
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(224, 248, 208, 0.98);
@@ -192,8 +197,19 @@
         let wMarioX, wMarioY, wMarioVX, wMarioVY, wMarioState, wMarioFacing;
         let backflipStartFloor = 0;
         let activeEntities = [];
-        let spawnedChunks = new Set();
         let floorCliffs = {}; 
+
+        // PERFORMANCE: TIME-SLICED CHUNK GENERATION & CACHING
+        let spawnedChunks = new Set();
+        let chunkCache = new Map(); 
+        let chunkQueue = [];
+        let queuedChunks = new Set();
+
+        // RENDER INTERPOLATION PREV-STATE
+        let prevWMarioX = 0, prevWMarioY = 0;
+        let prevCameraX = 0, prevCameraY = -196;
+        let prevVisualRotation = 0;
+        let prevDeathAnimationX = 0, prevDeathAnimationY = 0;
 
         // JUICE STATE
         let particles = [];
@@ -311,78 +327,130 @@
         });
 
         // ==============================================================================
-        // GENERATION LOGIC
+        // GENERATION LOGIC (CACHED & OPTIMIZED)
         // ==============================================================================
-        function getHoles(chunkX, floorN, evalMovement = true, ignorePrev = false) {
-            if (floorN <= 0) return [];
-            let diff = getDifficulty(floorN);
-            let pNum = prng(floorN ^ globalSeed, chunkX, 10);
-            let numHoles = 1;
-            if (floorN >= 6 && pNum > 0.65) numHoles = 2;
-            else if (floorN >= 2 && pNum < 0.15) numHoles = 0;
-            if (numHoles === 0) return [];
-            
-            let holes = [];
-            let prevHoles = (!ignorePrev && floorN > 1) ? getHoles(chunkX, floorN - 1, false, true) : [];
-            let prevLocalX = prevHoles.length > 0 ? prevHoles[0].baseX - (chunkX * CHUNK_WIDTH) : null;
-            let lastMaxBound = -Infinity;
-            let dynamicHolesUsed = 0;
-
-            for (let i = 0; i < numHoles; i++) {
-                let rHole = prng(floorN ^ globalSeed, chunkX, 1 + i);
-                let rHoleW = prng(floorN ^ globalSeed, chunkX, 4 + i);
-                let localX = 40 + Math.floor(rHole * (200 / numHoles)) + (i * (CHUNK_WIDTH / numHoles));
-
-                if (prevLocalX !== null && i === 0) {
-                    let diffLevel = Math.min(4, Math.floor(floorN / 8)); 
-                    if (diffLevel <= 1) { 
-                        let minStagger = diffLevel === 0 ? 120 : 80;
-                        if (Math.abs(localX - prevLocalX) < minStagger) localX = prevLocalX > (CHUNK_WIDTH / 2) ? prevLocalX - minStagger : prevLocalX + minStagger;
-                    } else if (diffLevel >= 3) { 
-                        let maxAlign = diffLevel === 3 ? 64 : 32;
-                        if (Math.abs(localX - prevLocalX) > maxAlign) localX = prevLocalX + (localX > prevLocalX ? maxAlign : -maxAlign);
-                    }
-                    localX = Math.max(32, Math.min(CHUNK_WIDTH - 48, localX));
-                }
-
-                let holeX = chunkX * CHUNK_WIDTH + localX;
-                holeX = Math.floor(holeX / 8) * 8; 
-                let rType = prng(floorN ^ globalSeed, chunkX, 20 + i);
-                let holeType = 0;
-                if (dynamicHolesUsed === 0) {
-                    if (floorN >= 6 && rType > 0.6) { holeType = 2; dynamicHolesUsed++; }
-                    else if (floorN >= 4 && rType > 0.45) { holeType = 1; dynamicHolesUsed++; }
-                }
-
-                let widths = [2, 3, 4, 5];
-                let widthTiles = (holeType === 2) ? Math.max(2, 5 - Math.min(4, Math.floor((floorN - 6) / 5))) : 
-                                 (diff === 0) ? widths[1 + Math.floor(rHoleW * 2)] : (diff === 1) ? widths[Math.floor(rHoleW * 4)] : 
-                                 (rHoleW < 0.4) ? 2 : (rHoleW < 0.8) ? 5 : (rHoleW < 0.9) ? 3 : 4;
-                
-                let currentW = widthTiles * 8;
-                let currentOffset = 0;
-                let minBound = holeX, maxBound = holeX + currentW;
-
-                if (holeType === 2) { minBound = holeX - 24; maxBound = holeX + currentW + 24; }
-                else if (holeType === 1) { let maxW = currentW + (12 + diff * 2); let midX = holeX + currentW / 2; minBound = midX - maxW / 2; maxBound = midX + maxW / 2; }
-
-                if (i > 0 && minBound < lastMaxBound + 64) {
-                    let shift = Math.ceil(((lastMaxBound + 64) - minBound) / 8) * 8;
-                    holeX += shift; minBound += shift; maxBound += shift;
-                }
-
-                if (evalMovement) {
-                    if (holeType === 2) currentOffset = Math.sin(frameCount * (0.02 + diff * 0.005) + chunkX) * 24;
-                    else if (holeType === 1) {
-                        let newW = Math.max(16, currentW + Math.sin(frameCount * (0.02 + diff * 0.005) + chunkX) * (12 + diff * 2));
-                        currentOffset = (currentW - newW) / 2; currentW = newW;
-                    }
-                }
-
-                lastMaxBound = maxBound;
-                holes.push({ x: holeX + currentOffset, w: currentW, baseX: holeX, type: holeType, amplitude: 24, minBound: minBound, maxBound: maxBound });
+        
+        function queueChunkGeneration(cx, f) {
+            let key = cx + ',' + f;
+            if (!chunkCache.has(key) && !queuedChunks.has(key)) {
+                queuedChunks.add(key);
+                chunkQueue.push({cx, f, key});
             }
-            return holes;
+        }
+
+        // Only calculates the PRNG layout of a chunk once per game, caching the static geometry.
+        function getCachedChunk(chunkX, floorN) {
+            let key = chunkX + ',' + floorN;
+            if (chunkCache.has(key)) return chunkCache.get(key);
+
+            let holes = [];
+            if (floorN > 0) {
+                let diff = getDifficulty(floorN);
+                
+                // TETRIS-STYLE BAG RANDOMIZER FOR HOLES
+                let HOLE_BAG_SIZE = 5;
+                let hBlockId = Math.floor(chunkX / HOLE_BAG_SIZE);
+                let hLocalIdx = ((chunkX % HOLE_BAG_SIZE) + HOLE_BAG_SIZE) % HOLE_BAG_SIZE;
+                
+                let hBag = [1, 1, 1, 1, 1]; 
+                if (floorN >= 6) {
+                    hBag = [1, 1, 1, 2, 2]; // Exactly two 2-hole chunks per bag
+                } else if (floorN >= 2) {
+                    hBag = [1, 1, 1, 1, 0]; // Exactly one breather chunk per bag
+                }
+                
+                // Shuffle the hole bag
+                for (let i = HOLE_BAG_SIZE - 1; i > 0; i--) {
+                    let j = Math.floor(prng(floorN ^ globalSeed, hBlockId, 50 + i) * (i + 1));
+                    [hBag[i], hBag[j]] = [hBag[j], hBag[i]];
+                }
+                
+                let numHoles = hBag[hLocalIdx];
+
+                if (numHoles > 0) {
+                    let prevHoles = (floorN > 1) ? getCachedChunk(chunkX, floorN - 1).holes : [];
+                    let prevLocalX = prevHoles.length > 0 ? prevHoles[0].baseX - (chunkX * CHUNK_WIDTH) : null;
+                    let lastMaxBound = -Infinity;
+                    let dynamicHolesUsed = 0;
+
+                    for (let i = 0; i < numHoles; i++) {
+                        let rHole = prng(floorN ^ globalSeed, chunkX, 1 + i);
+                        let rHoleW = prng(floorN ^ globalSeed, chunkX, 4 + i);
+                        let localX = 40 + Math.floor(rHole * (200 / numHoles)) + (i * (CHUNK_WIDTH / numHoles));
+
+                        if (prevLocalX !== null && i === 0) {
+                            let diffLevel = Math.min(4, Math.floor(floorN / 8)); 
+                            if (diffLevel <= 1) { 
+                                let minStagger = diffLevel === 0 ? 120 : 80;
+                                if (Math.abs(localX - prevLocalX) < minStagger) localX = prevLocalX > (CHUNK_WIDTH / 2) ? prevLocalX - minStagger : prevLocalX + minStagger;
+                            } else if (diffLevel >= 3) { 
+                                let maxAlign = diffLevel === 3 ? 64 : 32;
+                                if (Math.abs(localX - prevLocalX) > maxAlign) localX = prevLocalX + (localX > prevLocalX ? maxAlign : -maxAlign);
+                            }
+                            localX = Math.max(32, Math.min(CHUNK_WIDTH - 48, localX));
+                        }
+
+                        let holeX = chunkX * CHUNK_WIDTH + localX;
+                        holeX = Math.floor(holeX / 8) * 8; 
+                        let rType = prng(floorN ^ globalSeed, chunkX, 20 + i);
+                        let holeType = 0;
+                        if (dynamicHolesUsed === 0) {
+                            if (floorN >= 6 && rType > 0.6) { holeType = 2; dynamicHolesUsed++; }
+                            else if (floorN >= 4 && rType > 0.45) { holeType = 1; dynamicHolesUsed++; }
+                        }
+
+                        let widths = [2, 3, 4, 5];
+                        let widthTiles = (holeType === 2) ? Math.max(2, 4 - Math.min(4, Math.floor((floorN - 6) / 5))) : 
+                                         (diff === 0) ? widths[1 + Math.floor(rHoleW * 2)] : (diff === 1) ? widths[Math.floor(rHoleW * 4)] : 
+                                         (rHoleW < 0.4) ? 2 : (rHoleW < 0.8) ? 5 : (rHoleW < 0.9) ? 3 : 4;
+                        
+                        let currentW = widthTiles * 8;
+                        let minBound = holeX, maxBound = holeX + currentW;
+
+                        if (holeType === 2) { minBound = holeX - 24; maxBound = holeX + currentW + 24; }
+                        else if (holeType === 1) { let maxW = currentW + (12 + diff * 2); let midX = holeX + currentW / 2; minBound = midX - maxW / 2; maxBound = midX + maxW / 2; }
+
+                        if (i > 0 && minBound < lastMaxBound + 64) {
+                            let shift = Math.ceil(((lastMaxBound + 64) - minBound) / 8) * 8;
+                            holeX += shift; minBound += shift; maxBound += shift;
+                        }
+
+                        holes.push({ baseX: holeX, baseW: currentW, type: holeType, amplitude: 24, minBound: minBound, maxBound: maxBound, diff: diff, chunkX: chunkX });
+                        lastMaxBound = maxBound;
+                    }
+                }
+            }
+            let chunkData = { holes: holes };
+            chunkCache.set(key, chunkData);
+            return chunkData;
+        }
+
+        // Lightweight function to evaluate dynamic hole offsets using fractional frameTime for 144hz smoothness
+        function getDynamicHoles(chunkX, floorN, frameTime) {
+            let chunk = getCachedChunk(chunkX, floorN);
+            let dynamicHoles = [];
+            for (let h of chunk.holes) {
+                let currentOffset = 0;
+                let currentW = h.baseW;
+                
+                if (h.type === 2) {
+                    currentOffset = Math.sin(frameTime * (0.02 + h.diff * 0.005) + h.chunkX) * 24;
+                } else if (h.type === 1) {
+                    let newW = Math.max(16, h.baseW + Math.sin(frameTime * (0.02 + h.diff * 0.005) + h.chunkX) * (12 + h.diff * 2));
+                    currentOffset = (h.baseW - newW) / 2; 
+                    currentW = newW;
+                }
+                dynamicHoles.push({
+                    x: h.baseX + currentOffset,
+                    w: currentW,
+                    baseX: h.baseX,
+                    baseW: h.baseW,
+                    type: h.type,
+                    minBound: h.minBound,
+                    maxBound: h.maxBound
+                });
+            }
+            return dynamicHoles;
         }
 
         function registerFloorLanding(floorN, startX, dirX) {
@@ -390,12 +458,13 @@
             if (floorN <= 0) { floorCliffs[floorN] = { x: startX + (dirX * 999999), dir: dirX }; return; }
             let holesFound = 0, chunkX = Math.floor(startX / CHUNK_WIDTH), cliffX = null;
             for (let i = 0; i < 50; i++) { 
-                let holes = getHoles(chunkX, floorN, false);
-                if (dirX === 1) holes.sort((a, b) => a.baseX - b.baseX); else holes.sort((a, b) => b.baseX - a.baseX);
-                for (let hole of holes) {
+                let holes = getCachedChunk(chunkX, floorN).holes;
+                let sortedHoles = [...holes];
+                if (dirX === 1) sortedHoles.sort((a, b) => a.baseX - b.baseX); else sortedHoles.sort((a, b) => b.baseX - a.baseX);
+                for (let hole of sortedHoles) {
                     if ((dirX === 1 && hole.baseX > startX) || (dirX === -1 && hole.baseX < startX)) {
                         if (++holesFound === 4) {
-                            cliffX = (dirX === 1) ? hole.baseX + (hole.type === 2 ? 24 : 0) + hole.w + 48 : hole.baseX - (hole.type === 2 ? 24 : 0) - 48;
+                            cliffX = (dirX === 1) ? hole.baseX + (hole.type === 2 ? 24 : 0) + hole.baseW + 48 : hole.baseX - (hole.type === 2 ? 24 : 0) - 48;
                             break;
                         }
                     }
@@ -412,8 +481,15 @@
             if (py >= floorY && py < floorY + 8) {
                 let cliff = floorCliffs[floorN];
                 if (cliff && ((cliff.dir === 1 && px >= cliff.x) || (cliff.dir === -1 && px <= cliff.x))) return 0; 
-                let holes = getHoles(Math.floor(px / CHUNK_WIDTH), floorN, true); 
-                for (let hole of holes) if (px >= hole.x && px < hole.x + hole.w) return 0; 
+                
+                // Aggressive neighborhood check (± 2 chunks) totally eliminates dynamic hole clipping on boundaries
+                let centerChunk = Math.floor(px / CHUNK_WIDTH);
+                for (let cx = centerChunk - 2; cx <= centerChunk + 2; cx++) {
+                    let holes = getDynamicHoles(cx, floorN, frameCount); 
+                    for (let hole of holes) {
+                        if (px >= hole.x && px < hole.x + hole.w) return 0; 
+                    }
+                }
                 return 1; 
             }
             return 0; 
@@ -425,25 +501,78 @@
             if (spawnedChunks.has(chunkId)) return;
             spawnedChunks.add(chunkId);
             let floorY = -floorN * FLOOR_SPACING, diff = getDifficulty(floorN), cliff = floorCliffs[floorN];
-            if (prng(floorN ^ globalSeed, chunkX, 2) > Math.max(0.05, 0.25 - (diff * 0.1))) {
-                let obsX = chunkX * CHUNK_WIDTH + 40 + Math.floor(prng(floorN ^ globalSeed, chunkX, 3) * 240);
-                if (cliff && ((cliff.dir === 1 && obsX >= cliff.x) || (cliff.dir === -1 && obsX <= cliff.x))) return;
-                let holes = getHoles(chunkX, floorN, false);
-                for (let hole of holes) {
-                    let m = (hole.type === 2) ? hole.amplitude : (hole.type === 1 ? 16 : 0);
-                    if (obsX >= hole.baseX - m - 32 && obsX <= hole.baseX + m + hole.w + 32) return;
+            
+            // TETRIS-STYLE BAG RANDOMIZER FOR ENTITIES
+            let BAG_SIZE = 4;
+            let blockId = Math.floor(chunkX / BAG_SIZE);
+            let localIdx = ((chunkX % BAG_SIZE) + BAG_SIZE) % BAG_SIZE;
+            
+            let numObstacles = 3; // 75% coverage at diff 0
+            if (diff === 1) numObstacles = prng(floorN ^ globalSeed, blockId, 100) > 0.5 ? 4 : 3;
+            else if (diff >= 2) numObstacles = prng(floorN ^ globalSeed, blockId, 100) > 0.15 ? 4 : 3;
+            
+            let bag = [0, 1, 2, 3];
+            for (let i = BAG_SIZE - 1; i > 0; i--) {
+                let j = Math.floor(prng(floorN ^ globalSeed, blockId, i) * (i + 1));
+                [bag[i], bag[j]] = [bag[j], bag[i]];
+            }
+            
+            let spawnEntity = false;
+            for (let i = 0; i < numObstacles; i++) {
+                if (bag[i] === localIdx) { spawnEntity = true; break; }
+            }
+
+            if (spawnEntity) {
+                let chunk = getCachedChunk(chunkX, floorN);
+                let obsX;
+                let validPlacement = false;
+                
+                // Smart placement: try up to 5 times to avoid placing an entity inside a hole
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    obsX = chunkX * CHUNK_WIDTH + 40 + Math.floor(prng(floorN ^ globalSeed, chunkX, 3 + attempt) * 240);
+                    validPlacement = true;
+                    
+                    if (cliff && ((cliff.dir === 1 && obsX >= cliff.x) || (cliff.dir === -1 && obsX <= cliff.x))) {
+                        validPlacement = false;
+                        continue;
+                    }
+                    
+                    for (let hole of chunk.holes) {
+                        let m = (hole.type === 2) ? hole.amplitude : (hole.type === 1 ? 16 : 0);
+                        if (obsX >= hole.baseX - m - 32 && obsX <= hole.baseX + m + hole.baseW + 32) {
+                            validPlacement = false;
+                            break;
+                        }
+                    }
+                    if (validPlacement) break;
                 }
+                
+                if (!validPlacement) return; // Discard spawn if no valid solid ground was found
                 
                 let r = prng(floorN ^ globalSeed, chunkX, 5), type = 'SPIKE', dirX = (obsX > chunkX * CHUNK_WIDTH + CHUNK_WIDTH / 2) ? -1 : 1;
                 
-                // Favor SPIKE significantly (roughly 3x more common than original distribution)
-                if (diff === 0 && r > 0.9) type = 'PATROL';
-                else if (diff === 1) type = (r > 0.97) ? 'CANNON' : (r > 0.93) ? 'BOUNCER' : (r > 0.85) ? 'PATROL' : 'SPIKE';
-                else if (diff >= 2) type = (r > 0.98) ? 'WAVER' : (r > 0.94) ? 'CANNON' : (r > 0.88) ? 'BOUNCER' : (r > 0.8) ? 'PATROL' : 'SPIKE';
+                // Heavily favor SPIKE
+                if (diff === 0 && r > 0.8) type = 'PATROL';
+                else if (diff === 1) type = (r > 0.95) ? 'CANNON' : (r > 0.90) ? 'BOUNCER' : (r > 0.8) ? 'PATROL' : 'SPIKE';
+                else if (diff >= 2) type = (r > 0.96) ? 'WAVER' : (r > 0.92) ? 'CANNON' : (r > 0.85) ? 'BOUNCER' : (r > 0.75) ? 'PATROL' : 'SPIKE';
                 
-                if (type === 'BOUNCER') activeEntities.push({ type, x: obsX, y: floorY - 8, baseFloorY: floorY, vx: dirX * Math.min(2.5, 1.6 + (diff * 0.2)), vy: -2.0, dirX, timer: 0 });
-                else if (type === 'WAVER') activeEntities.push({ type, x: obsX, y: floorY - 24, startY: floorY - 24, vx: dirX * Math.min(2.8, 1.6 + (diff * 0.2)), dirX, timer: 0 });
-                else activeEntities.push({ type, x: obsX, y: floorY, vx: (type === 'PATROL') ? (dirX * Math.min(2.5, 1.6 + (diff * 0.15))) : 0, dirX, fireRate: Math.max(80, 240 - (diff * 30)), bulletSpeed: Math.min(2.5, 1.2 + (diff * 0.15)), timer: 0 });
+                if (type === 'BOUNCER') {
+                    activeEntities.push({ type, x: obsX, y: floorY - 8, prevX: obsX, prevY: floorY - 8, baseFloorY: floorY, vx: dirX * Math.min(2.5, 1.6 + (diff * 0.2)), vy: -2.0, dirX, timer: 0 });
+                } else if (type === 'WAVER') {
+                    activeEntities.push({ type, x: obsX, y: floorY - 24, prevX: obsX, prevY: floorY - 24, startY: floorY - 24, vx: dirX * Math.min(2.8, 1.6 + (diff * 0.2)), dirX, timer: 0 });
+                } else if (type === 'PATROL' || type === 'CANNON') {
+                    activeEntities.push({ type, x: obsX, y: floorY, prevX: obsX, prevY: floorY, vx: (type === 'PATROL') ? (dirX * Math.min(2.5, 1.6 + (diff * 0.15))) : 0, dirX, fireRate: Math.max(80, 240 - (diff * 30)), bulletSpeed: Math.min(2.5, 1.2 + (diff * 0.15)), timer: 0 });
+                } else if (type === 'SPIKE') {
+                    activeEntities.push({ type, x: obsX, y: floorY, prevX: obsX, prevY: floorY, vx: 0, dirX });
+                    // Cluster logic: 3x more common via clustering beds of spikes
+                    if (prng(floorN ^ globalSeed, chunkX, 6) > 0.4) {
+                        activeEntities.push({ type, x: obsX + 10, y: floorY, prevX: obsX + 10, prevY: floorY, vx: 0, dirX });
+                    }
+                    // Gate the 3rd spike until after the first difficulty spike
+                    if (diff > 0 && prng(floorN ^ globalSeed, chunkX, 7) > 0.7) {
+                        activeEntities.push({ type, x: obsX + 20, y: floorY, prevX: obsX + 20, prevY: floorY, vx: 0, dirX });
+                    }
+                }
             }
         }
 
@@ -455,9 +584,10 @@
             gameState = 'DYING';
             let px = Math.floor(wMarioX / 256), py = Math.floor(wMarioY / 256);
             deathAnimationX = px; deathAnimationY = py - 7; deathAnimationVY = -4.0;
+            prevDeathAnimationX = deathAnimationX; prevDeathAnimationY = deathAnimationY;
             cameraShake = 15;
             globalTimeScale = 1.0;
-            for(let i=0; i<12; i++) particles.push({ x: px, y: py - 7, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 20+Math.random()*15 });
+            for(let i=0; i<12; i++) particles.push({ x: px, y: py - 7, prevX: px, prevY: py - 7, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 20+Math.random()*15 });
             if (topFloor > highScore) { highScore = topFloor; localStorage.setItem('gb_runner_highscore', highScore); }
         }
 
@@ -474,10 +604,40 @@
             autoDirection = 1; topFloor = 0; currentFloor = 0; backflipStartFloor = 0; cameraY = -196; targetCameraY = -196; frameCount = 0;
             cameraX = 20 - 22; activeEntities = []; spawnedChunks.clear(); floorCliffs = {}; globalSeed = Math.floor(Math.random() * 1000000);
             particles = []; ghosts = []; cameraShake = 0; flashTimer = 0; globalTimeScale = 1.0; visualRotation = 0;
+            
+            chunkCache.clear();
+            chunkQueue = [];
+            queuedChunks.clear();
+            
+            // PRE-GENERATION: Blocks for < 10ms to ensure absolutely 0 hitching on the first jump
+            for (let f = 0; f <= 8; f++) {
+                for (let cx = -4; cx <= 4; cx++) {
+                    getCachedChunk(cx, f);
+                    spawnEntitiesForChunk(cx, f);
+                }
+            }
+
+            // Initialization for rendering interpolator 
+            prevWMarioX = wMarioX; prevWMarioY = wMarioY;
+            prevCameraX = cameraX; prevCameraY = cameraY;
+            prevVisualRotation = 0;
+            prevDeathAnimationX = 0; prevDeathAnimationY = 0;
+            
             registerFloorLanding(0, 20, 1); scoreDisplay.innerText = "0"; menuScreen.classList.remove('visible');
         }
 
         function gbUpdate() {
+            // ==========================================
+            // PREVIOUS STATE CAPTURE FOR INTERPOLATION
+            // ==========================================
+            prevWMarioX = wMarioX; prevWMarioY = wMarioY;
+            prevCameraX = cameraX; prevCameraY = cameraY;
+            prevVisualRotation = visualRotation;
+            prevDeathAnimationX = deathAnimationX; 
+            prevDeathAnimationY = deathAnimationY;
+            for (let ent of activeEntities) { ent.prevX = ent.x; ent.prevY = ent.y; }
+            for (let p of particles) { p.prevX = p.x; p.prevY = p.y; }
+            
             frameCount++;
             let isJumpAction = input.rawJump || input.discreteJump;
             let isFlipAction = input.discreteFlip;
@@ -532,14 +692,14 @@
             let px = Math.floor(wMarioX / 256), py = Math.floor(wMarioY / 256);
             let inAir = (wMarioState === STATE_JUMP || wMarioState === STATE_BACKFLIP || wMarioState === STATE_FALL);
             
-            // IMMINENT LANDING SLOW-MO LOGIC (Ratchet down to 70% speed)
+            // IMMINENT LANDING SLOW-MO LOGIC (Activates strictly during the descent arc toward a new high floor)
             let floorBelowN = Math.floor((-py + 24) / FLOOR_SPACING);
             let floorBelowY = -floorBelowN * FLOOR_SPACING;
             let distToFloor = floorBelowY - py;
-            let landingPending = (floorBelowN > topFloor && distToFloor > 0 && distToFloor < 32 && (getSolidType(px - 4, floorBelowY) || getSolidType(px + 3, floorBelowY)));
+            let landingPending = (floorBelowN > topFloor && distToFloor > 0 && (getSolidType(px - 4, floorBelowY) || getSolidType(px + 3, floorBelowY)));
 
             if (landingPending && inAir && wMarioVY > 0) {
-                globalTimeScale = Math.max(0.7, globalTimeScale * 0.9);
+                globalTimeScale = Math.max(0.6, globalTimeScale * 0.94);
             } else {
                 globalTimeScale = globalTimeScale + (1.0 - globalTimeScale) * 0.15;
             }
@@ -548,11 +708,13 @@
             if (wMarioState === STATE_BACKFLIP) {
                 visualRotation = (py * 0.1) * ((wMarioFacing === 1) ? 1 : -1);
             } else {
-                // If we just landed, snap rotation to the nearest single lap [-PI, PI] to prevent "extra spins"
+                // Instantly wrap rotation to the primary circle to prevent lerping through multiple backwards spins
                 if (Math.abs(visualRotation) > Math.PI) {
-                    visualRotation = Math.atan2(Math.sin(visualRotation), Math.cos(visualRotation));
+                    let offset = visualRotation - Math.atan2(Math.sin(visualRotation), Math.cos(visualRotation));
+                    visualRotation -= offset;
+                    prevVisualRotation -= offset; 
                 }
-                visualRotation *= 0.8; // Smoothly return to 0
+                visualRotation *= 0.8; // Smoothly return to flat 0
                 if (Math.abs(visualRotation) < 0.01) visualRotation = 0;
             }
 
@@ -567,9 +729,10 @@
                     if (landedFloor > topFloor) {
                         topFloor = landedFloor; cameraShake = 8; flashTimer = 8;
                         scoreDisplay.classList.add('pop'); setTimeout(() => scoreDisplay.classList.remove('pop'), 150);
-                        for (let i = 0; i < 6; i++) particles.push({ x: px + (wMarioFacing === 1 ? -2 : 2), y: py, vx: (Math.random()-0.5)*3, vy: (Math.random()*-1.5)-0.5, life: 15+Math.random()*10 });
+                        for (let i = 0; i < 6; i++) particles.push({ x: px + (wMarioFacing === 1 ? -2 : 2), y: py, prevX: px + (wMarioFacing === 1 ? -2 : 2), prevY: py, vx: (Math.random()-0.5)*3, vy: (Math.random()*-1.5)-0.5, life: 15+Math.random()*10 });
                     }
                     wMarioState = STATE_WALK; registerFloorLanding(landedFloor, px, autoDirection); 
+                    globalTimeScale = 1.0; // Instantly snap back to 100% speed on impact
                 }
             } else { if (wMarioState === STATE_WALK) wMarioState = STATE_FALL; if (inAir && getSolidType(px, py - 7) !== 0) triggerGameOver(); }
 
@@ -582,14 +745,20 @@
 
             currentFloor = Math.max(0, Math.floor(-py / FLOOR_SPACING));
             let chunkX = Math.floor(px / CHUNK_WIDTH);
-            for (let f = currentFloor; f <= currentFloor + 6; f++) for (let cx = chunkX - 2; cx <= chunkX + 2; cx++) spawnEntitiesForChunk(cx, f);
+            
+            // Queue upcoming chunks for generation instead of blocking the main thread
+            for (let f = currentFloor; f <= currentFloor + 8; f++) {
+                for (let cx = chunkX - 3; cx <= chunkX + 3; cx++) {
+                    queueChunkGeneration(cx, f);
+                }
+            }
             
             for (let i = activeEntities.length - 1; i >= 0; i--) {
                 let ent = activeEntities[i];
                 if (ent.y > cameraY + 300) { activeEntities.splice(i, 1); continue; }
                 let speedMultiplier = (Math.sign(ent.vx) !== Math.sign(autoDirection)) ? 0.5 : 1.0;
                 if (ent.type === 'PATROL') { ent.x += ent.vx * speedMultiplier; if (getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y) === 0 || getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y - 4) !== 0) ent.vx *= -1; }
-                else if (ent.type === 'CANNON') { if (++ent.timer > ent.fireRate) { ent.timer = 0; activeEntities.push({ type: 'BULLET', x: ent.x + (ent.dirX > 0 ? 8 : -4), y: ent.y - 4, vx: ent.dirX * ent.bulletSpeed, timer: 0 }); } }
+                else if (ent.type === 'CANNON') { if (++ent.timer > ent.fireRate) { ent.timer = 0; activeEntities.push({ type: 'BULLET', x: ent.x + (ent.dirX > 0 ? 8 : -4), y: ent.y - 4, prevX: ent.x + (ent.dirX > 0 ? 8 : -4), prevY: ent.y - 4, vx: ent.dirX * ent.bulletSpeed, timer: 0 }); } }
                 else if (ent.type === 'BULLET') { ent.x += ent.vx; if (ent.timer++ > 300) activeEntities.splice(i, 1); }
                 else if (ent.type === 'BOUNCER') { ent.x += ent.vx * speedMultiplier; ent.y += ent.vy; if (getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y - 4) !== 0) ent.vx *= -1; if (ent.vy > 0 && getSolidType(ent.x + 4, ent.y + 1) !== 0) { ent.vy *= -1; ent.y = Math.floor(ent.y / 8) * 8; } if (ent.vy < 0 && (getSolidType(ent.x + 4, ent.y - 8) !== 0 || ent.y < ent.baseFloorY - 40)) ent.vy *= -1; }
                 else if (ent.type === 'WAVER') { ent.timer++; ent.x += ent.vx * speedMultiplier; ent.y = ent.startY + Math.sin(ent.timer * 0.05) * 20; if (getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y) !== 0) ent.vx *= -1; }
@@ -610,28 +779,40 @@
             if (py > cameraY + 256 && gameState === 'PLAYING') triggerGameOver();
         }
 
-        function draw() {
+        // Rendering logic decoupled with alpha for sub-frame perfect visuals without hitching
+        function draw(alpha) {
             ctx.fillStyle = PALETTE.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
             let shakeOffset = cameraShake > 0 ? ((frameCount % 2 === 0) ? 2 : -2) : 0;
-            ctx.save(); ctx.translate(-cameraX, -(cameraY + shakeOffset));
             
-            let bottomVisibleFloor = Math.max(0, Math.floor((-cameraY - 256) / FLOOR_SPACING) - 1);
-            let topVisibleFloor = Math.floor((-cameraY + 300) / FLOOR_SPACING) + 1;
+            // Interpolate camera
+            let lerpCameraX = prevCameraX + (cameraX - prevCameraX) * alpha;
+            let lerpCameraY = prevCameraY + (cameraY - prevCameraY) * alpha;
+            let camX = Math.round(lerpCameraX);
+            let camY = Math.round(lerpCameraY);
             
+            ctx.save(); ctx.translate(-camX, -(camY + shakeOffset));
+            
+            let bottomVisibleFloor = Math.max(0, Math.floor((-camY - 256) / FLOOR_SPACING) - 1);
+            let topVisibleFloor = Math.floor((-camY + 300) / FLOOR_SPACING) + 1;
+            
+            // Rendering chunk checks expanded to match physics limits completely avoiding visual popping
             for (let f = bottomVisibleFloor; f <= topVisibleFloor; f++) {
-                let floorY = -f * FLOOR_SPACING, leftX = cameraX - 32, rightX = cameraX + 144 + 32;
-                let startChunk = Math.floor(leftX / CHUNK_WIDTH), endChunk = Math.floor(rightX / CHUNK_WIDTH);
+                let floorY = -f * FLOOR_SPACING, leftX = camX - 32, rightX = camX + 144 + 32;
+                let startChunk = Math.floor(leftX / CHUNK_WIDTH) - 2, endChunk = Math.floor(rightX / CHUNK_WIDTH) + 2;
                 let cliff = floorCliffs[f], cliffLeft = -Infinity, cliffRight = Infinity;
                 if (cliff) { if (cliff.dir === 1) cliffRight = cliff.x; else cliffLeft = cliff.x; }
                 let allHoles = [];
-                for (let cx = startChunk; cx <= endChunk; cx++) allHoles.push(...getHoles(cx, f, true));
+                let frameTime = frameCount + alpha; // Use fractional time for perfectly smooth mechanics
+                for (let cx = startChunk; cx <= endChunk; cx++) {
+                    if (chunkCache.has(cx + ',' + f)) allHoles.push(...getDynamicHoles(cx, f, frameTime));
+                }
                 allHoles.sort((a,b) => a.x - b.x);
                 let curX = Math.max(leftX, cliffLeft), maxRight = Math.min(rightX, cliffRight), solidSegments = [];
                 for (let hole of allHoles) { if (hole.x > curX) solidSegments.push([curX, Math.min(hole.x, maxRight)]); curX = Math.max(curX, hole.x + hole.w); }
                 if (curX < maxRight) solidSegments.push([curX, maxRight]);
                 for (let seg of solidSegments) {
                     if (seg[1] > seg[0]) {
-                        let segX = Math.floor(seg[0]), segW = Math.ceil(seg[1] - seg[0]);
+                        let segX = Math.round(seg[0]), segW = Math.round(seg[1] - seg[0]);
                         let isFlashing = (f === topFloor && flashTimer > 0);
                         ctx.fillStyle = isFlashing ? PALETTE.light : PALETTE.dark; ctx.fillRect(segX, floorY, segW, f === 0 ? 300 : 8);
                         ctx.fillStyle = isFlashing ? PALETTE.bg : PALETTE.light; ctx.fillRect(segX, floorY, segW, 1);
@@ -650,7 +831,9 @@
             }
 
             for (let ent of activeEntities) {
-                let ex = Math.floor(ent.x), ey = Math.floor(ent.y);
+                let lerpX = ent.prevX + (ent.x - ent.prevX) * alpha;
+                let lerpY = ent.prevY + (ent.y - ent.prevY) * alpha;
+                let ex = Math.round(lerpX), ey = Math.round(lerpY);
                 if (ent.type === 'SPIKE') { ctx.fillStyle = PALETTE.black; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + 4, ey - 8); ctx.lineTo(ex + 8, ey); ctx.fill(); }
                 else if (ent.type === 'PATROL') { ctx.fillStyle = PALETTE.dark; ctx.fillRect(ex, ey - 8, 8, 8); ctx.fillStyle = PALETTE.bg; ctx.fillRect(ex + (ent.vx > 0 ? 5 : 1), ey - 6, 2, 2); }
                 else if (ent.type === 'CANNON') { ctx.fillStyle = PALETTE.black; ctx.fillRect(ex, ey - 8, 8, 8); ctx.fillStyle = PALETTE.dark; ctx.fillRect(ex + (ent.dirX > 0 ? 8 : -4), ey - 6, 4, 4); }
@@ -659,26 +842,62 @@
                 else if (ent.type === 'WAVER') { ctx.fillStyle = PALETTE.black; ctx.fillRect(ex, ey - 6, 8, 4); ctx.fillStyle = PALETTE.dark; ctx.fillRect(ex + 2, ey - 8, 4, 8); ctx.fillStyle = PALETTE.bg; ctx.fillRect(ex + (ent.vx > 0 ? 6 : 0), ey - 5, 2, 2); }
             }
             
-            for (let g of ghosts) { ctx.save(); ctx.translate(g.x, g.y - 7); ctx.rotate(g.rot); ctx.scale((g.facing === 1) ? -1 : 1, 1); ctx.globalAlpha = (g.life / g.maxLife) * 0.45; ctx.fillStyle = PALETTE.dark; ctx.fillRect(-5, -7, 10, 14); ctx.restore(); }
-            if (gameState === 'DYING') { ctx.save(); ctx.translate(deathAnimationX, deathAnimationY); ctx.rotate(frameCount * 0.1); ctx.fillStyle = PALETTE.black; ctx.fillRect(-5, -7, 10, 14); ctx.fillStyle = PALETTE.bg; ctx.fillRect(-1, -5, 6, 4); ctx.restore(); }
+            for (let g of ghosts) { ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y) - 7); ctx.rotate(g.rot); ctx.scale((g.facing === 1) ? -1 : 1, 1); ctx.globalAlpha = (g.life / g.maxLife) * 0.45; ctx.fillStyle = PALETTE.dark; ctx.fillRect(-5, -7, 10, 14); ctx.restore(); }
+            
+            if (gameState === 'DYING') { 
+                let lerpDx = prevDeathAnimationX + (deathAnimationX - prevDeathAnimationX) * alpha;
+                let lerpDy = prevDeathAnimationY + (deathAnimationY - prevDeathAnimationY) * alpha;
+                ctx.save(); ctx.translate(Math.round(lerpDx), Math.round(lerpDy)); ctx.rotate((frameCount + alpha) * 0.1); ctx.fillStyle = PALETTE.black; ctx.fillRect(-5, -7, 10, 14); ctx.fillStyle = PALETTE.bg; ctx.fillRect(-1, -5, 6, 4); ctx.restore(); 
+            }
             else if (gameState === 'PLAYING') {
-                let px = Math.floor(wMarioX / 256), py = Math.floor(wMarioY / 256);
-                ctx.save(); ctx.translate(px, py - 7); ctx.rotate(visualRotation); ctx.scale((wMarioFacing === 1) ? -1 : 1, 1);
+                let lerpPx = (prevWMarioX + (wMarioX - prevWMarioX) * alpha) / 256;
+                let lerpPy = (prevWMarioY + (wMarioY - prevWMarioY) * alpha) / 256;
+                let drawPx = Math.round(lerpPx);
+                let drawPy = Math.round(lerpPy);
+                let lerpRot = prevVisualRotation + (visualRotation - prevVisualRotation) * alpha;
+                ctx.save(); ctx.translate(drawPx, drawPy - 7); ctx.rotate(lerpRot); ctx.scale((wMarioFacing === 1) ? -1 : 1, 1);
                 ctx.fillStyle = PALETTE.black; ctx.fillRect(-5, -7, 10, 14); ctx.fillStyle = PALETTE.bg; ctx.fillRect(-1, -5, 6, 4); ctx.restore();
             }
-            ctx.fillStyle = PALETTE.dark; for (let p of particles) ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 2, 2);
+            
+            ctx.fillStyle = PALETTE.dark; 
+            for (let p of particles) {
+                let px = Math.round(p.prevX + (p.x - p.prevX) * alpha);
+                let py = Math.round(p.prevY + (p.y - p.prevY) * alpha);
+                ctx.fillRect(px, py, 2, 2);
+            }
+            
             ctx.restore();
             if (gameState === 'PLAYING') { scoreDisplay.innerText = topFloor; scoreDisplay.style.display = 'block'; } else scoreDisplay.style.display = 'none';
         }
 
-        const GB_STEP = 1000 / 59.7275; 
+        const GB_STEP = 1000 / 60; 
         let lastTime = 0, accumulator = 0;
         function gameLoop(timestamp) {
             if (!lastTime) lastTime = timestamp;
-            let dt = timestamp - lastTime; lastTime = timestamp;
+            let dt = timestamp - lastTime; 
+            lastTime = timestamp;
+            
+            // Process async chunk generation queue (Time-sliced to 2ms max to prevent stutter)
+            let qStart = performance.now();
+            while (chunkQueue.length > 0 && performance.now() - qStart < 2) {
+                let task = chunkQueue.shift();
+                queuedChunks.delete(task.key); 
+                getCachedChunk(task.cx, task.f);
+                spawnEntitiesForChunk(task.cx, task.f);
+            }
+
+            // Allow physics loop to digest time normally based on pure delta
             accumulator += Math.min(dt, 250) * globalTimeScale;
-            while (accumulator >= GB_STEP) { gbUpdate(); accumulator -= GB_STEP; }
-            draw(); requestAnimationFrame(gameLoop);
+            while (accumulator >= GB_STEP) { 
+                gbUpdate(); 
+                accumulator -= GB_STEP; 
+            }
+            
+            // Calculate strictly pure render interpolation to untether visual hz from physics hz
+            let alpha = accumulator / GB_STEP;
+            draw(alpha); 
+            
+            requestAnimationFrame(gameLoop);
         }
         menuInstruction.style.opacity = "1"; menuScreen.classList.add('visible'); requestAnimationFrame(gameLoop);
     </script>

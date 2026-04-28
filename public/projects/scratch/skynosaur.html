@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Skynosaur</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #d0d0d0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            background-color: #e0f8d0;
+            border: 4px solid #081820;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            
+            aspect-ratio: 9 / 16;
+            width: 100%;
+            max-width: calc(100vh * 9 / 16);
+            height: 100%;
+            max-height: calc(100vw * 16 / 9);
+            overflow: hidden;
+            
+            /* Establish container to allow internal elements to scale proportionately */
+            container-type: size;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated; 
+            touch-action: none;
+        }
+
+        /* --- Crisp HTML UI Overlay --- */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        #score-display {
+            position: absolute;
+            top: 27%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Scale precisely with container width to stay proportional at all resolutions */
+            font-size: 25cqw;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0;
+            padding: 0;
+            
+            /* Dark Green palette color #346856 with transparency */
+            color: rgba(52, 104, 86, 0.4);
+            text-align: center;
+            z-index: 1;
+            white-space: nowrap;
+        }
+
+        #menu-screen {
+            position: absolute;
+            top: 150%; /* Start off-screen */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(224, 248, 208, 0.98);
+            border: 4px solid #081820;
+            padding: 6cqw;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 3cqw;
+            color: #346856; 
+            width: 80%;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+            transition: top 0.5s ease-out;
+        }
+
+        #menu-screen.visible {
+            top: 50%;
+        }
+
+        .menu-title { 
+            font-size: 8cqw; 
+            font-weight: bold; 
+            color: #081820; 
+            margin-bottom: 1cqw;
+        }
+        .menu-text { 
+            font-size: 4.5cqw; 
+            font-weight: bold; 
+        }
+        .menu-instruction { 
+            font-size: 3.5cqw; 
+            margin-top: 2cqw; 
+            color: #88c070; 
+            transition: opacity 0.3s ease-in;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="144" height="256"></canvas>
+        
+        <div id="ui-layer">
+            <div id="score-display">0</div>
+            <div id="menu-screen">
+                <div class="menu-title" id="menu-title">READY?</div>
+                <div class="menu-text" id="menu-score">Swipe Forwards to Jump</div>
+                <div class="menu-text" id="menu-highscore">Swipe Backwards to Backflip</div>
+                <div class="menu-instruction" id="menu-instruction">[TAP] to Start</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==============================================================================
+        // CONSTANTS & BITMASKS
+        // ==============================================================================
+        const PALETTE = { bg: '#e0f8d0', light: '#88c070', dark: '#346856', black: '#081820' };
+
+        const PAD_RIGHT = 0x01;
+        const PAD_LEFT  = 0x02;
+        const PAD_UP    = 0x04;
+        const PAD_DOWN  = 0x08;
+        const PAD_A     = 0x10; 
+
+        const STATE_STAND    = 0x00;
+        const STATE_WALK     = 0x01;
+        const STATE_SKID     = 0x02;
+        const STATE_JUMP     = 0x03;
+        const STATE_FALL     = 0x04;
+        const STATE_BACKFLIP = 0x05;
+
+        const GRAVITY_ORIGINAL  = 0x0040; 
+        const BACKFLIP_FORCE    = 0xFA00; 
+        const JUMP_FORCE        = 0xFB80; 
+        const TERM_VELOCITY     = 0x0400; 
+        const WALK_ACCEL        = 0x0014;
+        const FRICTION          = 0x0019;
+        const MAX_WALK_SPEED    = 0x0180; 
+
+        const FLOOR_SPACING = 64; 
+        const CHUNK_WIDTH = 320;
+
+        // ==============================================================================
+        // CORE ENGINE STATE
+        // ==============================================================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score-display');
+        const menuScreen = document.getElementById('menu-screen');
+        const menuTitle = document.getElementById('menu-title');
+        const menuScore = document.getElementById('menu-score');
+        const menuHighscore = document.getElementById('menu-highscore');
+        const menuInstruction = document.getElementById('menu-instruction');
+
+        let gameState = 'START'; 
+        let topFloor = 0;
+        let currentFloor = 0;
+        let autoDirection = 1; 
+        let cameraX = 0;
+        let cameraY = -224;
+        let targetCameraY = -224; 
+        let frameCount = 0; 
+        let globalSeed = 0;
+        let gameOverTime = 0;
+        
+        let highScore = parseInt(localStorage.getItem('gb_runner_highscore')) || 0;
+        let lastRenderedScore = -1;
+
+        let wMarioX, wMarioY, wMarioVX, wMarioVY, wMarioState, wMarioFacing;
+        let backflipStartFloor = 0;
+        let activeEntities = [];
+        let spawnedChunks = new Set();
+        let floorCliffs = {}; 
+
+        const input = {
+            rawJump: false,
+            discreteJump: false,
+            discreteFlip: false,
+            menuTap: false,
+            rightHeld: false,
+            leftHeld: false
+        };
+
+        let hJoypadDown = 0;
+        let hJoypadPressed = 0;
+        let lastJoypadDown = 0;
+        let lastMenuAction = false;
+
+        // ==============================================================================
+        // MATH & UTILITIES
+        // ==============================================================================
+        function addQ88(pos, vel) {
+            let signedVel = (vel & 0x8000) ? (vel | 0xFFFF0000) : vel;
+            return pos + signedVel; 
+        }
+
+        function prng(seed1, seed2, seed3) {
+            let h = Math.imul(seed1 ^ seed2, 2654435761) ^ seed3;
+            h = Math.imul(h ^ (h >>> 16), 2246822507);
+            h = Math.imul(h ^ (h >>> 13), 3266489909);
+            return (h >>> 0) / 4294967296;
+        }
+
+        function getDifficulty(floorN) {
+            return Math.floor((floorN + 6) / 12);
+        }
+
+        // ==============================================================================
+        // INPUT HANDLERS
+        // ==============================================================================
+        window.addEventListener('keydown', (e) => {
+            if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Space', 'KeyD', 'KeyA', 'KeyW', 'KeyZ'].includes(e.code)) {
+                e.preventDefault();
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                if (!input.rightHeld) {
+                    if (autoDirection === 1) input.discreteJump = true;
+                    else input.discreteFlip = true;
+                    input.rightHeld = true;
+                }
+            }
+            if (e.code === 'ArrowLeft'  || e.code === 'KeyA') {
+                if (!input.leftHeld) {
+                    if (autoDirection === -1) input.discreteJump = true;
+                    else input.discreteFlip = true;
+                    input.leftHeld = true;
+                }
+            }
+            if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'KeyZ' || e.code === 'Space') {
+                input.rawJump = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Space', 'KeyD', 'KeyA', 'KeyW', 'KeyZ'].includes(e.code)) {
+                e.preventDefault();
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') input.rightHeld = false;
+            if (e.code === 'ArrowLeft'  || e.code === 'KeyA') input.leftHeld = false;
+            if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'KeyZ' || e.code === 'Space') {
+                input.rawJump = false;
+            }
+        });
+
+        let activePointers = {};
+        canvas.addEventListener('pointerdown', (e) => {
+            window.focus(); // Ensure game has focus
+            e.preventDefault();
+            try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+            if (gameState !== 'PLAYING') input.menuTap = true; 
+            activePointers[e.pointerId] = { startX: e.clientX, triggered: false };
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            e.preventDefault();
+            if (gameState !== 'PLAYING') return;
+            let pointerData = activePointers[e.pointerId];
+            if (pointerData && !pointerData.triggered) {
+                let deltaX = e.clientX - pointerData.startX;
+                if (Math.abs(deltaX) > 15) {
+                    pointerData.triggered = true;
+                    let swipeDir = deltaX > 0 ? 1 : -1;
+                    if (swipeDir === autoDirection) input.discreteJump = true; 
+                    else input.discreteFlip = true;
+                }
+            }
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+            delete activePointers[e.pointerId];
+        });
+
+        // ==============================================================================
+        // GENERATION LOGIC
+        // ==============================================================================
+        function getHoles(chunkX, floorN, evalMovement = true, ignorePrev = false) {
+            if (floorN <= 0) return [];
+            let diff = getDifficulty(floorN);
+            
+            // Adjust hole frequency: fewer holes, with a chance of no holes on a chunk
+            let pNum = prng(floorN ^ globalSeed, chunkX, 10);
+            let numHoles = 1;
+            if (floorN >= 6 && pNum > 0.65) numHoles = 2; // Was 0.5
+            else if (floorN >= 2 && pNum < 0.15) numHoles = 0; // 15% chance of no holes on chunk
+            
+            if (numHoles === 0) return [];
+            
+            let holes = [];
+            
+            // Check previous floor to determine staggering/alignment
+            let prevHoles = (!ignorePrev && floorN > 1) ? getHoles(chunkX, floorN - 1, false, true) : [];
+            let prevLocalX = prevHoles.length > 0 ? prevHoles[0].baseX - (chunkX * CHUNK_WIDTH) : null;
+
+            let lastMaxBound = -Infinity;
+            let dynamicHolesUsed = 0;
+
+            for (let i = 0; i < numHoles; i++) {
+                let rHole = prng(floorN ^ globalSeed, chunkX, 1 + i);
+                let rHoleW = prng(floorN ^ globalSeed, chunkX, 4 + i);
+                let localX = 40 + Math.floor(rHole * (200 / numHoles)) + (i * (CHUNK_WIDTH / numHoles));
+
+                // Difficulty adjustment for proximity (Stagger early floors, align higher floors)
+                if (prevLocalX !== null && i === 0) {
+                    let diffLevel = Math.min(4, Math.floor(floorN / 8)); 
+                    if (diffLevel <= 1) { 
+                        // Easy: Stagger holes apart
+                        let minStagger = diffLevel === 0 ? 120 : 80;
+                        if (Math.abs(localX - prevLocalX) < minStagger) {
+                            localX = prevLocalX > (CHUNK_WIDTH / 2) ? prevLocalX - minStagger : prevLocalX + minStagger;
+                        }
+                    } else if (diffLevel >= 3) { 
+                        // Hard: Align holes closer together
+                        let maxAlign = diffLevel === 3 ? 64 : 32;
+                        if (Math.abs(localX - prevLocalX) > maxAlign) {
+                            localX = prevLocalX + (localX > prevLocalX ? maxAlign : -maxAlign);
+                        }
+                    }
+                    localX = Math.max(32, Math.min(CHUNK_WIDTH - 48, localX));
+                }
+
+                let holeX = chunkX * CHUNK_WIDTH + localX;
+                holeX = Math.floor(holeX / 8) * 8; 
+                
+                // 0: Static, 1: Oscillating Width, 2: Moving position
+                let rType = prng(floorN ^ globalSeed, chunkX, 20 + i);
+                let holeType = 0;
+                
+                // Limit to 1 dynamic hole per chunk and decrease oscillation frequency (from > 0.3 to > 0.45)
+                if (dynamicHolesUsed === 0) {
+                    if (floorN >= 6 && rType > 0.6) { holeType = 2; dynamicHolesUsed++; }
+                    else if (floorN >= 4 && rType > 0.45) { holeType = 1; dynamicHolesUsed++; }
+                }
+
+                let widths = [2, 3, 4, 5];
+                let widthTiles;
+
+                if (holeType === 2) {
+                    // Moving floor scales extremely with width. Narrow gaps = most difficult.
+                    let diffLevel = Math.min(4, Math.floor((floorN - 6) / 5)); // scales 0 to 4 based on floors
+                    widthTiles = Math.max(2, 5 - diffLevel); // Starts at 5 tiles (40px), narrows down to 2 tiles (16px)
+                } else {
+                    widthTiles = (diff === 0) ? widths[1 + Math.floor(rHoleW * 2)] : 
+                                 (diff === 1) ? widths[Math.floor(rHoleW * 4)] : 
+                                 (rHoleW < 0.4) ? 2 : (rHoleW < 0.8) ? 5 : (rHoleW < 0.9) ? 3 : 4;
+                }
+                
+                let currentW = widthTiles * 8;
+                let currentOffset = 0;
+
+                // Calculate bounds where this hole CAN potentially open up
+                let minBound = holeX;
+                let maxBound = holeX + currentW;
+
+                if (holeType === 2) {
+                    minBound = holeX - 24;
+                    maxBound = holeX + currentW + 24;
+                } else if (holeType === 1) {
+                    let maxExtra = 12 + diff * 2;
+                    let maxW = currentW + maxExtra;
+                    let midX = holeX + currentW / 2;
+                    minBound = midX - maxW / 2;
+                    maxBound = midX + maxW / 2;
+                }
+
+                // Force a minimum 64px (8 tile) safe gap between the maximum boundaries of holes on the same chunk
+                if (i > 0 && minBound < lastMaxBound + 64) {
+                    let shift = (lastMaxBound + 64) - minBound;
+                    shift = Math.ceil(shift / 8) * 8;
+                    holeX += shift;
+                    minBound += shift;
+                    maxBound += shift;
+                }
+
+                if (evalMovement) {
+                    if (holeType === 2) {
+                        currentOffset = Math.sin(frameCount * (0.02 + diff * 0.005) + chunkX) * 24;
+                    } else if (holeType === 1) {
+                        // Oscillate width centered around holeX
+                        let wave = Math.sin(frameCount * (0.02 + diff * 0.005) + chunkX);
+                        let extraW = wave * (12 + diff * 2); 
+                        let newW = Math.max(16, currentW + extraW);
+                        currentOffset = (currentW - newW) / 2; // Offset coordinates to center the size shifting
+                        currentW = newW;
+                    }
+                }
+
+                lastMaxBound = maxBound;
+                holes.push({ x: holeX + currentOffset, w: currentW, baseX: holeX, type: holeType, amplitude: 24, minBound: minBound, maxBound: maxBound });
+            }
+            return holes;
+        }
+
+        function registerFloorLanding(floorN, startX, dirX) {
+            if (floorCliffs[floorN] !== undefined) return; 
+            if (floorN <= 0) { floorCliffs[floorN] = { x: startX + (dirX * 999999), dir: dirX }; return; }
+            let holesFound = 0, chunkX = Math.floor(startX / CHUNK_WIDTH), cliffX = null;
+            for (let i = 0; i < 50; i++) { 
+                let holes = getHoles(chunkX, floorN, false);
+                if (dirX === 1) holes.sort((a, b) => a.baseX - b.baseX); else holes.sort((a, b) => b.baseX - a.baseX);
+                for (let hole of holes) {
+                    if ((dirX === 1 && hole.baseX > startX) || (dirX === -1 && hole.baseX < startX)) {
+                        if (++holesFound === 4) {
+                            cliffX = (dirX === 1) ? hole.baseX + (hole.isMoving ? 24 : 0) + hole.w + 48 : hole.baseX - (hole.isMoving ? 24 : 0) - 48;
+                            break;
+                        }
+                    }
+                }
+                if (cliffX !== null) break; chunkX += dirX;
+            }
+            floorCliffs[floorN] = { x: cliffX || (startX + (dirX * 5000)), dir: dirX }; 
+        }
+
+        function getSolidType(px, py) {
+            let floorN = Math.floor((-py + 8) / FLOOR_SPACING);
+            if (floorN <= 0) return (py >= 0) ? 1 : 0; 
+            let floorY = -floorN * FLOOR_SPACING;
+            if (py >= floorY && py < floorY + 8) {
+                let cliff = floorCliffs[floorN];
+                if (cliff && ((cliff.dir === 1 && px >= cliff.x) || (cliff.dir === -1 && px <= cliff.x))) return 0; 
+                let holes = getHoles(Math.floor(px / CHUNK_WIDTH), floorN, true); 
+                for (let hole of holes) if (px >= hole.x && px < hole.x + hole.w) return 0; 
+                return 1; 
+            }
+            return 0; 
+        }
+
+        function spawnEntitiesForChunk(chunkX, floorN) {
+            if (floorN <= 0) return; 
+            let chunkId = chunkX + ',' + floorN;
+            if (spawnedChunks.has(chunkId)) return;
+            spawnedChunks.add(chunkId);
+            let floorY = -floorN * FLOOR_SPACING, diff = getDifficulty(floorN), cliff = floorCliffs[floorN];
+            
+            // Increased obstacle spawn rate significantly (made slightly more common)
+            if (prng(floorN ^ globalSeed, chunkX, 2) > Math.max(0.05, 0.25 - (diff * 0.1))) {
+                let obsX = chunkX * CHUNK_WIDTH + 40 + Math.floor(prng(floorN ^ globalSeed, chunkX, 3) * 240);
+                if (cliff && ((cliff.dir === 1 && obsX >= cliff.x) || (cliff.dir === -1 && obsX <= cliff.x))) return;
+                let holes = getHoles(chunkX, floorN, false);
+                for (let hole of holes) {
+                    let m = (hole.type === 2) ? hole.amplitude : (hole.type === 1 ? 16 : 0);
+                    if (obsX >= hole.baseX - m - 32 && obsX <= hole.baseX + m + hole.w + 32) return;
+                }
+                let r = prng(floorN ^ globalSeed, chunkX, 5), type = 'SPIKE', dirX = (obsX > chunkX * CHUNK_WIDTH + CHUNK_WIDTH / 2) ? -1 : 1;
+                
+                // Increased SPIKE frequency natively
+                if (diff === 0 && r > 0.75) type = 'PATROL';
+                else if (diff === 1) type = (r > 0.9) ? 'CANNON' : (r > 0.8) ? 'BOUNCER' : (r > 0.5) ? 'PATROL' : 'SPIKE';
+                else if (diff >= 2) type = (r > 0.92) ? 'WAVER' : (r > 0.82) ? 'CANNON' : (r > 0.65) ? 'BOUNCER' : (r > 0.4) ? 'PATROL' : 'SPIKE';
+                
+                // Base speed is now 1.6 for all moving entities (player max speed is 1.5). Bullets slowed down drastically.
+                if (type === 'BOUNCER') activeEntities.push({ type, x: obsX, y: floorY - 8, baseFloorY: floorY, vx: dirX * Math.min(2.5, 1.6 + (diff * 0.2)), vy: -2.0, dirX, timer: 0 });
+                else if (type === 'WAVER') activeEntities.push({ type, x: obsX, y: floorY - 24, startY: floorY - 24, vx: dirX * Math.min(2.8, 1.6 + (diff * 0.2)), dirX, timer: 0 });
+                else activeEntities.push({ type, x: obsX, y: floorY, vx: (type === 'PATROL') ? (dirX * Math.min(2.5, 1.6 + (diff * 0.15))) : 0, dirX, fireRate: Math.max(40, 120 - (diff * 15)), bulletSpeed: Math.min(2.5, 1.2 + (diff * 0.15)), timer: 0 });
+            }
+        }
+
+        // ==============================================================================
+        // PHYSICS & LOOP
+        // ==============================================================================
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            gameOverTime = performance.now();
+            if (topFloor > highScore) { highScore = topFloor; localStorage.setItem('gb_runner_highscore', highScore); }
+            menuTitle.innerText = "GAME OVER";
+            menuScore.innerText = `Floor Reached: ${topFloor}`;
+            menuHighscore.innerText = `High Score: ${highScore}`;
+            
+            menuInstruction.innerText = "[TAP] to Retry";
+            menuInstruction.style.opacity = "0";
+            
+            // Fade in the prompt exactly when the 1-second timer ends
+            setTimeout(() => {
+                if (gameState === 'GAMEOVER') menuInstruction.style.opacity = "1";
+            }, 1000);
+            
+            menuScreen.classList.add('visible');
+        }
+
+        function initGame() {
+            wMarioX = 20 << 8; wMarioY = 0 << 8; wMarioVX = 0; wMarioVY = 0; wMarioState = STATE_FALL; wMarioFacing = 0;      
+            autoDirection = 1; topFloor = 0; currentFloor = 0; backflipStartFloor = 0; cameraY = -224; targetCameraY = -224; frameCount = 0;
+            cameraX = 20 - 22; // Start with proper 85% alignment right away
+            activeEntities = []; spawnedChunks.clear(); floorCliffs = {}; globalSeed = Math.floor(Math.random() * 1000000);
+            registerFloorLanding(0, 20, 1); scoreDisplay.innerText = "0"; lastRenderedScore = 0; 
+            menuScreen.classList.remove('visible');
+        }
+
+        function gbUpdate() {
+            frameCount++;
+            
+            let isJumpAction = input.rawJump || input.discreteJump;
+            let isFlipAction = input.discreteFlip;
+            let menuAction = isJumpAction || input.menuTap;
+
+            // Consume discrete triggers
+            input.discreteJump = false;
+            input.discreteFlip = false;
+
+            if (gameState === 'START') {
+                if (menuAction && !lastMenuAction) { input.menuTap = false; initGame(); gameState = 'PLAYING'; }
+                lastMenuAction = menuAction; return;
+            }
+            if (gameState === 'GAMEOVER') {
+                if (performance.now() - gameOverTime < 1000) {
+                    lastMenuAction = menuAction; 
+                    return;
+                }
+                if (menuAction && !lastMenuAction) { input.menuTap = false; initGame(); gameState = 'PLAYING'; }
+                lastMenuAction = menuAction; return;
+            }
+
+            lastMenuAction = menuAction;
+
+            hJoypadDown = isJumpAction ? PAD_A : 0;
+            hJoypadPressed = (lastJoypadDown ^ hJoypadDown) & hJoypadDown;
+            lastJoypadDown = hJoypadDown;
+
+            switch(wMarioState) {
+                case STATE_STAND: wMarioVX = 0; wMarioState = STATE_WALK; break;
+                case STATE_WALK:
+                    if (isFlipAction) { 
+                        wMarioVY = BACKFLIP_FORCE; 
+                        autoDirection *= -1; 
+                        wMarioFacing = (autoDirection === 1) ? 0 : 1; 
+                        wMarioVX = (wMarioFacing === 1) ? ((~MAX_WALK_SPEED + 1) & 0xFFFF) : MAX_WALK_SPEED; 
+                        wMarioState = STATE_BACKFLIP; 
+                        backflipStartFloor = Math.max(0, Math.floor(-Math.floor(wMarioY / 256) / FLOOR_SPACING)); 
+                        targetCameraY = - ((backflipStartFloor + 1) * FLOOR_SPACING) - 224; 
+                        break; 
+                    }
+                    wMarioVX = addQ88(wMarioVX, (autoDirection === 1) ? WALK_ACCEL : (~WALK_ACCEL + 1) & 0xFFFF);
+                    if (!(wMarioVX & 0x8000) && wMarioVX > MAX_WALK_SPEED) wMarioVX = MAX_WALK_SPEED; if ((wMarioVX & 0x8000) && wMarioVX < ((~MAX_WALK_SPEED + 1) & 0xFFFF)) wMarioVX = (~MAX_WALK_SPEED + 1) & 0xFFFF;
+                    wMarioFacing = (autoDirection === 1) ? 0 : 1;
+                    if (hJoypadPressed & PAD_A) { wMarioVY = JUMP_FORCE; wMarioState = STATE_JUMP; }
+                    break;
+                case STATE_JUMP: case STATE_BACKFLIP: case STATE_FALL:
+                    wMarioVX = addQ88(wMarioVX, (autoDirection === 1) ? (WALK_ACCEL >> 1) : (~(WALK_ACCEL >> 1) + 1) & 0xFFFF);
+                    if (!(wMarioVX & 0x8000) && wMarioVX > MAX_WALK_SPEED) wMarioVX = MAX_WALK_SPEED; if ((wMarioVX & 0x8000) && wMarioVX < ((~MAX_WALK_SPEED + 1) & 0xFFFF)) wMarioVX = (~MAX_WALK_SPEED + 1) & 0xFFFF;
+                    if (!(wMarioVY & 0x8000) && wMarioState !== STATE_BACKFLIP) wMarioState = STATE_FALL; 
+                    break;
+            }
+
+            wMarioVY = addQ88(wMarioVY, GRAVITY_ORIGINAL);
+            if (!(wMarioVY & 0x8000) && wMarioVY > TERM_VELOCITY) wMarioVY = TERM_VELOCITY;
+
+            // Velocity and Collide
+            let oldY = wMarioY; wMarioY = addQ88(wMarioY, wMarioVY);
+            let px = Math.floor(wMarioX / 256), py = Math.floor(wMarioY / 256);
+            let inAir = (wMarioState === STATE_JUMP || wMarioState === STATE_BACKFLIP || wMarioState === STATE_FALL);
+            if (!(wMarioVY & 0x8000) && (getSolidType(px - 4, py) !== 0 || getSolidType(px + 3, py) !== 0)) {
+                wMarioY = (Math.floor(py / 8) * 8) * 256; wMarioVY = 0;
+                let landedFloor = Math.max(0, Math.floor(-Math.floor(wMarioY / 256) / FLOOR_SPACING));
+                if (wMarioState === STATE_BACKFLIP && landedFloor <= backflipStartFloor) triggerGameOver();
+                else { wMarioState = STATE_WALK; registerFloorLanding(landedFloor, px, autoDirection); }
+            } else { if (wMarioState === STATE_WALK) wMarioState = STATE_FALL; if (inAir && getSolidType(px, py - 7) !== 0) triggerGameOver(); }
+            wMarioX = addQ88(wMarioX, wMarioVX); px = Math.floor(wMarioX / 256); py = Math.floor(wMarioY / 256);
+            if (inAir && getSolidType(px, py - 7) !== 0) triggerGameOver();
+            else if (!inAir) {
+                if (wMarioVX > 0 && getSolidType(px + 4, py - 1) !== 0) { wMarioX = (Math.floor((px + 4) / 8) * 8 - 5) * 256; wMarioVX = 0; }
+                else if (wMarioVX < 0 && getSolidType(px - 5, py - 1) !== 0) { wMarioX = (Math.floor((px - 5) / 8) * 8 + 13) * 256; wMarioVX = 0; }
+            }
+
+            currentFloor = Math.max(0, Math.floor(-py / FLOOR_SPACING));
+            let chunkX = Math.floor(px / CHUNK_WIDTH);
+            
+            // Spawn entities further ahead vertically and horizontally to prevent pop-in
+            for (let f = currentFloor; f <= currentFloor + 6; f++) {
+                for (let cx = chunkX - 2; cx <= chunkX + 2; cx++) {
+                    spawnEntitiesForChunk(cx, f);
+                }
+            }
+            
+            // processEntities
+            for (let i = activeEntities.length - 1; i >= 0; i--) {
+                let ent = activeEntities[i];
+                if (ent.y > cameraY + 300) { activeEntities.splice(i, 1); continue; }
+                
+                // Entities slow down 2x when moving towards the player
+                let movingTowardsPlayer = (Math.sign(ent.vx) !== Math.sign(autoDirection));
+                let speedMultiplier = movingTowardsPlayer ? 0.5 : 1.0;
+
+                if (ent.type === 'PATROL') { 
+                    ent.x += ent.vx * speedMultiplier; 
+                    if (getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y) === 0 || getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y - 4) !== 0) ent.vx *= -1; 
+                }
+                else if (ent.type === 'CANNON') { 
+                    if (++ent.timer > ent.fireRate) { ent.timer = 0; activeEntities.push({ type: 'BULLET', x: ent.x + (ent.dirX > 0 ? 8 : -4), y: ent.y - 4, vx: ent.dirX * ent.bulletSpeed, timer: 0 }); } 
+                }
+                else if (ent.type === 'BULLET') { 
+                    ent.x += ent.vx; // Bullets retain full speed regardless
+                    if (ent.timer++ > 300) activeEntities.splice(i, 1); 
+                }
+                else if (ent.type === 'BOUNCER') { 
+                    ent.x += ent.vx * speedMultiplier; 
+                    ent.y += ent.vy; 
+                    if (getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y - 4) !== 0) ent.vx *= -1; 
+                    if (ent.vy > 0 && getSolidType(ent.x + 4, ent.y + 1) !== 0) { ent.vy *= -1; ent.y = Math.floor(ent.y / 8) * 8; } 
+                    if (ent.vy < 0 && (getSolidType(ent.x + 4, ent.y - 8) !== 0 || ent.y < ent.baseFloorY - 40)) ent.vy *= -1; 
+                }
+                else if (ent.type === 'WAVER') { 
+                    ent.timer++; 
+                    ent.x += ent.vx * speedMultiplier; 
+                    ent.y = ent.startY + Math.sin(ent.timer * 0.05) * 20; 
+                    if (getSolidType(ent.x + (ent.vx > 0 ? 8 : -1), ent.y) !== 0) ent.vx *= -1; 
+                }
+                
+                let ex = Math.floor(ent.x), ey = Math.floor(ent.y), dotY = py - 7, hit = false;
+                if (ent.type === 'BULLET') { if (px >= ex && px <= ex + 4 && dotY >= ey - 4 && dotY <= ey) hit = true; }
+                else if (px >= ex && px <= ex + 8 && dotY >= ey - 8 && dotY <= ey) hit = true;
+                if (hit && gameState === 'PLAYING') triggerGameOver();
+            }
+
+            if (currentFloor > topFloor && wMarioState !== STATE_FALL) topFloor = currentFloor;
+            
+            // Smoothly track camera X to keep 85% of screen in front of player
+            // 15% of 144px is ~22px behind the player
+            let targetCameraX = (autoDirection === 1) ? px - 22 : px - 122;
+            cameraX += (targetCameraX - cameraX) * 0.08; 
+            
+            cameraY += (targetCameraY - cameraY) * 0.1; 
+            if (py > cameraY + 256) triggerGameOver();
+        }
+
+        function draw() {
+            ctx.fillStyle = PALETTE.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.save(); ctx.translate(-cameraX, -cameraY);
+            
+            // Draw Floors smoothly rather than using strict 8x8 tile snapping
+            let bottomVisibleFloor = Math.max(0, Math.floor((-cameraY - 256) / FLOOR_SPACING) - 1);
+            let topVisibleFloor = Math.floor((-cameraY + 300) / FLOOR_SPACING) + 1;
+            
+            for (let f = bottomVisibleFloor; f <= topVisibleFloor; f++) {
+                let floorY = -f * FLOOR_SPACING;
+                let leftX = cameraX - 32;
+                let rightX = cameraX + 144 + 32;
+                
+                let startChunk = Math.floor(leftX / CHUNK_WIDTH);
+                let endChunk = Math.floor(rightX / CHUNK_WIDTH);
+                
+                let cliff = floorCliffs[f];
+                let cliffLeft = -Infinity, cliffRight = Infinity;
+                if (cliff) {
+                    if (cliff.dir === 1) cliffRight = cliff.x;
+                    else cliffLeft = cliff.x;
+                }
+                
+                let allHoles = [];
+                for (let cx = startChunk; cx <= endChunk; cx++) {
+                    allHoles.push(...getHoles(cx, f, true));
+                }
+                allHoles.sort((a,b) => a.x - b.x);
+                
+                let curX = Math.max(leftX, cliffLeft);
+                let maxRight = Math.min(rightX, cliffRight);
+                
+                let solidSegments = [];
+                for (let hole of allHoles) {
+                    if (hole.x > curX) {
+                        solidSegments.push([curX, Math.min(hole.x, maxRight)]);
+                    }
+                    curX = Math.max(curX, hole.x + hole.w);
+                }
+                if (curX < maxRight) {
+                    solidSegments.push([curX, maxRight]);
+                }
+                
+                for (let seg of solidSegments) {
+                    if (seg[1] > seg[0]) {
+                        let segX = Math.floor(seg[0]);
+                        let segW = Math.ceil(seg[1] - seg[0]);
+                        
+                        // Main floor body
+                        ctx.fillStyle = PALETTE.dark; ctx.fillRect(segX, floorY, segW, 8);
+                        ctx.fillStyle = PALETTE.light; ctx.fillRect(segX, floorY, segW, 1);
+
+                        // Draw caution track patterns for dynamic hole bounds
+                        for (let hole of allHoles) {
+                            if (hole.type === 1 || hole.type === 2) {
+                                let overlapStart = Math.max(segX, hole.minBound);
+                                let overlapEnd = Math.min(segX + segW, hole.maxBound);
+                                if (overlapStart < overlapEnd) {
+                                    // Mechanical groove track shadow
+                                    ctx.fillStyle = PALETTE.black;
+                                    ctx.fillRect(Math.floor(overlapStart), floorY + 4, Math.ceil(overlapEnd - overlapStart), 2);
+                                    
+                                    // Subtle dashed slider rail matching the background color 
+                                    ctx.fillStyle = PALETTE.light;
+                                    for (let dx = Math.floor(overlapStart); dx < overlapEnd; dx++) {
+                                        // Use global X coordinate to keep the dashes completely stationary 
+                                        if (Math.abs(dx) % 8 < 4) { 
+                                            ctx.fillRect(dx, floorY + 4, 1, 2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (let ent of activeEntities) {
+                let ex = Math.floor(ent.x), ey = Math.floor(ent.y);
+                if (ent.type === 'SPIKE') { ctx.fillStyle = PALETTE.black; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + 4, ey - 8); ctx.lineTo(ex + 8, ey); ctx.fill(); }
+                else if (ent.type === 'PATROL') { ctx.fillStyle = PALETTE.dark; ctx.fillRect(ex, ey - 8, 8, 8); ctx.fillStyle = PALETTE.bg; ctx.fillRect(ex + (ent.vx > 0 ? 5 : 1), ey - 6, 2, 2); }
+                else if (ent.type === 'CANNON') { ctx.fillStyle = PALETTE.black; ctx.fillRect(ex, ey - 8, 8, 8); ctx.fillStyle = PALETTE.dark; ctx.fillRect(ex + (ent.dirX > 0 ? 8 : -4), ey - 6, 4, 4); }
+                else if (ent.type === 'BULLET') { ctx.fillStyle = PALETTE.black; ctx.beginPath(); ctx.arc(ex + 2, ey - 2, 2, 0, Math.PI * 2); ctx.fill(); }
+                else if (ent.type === 'BOUNCER') { ctx.fillStyle = PALETTE.dark; ctx.beginPath(); ctx.arc(ex + 4, ey - 4, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = PALETTE.bg; ctx.fillRect(ex + (ent.vx > 0 ? 5 : 1), ey - 5, 2, 2); }
+                else if (ent.type === 'WAVER') { ctx.fillStyle = PALETTE.black; ctx.fillRect(ex, ey - 6, 8, 4); ctx.fillStyle = PALETTE.dark; ctx.fillRect(ex + 2, ey - 8, 4, 8); ctx.fillStyle = PALETTE.bg; ctx.fillRect(ex + (ent.vx > 0 ? 6 : 0), ey - 5, 2, 2); }
+            }
+            if (gameState !== 'START') {
+                let px = Math.floor(wMarioX / 256), py = Math.floor(wMarioY / 256);
+                ctx.save(); ctx.translate(px, py - 7); if (wMarioState === STATE_BACKFLIP) ctx.rotate((py * 0.1) * ((wMarioFacing === 1) ? 1 : -1)); ctx.scale((wMarioFacing === 1) ? -1 : 1, 1);
+                ctx.fillStyle = PALETTE.black; ctx.fillRect(-5, -7, 10, 14); ctx.fillStyle = PALETTE.bg; ctx.fillRect(-1, -5, 6, 4); ctx.restore();
+            }
+            ctx.restore();
+
+            if (gameState === 'PLAYING') {
+                scoreDisplay.innerText = topFloor;
+                scoreDisplay.style.display = 'block';
+            } else scoreDisplay.style.display = 'none';
+        }
+
+        const GB_STEP = 1000 / 59.7275; 
+        let lastTime = 0, accumulator = 0;
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            let dt = timestamp - lastTime; lastTime = timestamp;
+            accumulator += Math.min(dt, 250);
+            while (accumulator >= GB_STEP) { gbUpdate(); accumulator -= GB_STEP; }
+            draw(); requestAnimationFrame(gameLoop);
+        }
+        
+        menuInstruction.style.opacity = "1";
+        menuScreen.classList.add('visible');
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
